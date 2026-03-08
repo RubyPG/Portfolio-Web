@@ -1,0 +1,229 @@
+---
+/* ── Contacto Page (/contacto) ── */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Container from '../components/ui/Container.astro';
+import Card from '../components/ui/Card.astro';
+import Button from '../components/ui/Button.astro';
+import GitHubMark from '../components/icons/GitHubMark.astro';
+import Ballpit from '../components/Ballpit';
+import { site } from '../data/site';
+
+const contactMethods = [
+  {
+    label: 'Email',
+    value: site.contact.email,
+    href: `mailto:${site.contact.email}`,
+    description: 'Cuéntame tu proyecto. Respondo en menos de 24 horas.',
+    icon: 'email',
+    color: 'text-secondary',
+  },
+  {
+    label: 'Teléfono',
+    value: '+34 618 856 782',
+    href: `tel:${site.contact.phone}`,
+    description: '¿Prefieres hablar directamente? Llámame.',
+    icon: 'phone',
+    color: 'text-secondary',
+  },
+  {
+    label: 'WhatsApp',
+    value: 'Enviar mensaje',
+    href: `https://wa.me/${site.contact.whatsapp}`,
+    description: 'Respuesta más rápida por WhatsApp.',
+    icon: 'whatsapp',
+    color: 'text-state-success',
+    external: true,
+  },
+  {
+    label: 'GitHub',
+    value: '@RubyPG',
+    href: 'https://github.com/RubyPG',
+    description: 'Perfil de GitHub.',
+    icon: 'github',
+    color: 'text-text-primary',
+    external: true,
+  },
+  {
+    label: 'LinkedIn',
+    value: 'Rubén Pezuela García',
+    href: 'https://linkedin.com/in/rubenpg',
+    description: 'Perfil profesional y experiencia.',
+    icon: 'linkedin',
+    color: 'text-link',
+    external: true,
+  },
+];
+---
+
+<BaseLayout
+  title="Contacto — Rubén Pezuela García"
+  description="Contacta con Rubén Pezuela García. Full Stack Developer disponible para proyectos. Respondo en menos de 24h por email, WhatsApp o LinkedIn."
+>
+  <!-- Header -->
+  <section class="py-14 sm:py-20 bg-bg-secondary/50 border-b border-ui-border relative overflow-hidden min-h-[450px] flex items-center" data-no-reveal>
+    <!-- Ballpit Background -->
+    <div class="absolute inset-0 z-0 opacity-60">
+      <Ballpit
+        client:only="react"
+        count={80}
+        gravity={0.01}
+        friction={0.9975}
+        wallBounce={0.95}
+        followCursor={true}
+        colors={[0x3b82f6, 0x1d4ed8, 0x0f172a]}
+      />
+    </div>
+    <!-- Overlay for contrast -->
+    <div class="absolute inset-0 bg-bg-primary/40 pointer-events-none z-0"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(59,130,246,0.15),transparent_60%)] pointer-events-none z-10"></div>
+    
+    <Container size="md" class="relative z-20">
+      <div class="relative z-20">
+        <div class="motion-chip inline-flex items-center gap-2 bg-accent/10 border border-accent/25 rounded-full px-4 py-1.5 mb-6" data-motion-active="false">
+          <span class="w-2 h-2 bg-accent rounded-full animate-pulse"></span>
+          <span class="text-accent font-semibold text-xs uppercase tracking-widest">Respondo en menos de 24h</span>
+        </div>
+        <h1 class="text-4xl sm:text-5xl font-black text-text-primary mb-4 leading-tight">
+          Hablemos de tu<br/><span class="text-secondary">próximo proyecto</span>
+        </h1>
+        <p class="text-text-secondary text-lg leading-relaxed max-w-lg">
+          Sin formularios interminables ni reuniones de descubrimiento. Cuéntame tu idea y te digo directamente cómo puedo ayudarte.
+        </p>
+      </div>
+    </Container>
+  </section>
+
+  <section class="py-14 sm:py-20">
+    <Container size="md">
+      <!-- Contact cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-16 stagger-children">
+        {contactMethods.map((method) => (
+          <a
+            href={method.href}
+            target={method.external ? '_blank' : undefined}
+            rel={method.external ? 'noopener noreferrer' : undefined}
+            class="no-underline group"
+            aria-label={`Contactar por ${method.label}`}
+          >
+            <Card class="h-full flex flex-col items-start hover:border-secondary/40 transition-colors" padding="md">
+              <!-- Icon -->
+              <div class={`mb-4 ${method.color}`}>
+                {method.icon === 'email' && (
+                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                )}
+                {method.icon === 'phone' && (
+                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                )}
+                {method.icon === 'whatsapp' && (
+                  <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                  </svg>
+                )}
+                {method.icon === 'github' && (
+                  <GitHubMark class="w-8 h-8" />
+                )}
+                {method.icon === 'linkedin' && (
+                  <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+                    <rect width="256" height="256" fill="#fff" rx="60" />
+                    <rect width="256" height="256" fill="#0A66C2" rx="60" />
+                    <path fill="#fff" d="M184.715 217.685h29.27a4 4 0 0 0 4-3.999l.015-61.842c0-32.323-6.965-57.168-44.738-57.168c-14.359-.534-27.9 6.868-35.207 19.228a.32.32 0 0 1-.595-.161V101.66a4 4 0 0 0-4-4h-27.777a4 4 0 0 0-4 4v112.02a4 4 0 0 0 4 4h29.268a4 4 0 0 0 4-4v-55.373c0-15.657 2.97-30.82 22.381-30.82c19.135 0 19.383 17.916 19.383 31.834v54.364a4 4 0 0 0 4 4M38 59.628c0 11.864 9.767 21.626 21.632 21.626c11.862-.001 21.623-9.769 21.623-21.631C81.253 47.761 71.491 38 59.628 38C47.762 38 38 47.763 38 59.627m6.959 158.058h29.307a4 4 0 0 0 4-4V101.66a4 4 0 0 0-4-4H44.959a4 4 0 0 0-4 4v112.025a4 4 0 0 0 4 4"/>
+                  </svg>
+                )}
+              </div>
+
+              <h3 class="text-lg font-bold text-text-primary mb-1 group-hover:text-secondary transition-colors">
+                {method.label}
+              </h3>
+              <p class="text-sm text-secondary font-medium mb-2">{method.value}</p>
+              <p class="text-sm text-text-muted">{method.description}</p>
+            </Card>
+          </a>
+        ))}
+      </div>
+
+      <!-- Contact form -->
+      <div class="max-w-lg mx-auto">
+        <div class="text-center mb-8">
+          <h2 class="text-2xl font-black text-text-primary mb-2">
+            Envíame un mensaje
+            <span class="inline-block w-2 h-2 bg-accent rounded-full ml-1 align-middle"></span>
+          </h2>
+          <p class="text-text-muted text-sm">Se abrirá tu cliente de correo con el mensaje listo para enviar.</p>
+        </div>
+
+        <form id="contact-form" class="space-y-5">
+          <div>
+            <label for="contact-name" class="block text-sm font-semibold text-text-secondary mb-2">
+              Tu nombre
+            </label>
+            <input
+              type="text"
+              id="contact-name"
+              name="name"
+              required
+              placeholder="Nombre completo"
+              class="motion-field w-full px-4 py-3 bg-ui-surface border border-ui-border rounded-xl text-text-primary placeholder:text-ui-placeholder focus:border-secondary focus:outline-none focus:ring-1 focus:ring-secondary transition-colors"
+            />
+          </div>
+
+          <div>
+            <label for="contact-subject" class="block text-sm font-semibold text-text-secondary mb-2">
+              Asunto
+            </label>
+            <input
+              type="text"
+              id="contact-subject"
+              name="subject"
+              required
+              placeholder="Ej: Quiero contratar desarrollo web"
+              class="motion-field w-full px-4 py-3 bg-ui-surface border border-ui-border rounded-xl text-text-primary placeholder:text-ui-placeholder focus:border-secondary focus:outline-none focus:ring-1 focus:ring-secondary transition-colors"
+            />
+          </div>
+
+          <div>
+            <label for="contact-message" class="block text-sm font-semibold text-text-secondary mb-2">
+              Tu proyecto
+            </label>
+            <textarea
+              id="contact-message"
+              name="message"
+              required
+              rows="5"
+              placeholder="Cuéntame qué necesitas, en qué estás trabajando y cómo puedo ayudarte…"
+              class="motion-field w-full px-4 py-3 bg-ui-surface border border-ui-border rounded-xl text-text-primary placeholder:text-ui-placeholder focus:border-secondary focus:outline-none focus:ring-1 focus:ring-secondary transition-colors resize-y"
+            ></textarea>
+          </div>
+
+          <Button variant="primary" size="lg" class="w-full" ariaLabel="Enviar mensaje por email" id="contact-submit">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            Enviar mensaje
+          </Button>
+        </form>
+      </div>
+    </Container>
+  </section>
+</BaseLayout>
+
+<script>
+  const form = document.getElementById('contact-form') as HTMLFormElement | null;
+
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const name = (document.getElementById('contact-name') as HTMLInputElement)?.value || '';
+    const subject = (document.getElementById('contact-subject') as HTMLInputElement)?.value || '';
+    const message = (document.getElementById('contact-message') as HTMLTextAreaElement)?.value || '';
+
+    const body = `Hola Rubén,\n\nMe llamo ${name}.\n\n${message}\n\nSaludos.`;
+    const mailtoUrl = `mailto:ruben.pezuelagarcia@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    window.location.href = mailtoUrl;
+  });
+</script>
+

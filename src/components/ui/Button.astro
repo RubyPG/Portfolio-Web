@@ -1,0 +1,88 @@
+---
+/* ── Button Component ── */
+interface Props {
+    href?: string;
+    variant?: "primary" | "secondary" | "ghost" | "outline";
+    size?: "sm" | "md" | "lg";
+    class?: string;
+    ariaLabel?: string;
+    external?: boolean;
+    id?: string;
+}
+
+const {
+    href,
+    variant = "primary",
+    size = "md",
+    class: className = "",
+    ariaLabel,
+    external = false,
+    id,
+} = Astro.props;
+
+const baseClasses =
+    "motion-button inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-250 cursor-pointer focus-visible:outline-2 focus-visible:outline-secondary focus-visible:outline-offset-2";
+const contentBaseClasses =
+    "button-content relative z-[1] inline-flex items-center justify-center";
+
+const variantClasses: Record<string, string> = {
+    primary:
+        "bg-accent text-bg-deep hover:bg-accent-hover active:bg-accent-muted",
+    secondary:
+        "bg-ui-surface text-text-primary border border-ui-border hover:border-secondary hover:text-secondary",
+    ghost: "text-text-secondary hover:text-secondary hover:bg-ui-surface",
+    outline:
+        "border border-secondary text-secondary hover:bg-secondary hover:text-neutral-white",
+};
+
+const sizeClasses: Record<string, string> = {
+    sm: "px-3 py-1.5 text-sm",
+    md: "px-5 py-2.5 text-sm",
+    lg: "px-7 py-3 text-base",
+};
+const contentGapClasses: Record<string, string> = {
+    sm: "gap-1.5",
+    md: "gap-2",
+    lg: "gap-2.5",
+};
+
+const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;
+const contentClasses = `${contentBaseClasses} ${contentGapClasses[size]}`;
+const inlineStyle = variant === "primary" ? "color: var(--bg-deep);" : undefined;
+
+const Tag = href ? "a" : "button";
+const externalAttrs = external
+    ? { target: "_blank", rel: "noopener noreferrer" }
+    : {};
+---
+
+{
+    href ? (
+        <a
+            href={href}
+            class={classes}
+            data-motion-active="false"
+            aria-label={ariaLabel}
+            id={id}
+            style={inlineStyle}
+            {...externalAttrs}
+        >
+            <span class={contentClasses}>
+                <slot />
+            </span>
+        </a>
+    ) : (
+        <button
+            class={classes}
+            data-motion-active="false"
+            aria-label={ariaLabel}
+            id={id}
+            style={inlineStyle}
+            type="button"
+        >
+            <span class={contentClasses}>
+                <slot />
+            </span>
+        </button>
+    )
+}

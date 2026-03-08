@@ -1,0 +1,49 @@
+---
+import Badge from "./Badge.astro";
+import { getTechIcon } from "../../data/tech-icons";
+
+interface Props {
+    label: string;
+    variant?: "accent" | "neutral" | "outline";
+    size?: "sm" | "md";
+    class?: string;
+}
+
+const {
+    label,
+    variant = "neutral",
+    size = "sm",
+    class: className = "",
+} = Astro.props;
+const icon = getTechIcon(label);
+---
+
+<Badge
+    variant={variant}
+    size={size}
+    class={`motion-chip inline-flex gap-1.5 ${className}`}
+>
+    {
+        icon?.kind === "svg" && (
+            <span
+                class="w-3.5 h-3.5 shrink-0 inline-flex [&>svg]:w-full [&>svg]:h-full [&>svg]:block"
+                set:html={icon.value}
+                aria-hidden="true"
+            />
+        )
+    }
+    {
+        icon?.kind === "url" && (
+            <img
+                src={icon.value}
+                alt=""
+                aria-hidden="true"
+                class="w-3.5 h-3.5 shrink-0"
+                loading="lazy"
+                decoding="async"
+                onerror="this.style.display='none';"
+            />
+        )
+    }
+    <span>{label}</span>
+</Badge>

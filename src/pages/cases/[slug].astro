@@ -1,0 +1,24 @@
+---
+/* ── Case Study dynamic page (/cases/[slug]) ── */
+import { getCollection, type CollectionEntry } from "astro:content";
+import CaseLayout from "../../layouts/CaseLayout.astro";
+
+export async function getStaticPaths() {
+    const cases = await getCollection("cases");
+    return cases.map((entry: CollectionEntry<"cases">) => ({
+        params: { slug: entry.data.caseSlug },
+        props: { entry },
+    }));
+}
+
+interface Props {
+    entry: CollectionEntry<"cases">;
+}
+
+const { entry } = Astro.props;
+const { Content } = await entry.render();
+---
+
+<CaseLayout frontmatter={entry.data}>
+    <Content />
+</CaseLayout>

@@ -1,0 +1,34 @@
+---
+/* ── SectionTitle Component ── */
+interface Props {
+    title: string;
+    subtitle?: string;
+    align?: "left" | "center";
+    class?: string;
+}
+
+const { title, subtitle, align = "left", class: className = "" } = Astro.props;
+
+const alignClasses = align === "center" ? "text-center" : "text-left";
+---
+
+<div class={`mb-12 ${alignClasses} ${className}`}>
+    <h2
+        class="text-3xl sm:text-4xl font-black text-text-primary tracking-tight"
+    >
+        {title}
+        <span
+            class="inline-block w-2.5 h-2.5 bg-accent rounded-full ml-1.5 align-middle"
+        ></span>
+    </h2>
+    {
+        subtitle && (
+            <p
+                class="mt-4 text-text-muted text-base sm:text-lg max-w-2xl leading-relaxed"
+                class:list={[align === "center" && "mx-auto"]}
+            >
+                {subtitle}
+            </p>
+        )
+    }
+</div>

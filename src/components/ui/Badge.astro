@@ -1,0 +1,27 @@
+---
+/* ── Badge Component ── */
+interface Props {
+    variant?: "accent" | "neutral" | "outline";
+    size?: "sm" | "md";
+    class?: string;
+}
+
+const { variant = "neutral", size = "sm", class: className = "" } = Astro.props;
+
+const variantClasses: Record<string, string> = {
+    accent: "bg-accent/15 text-accent border border-accent/30",
+    neutral: "bg-ui-surface text-text-secondary border border-ui-border",
+    outline: "border border-ui-border text-text-muted",
+};
+
+const sizeClasses: Record<string, string> = {
+    sm: "px-2 py-0.5 text-xs",
+    md: "px-3 py-1 text-sm",
+};
+
+const classes = `inline-flex items-center rounded-full font-medium ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;
+---
+
+<span class={classes}>
+    <slot />
+</span>

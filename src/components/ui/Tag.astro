@@ -1,0 +1,20 @@
+---
+/* ── Tag Component (for project types/categories) ── */
+interface Props {
+    active?: boolean;
+    class?: string;
+}
+
+const { active = false, class: className = "" } = Astro.props;
+
+const baseClasses =
+    "inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer select-none";
+const activeClasses = active
+    ? "bg-accent text-bg-deep"
+    : "bg-ui-surface text-text-secondary border border-ui-border hover:border-secondary hover:text-secondary";
+const classes = `${baseClasses} ${activeClasses} ${className}`;
+---
+
+<span class={classes} role="button" tabindex="0">
+    <slot />
+</span>

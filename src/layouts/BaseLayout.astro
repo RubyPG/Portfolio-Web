@@ -1,0 +1,110 @@
+---
+/* ── BaseLayout ── */
+import Navbar from "../components/layout/Navbar.astro";
+import Footer from "../components/layout/Footer.astro";
+import MotionEffectsController from "../components/layout/MotionEffectsController";
+import ScrollChrome from "../components/layout/ScrollChrome";
+import ScrollRevealController from "../components/layout/ScrollRevealController";
+import { site } from "../data/site";
+import "../styles/globals.css";
+
+interface Props {
+    title?: string;
+    description?: string;
+    ogImage?: string;
+    canonical?: string;
+}
+
+const {
+    title,
+    description = site.seo.defaultDescription,
+    ogImage = site.seo.ogImage,
+    canonical,
+} = Astro.props;
+
+const pageTitle = title
+    ? site.seo.titleTemplate.replace("%s", title)
+    : site.seo.defaultTitle;
+
+const canonicalUrl =
+    canonical || new URL(Astro.url.pathname, site.siteUrl).href;
+
+const isEn = Astro.url.pathname.startsWith("/en");
+const htmlLang = isEn ? "en" : "es";
+const ogLocale = isEn ? "en_US" : site.locale;
+
+const normalizedPath =
+    Astro.url.pathname.endsWith("/") && Astro.url.pathname !== "/"
+        ? Astro.url.pathname.slice(0, -1)
+        : Astro.url.pathname;
+
+const revealPages = new Set([
+    "/",
+    "/proyectos",
+    "/sobre-mi",
+    "/contacto",
+    "/en",
+    "/en/proyectos",
+    "/en/sobre-mi",
+    "/en/contacto",
+]);
+
+const enableScrollReveal = revealPages.has(normalizedPath);
+---
+
+<!doctype html>
+<html lang={htmlLang} class="scroll-smooth">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="generator" content={Astro.generator} />
+
+        <!-- SEO -->
+        <title>{pageTitle}</title>
+        <meta name="description" content={description} />
+        <link rel="canonical" href={canonicalUrl} />
+
+        <!-- Open Graph -->
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={description} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta
+            property="og:image"
+            content={new URL(ogImage, site.siteUrl).href}
+        />
+        <meta property="og:type" content="website" />
+        <meta property="og:locale" content={ogLocale} />
+        <meta property="og:site_name" content={site.shortName} />
+
+        <!-- Twitter -->
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={description} />
+        <meta
+            name="twitter:image"
+            content={new URL(ogImage, site.siteUrl).href}
+        />
+
+        <!-- Favicon -->
+        <link rel="icon" type="image/png" href="/favicon.png" />
+
+        <!-- Theme color -->
+        <meta name="theme-color" content="#111111" />
+    </head>
+    <body class="bg-bg-primary text-text-primary min-h-screen flex flex-col">
+        <Navbar />
+
+        {enableScrollReveal && <ScrollRevealController client:load />}
+        <MotionEffectsController client:load />
+        <ScrollChrome client:load />
+
+        <main
+            class="grow pt-16"
+            data-scroll-reveal={enableScrollReveal ? "true" : "false"}
+        >
+            <slot />
+        </main>
+
+        <Footer />
+    </body>
+</html>

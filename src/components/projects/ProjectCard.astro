@@ -1,0 +1,187 @@
+---
+/* ── ProjectCard Component ── */
+import Card from "../ui/Card.astro";
+import Badge from "../ui/Badge.astro";
+import Button from "../ui/Button.astro";
+import TechBadge from "../ui/TechBadge.astro";
+import GitHubMark from "../icons/GitHubMark.astro";
+import type { Project } from "../../data/projects";
+
+interface Props {
+    project: Project;
+}
+
+const { project } = Astro.props;
+const filterTypes = Array.from(
+    new Set([project.type, ...(project.categories ?? [])]),
+);
+const thumbnailIframeScale = project.thumbnailIframeScale ?? 1;
+const thumbnailIframeStyle = thumbnailIframeScale < 1
+    ? `width: calc((100% + 16px) / ${thumbnailIframeScale}); height: calc(100% / ${thumbnailIframeScale}); transform: scale(${thumbnailIframeScale}); transform-origin: top left; margin-right: -16px;`
+    : "width: calc(100% + 16px); margin-right: -16px;";
+---
+
+<Card
+    padding="none"
+    class="flex flex-col overflow-hidden group"
+    id={`project-${project.slug}`}
+    data-filter-types={filterTypes.join("|")}
+>
+    <!-- Thumbnail 16:9 -->
+    <a
+        href={project.casePath}
+        class="block no-underline"
+        aria-label={`Ver case de ${project.title}`}
+    >
+        <div class="aspect-video bg-bg-tertiary relative overflow-hidden">
+            {
+                project.thumbnailIframe ? (
+                    <div class="absolute inset-0 overflow-hidden">
+                        <iframe
+                            src={project.thumbnailIframe}
+                            title={`Vista previa de ${project.title}`}
+                            class="h-full border-0 pointer-events-none"
+                            style={thumbnailIframeStyle}
+                            loading="lazy"
+                            scrolling="no"
+                        ></iframe>
+                    </div>
+                ) : (
+                    <>
+                        <img
+                            src={project.thumbnail}
+                            alt={`Miniatura de ${project.title}`}
+                            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            loading="lazy"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                        />
+                        <!-- Placeholder fallback -->
+                        <div
+                            class="absolute inset-0 bg-bg-tertiary items-center justify-center hidden"
+                            aria-hidden="true"
+                        >
+                            <div class="text-center">
+                                <svg
+                                    class="w-12 h-12 text-text-dim mx-auto mb-2"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="1.5"
+                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                    ></path>
+                                </svg>
+                                <span class="text-xs text-text-dim">
+                                    {project.title}
+                                </span>
+                            </div>
+                        </div>
+                    </>
+                )
+            }
+            <!-- Status badge -->
+            <div class="absolute top-3 right-3">
+                <Badge
+                    variant={project.status === "En curso"
+                        ? "accent"
+                        : "neutral"}
+                    size="sm"
+                >
+                    {project.status}
+                </Badge>
+            </div>
+        </div>
+    </a>
+
+    <!-- Content -->
+    <div class="p-5 flex flex-col grow">
+        <!-- Type tag -->
+        <div class="mb-2">
+            <Badge variant="outline" size="sm">{project.type}</Badge>
+        </div>
+
+        <!-- Title -->
+        <h3
+            class="text-lg font-bold text-text-primary mb-2 group-hover:text-secondary transition-colors"
+        >
+            <a
+                href={project.casePath}
+                class="no-underline text-inherit hover:text-secondary"
+            >
+                {project.title}
+            </a>
+        </h3>
+
+        <!-- Description -->
+        <p class="text-sm text-text-muted mb-4 line-clamp-2 grow">
+            {project.shortDescription}
+        </p>
+
+        <!-- Stack -->
+        <div class="flex flex-wrap gap-1.5 mb-4">
+            {
+                project.stack.slice(0, 4).map((tech) => (
+                    <TechBadge label={tech} variant="neutral" size="sm" />
+                ))
+            }
+            {
+                project.stack.length > 4 && (
+                    <Badge variant="neutral" size="sm">
+                        +{project.stack.length - 4}
+                    </Badge>
+                )
+            }
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-2 mt-auto">
+            <Button href={project.casePath} variant="outline" size="sm">
+                Ver case
+            </Button>
+
+            {
+                project.links.demo && (
+                    <Button
+                        href={project.links.demo}
+                        variant="secondary"
+                        size="sm"
+                        external
+                    >
+                        Visitar web
+                        <svg
+                            class="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                            />
+                        </svg>
+                    </Button>
+                )
+            }
+
+            {
+                project.links.repo && (
+                    <a
+                        href={project.links.repo}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="motion-chip p-2 text-text-muted hover:text-secondary transition-colors no-underline rounded-lg"
+                        data-motion-active="false"
+                        aria-label={`GitHub de ${project.title}`}
+                    >
+                        <GitHubMark class="w-5 h-5" />
+                    </a>
+                )
+            }
+        </div>
+    </div>
+</Card>

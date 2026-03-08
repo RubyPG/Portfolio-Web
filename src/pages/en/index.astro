@@ -1,0 +1,468 @@
+---
+/* ── Index Page (/) ── */
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Container from "../../components/ui/Container.astro";
+import Button from "../../components/ui/Button.astro";
+import TechBadge from "../../components/ui/TechBadge.astro";
+import SectionTitle from "../../components/ui/SectionTitle.astro";
+import ProjectCard from "../../components/projects/ProjectCard.astro";
+import ValuePropsBand from "../../components/home/ValuePropsBand";
+import ProjectTechLogoLoop from "../../components/home/ProjectTechLogoLoop";
+import Prism from "../../components/Prism";
+import { site } from "../../data/site";
+import { getFeaturedProjects } from "../../data/projects";
+import { getProjectTechLogos } from "../../data/project-tech-logos";
+import { skillCategories } from "../../data/skills";
+
+const featuredProjects = getFeaturedProjects();
+const projectTechLogos = getProjectTechLogos();
+
+const iconBolt =
+	'<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="#3b82f6" fill-rule="evenodd" d="M14 2a1 1 0 0 0-1.864-.504l-7 12A1 1 0 0 0 6 15h4v7a1 1 0 0 0 1.864.504l7-12A1 1 0 0 0 18 9h-4z" clip-rule="evenodd"/></svg>';
+const iconBot =
+	'<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="none" stroke="#3b82f6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V2H8m7 9v2M2 12h2m16 0h2m-2 4a2 2 0 0 1-2 2H8.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 4 20.286V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2zM9 11v2"/></svg>';
+const iconRocket =
+	'<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="#3b82f6" d="m2.45 10.575l4.2-4.2q.35-.35.825-.5t.975-.05l1.3.275Q8.4 7.7 7.625 9t-1.5 3.15zm5.125 2.275q.575-1.8 1.563-3.4t2.387-3q2.2-2.2 5.025-3.287t5.275-.663q.425 2.45-.65 5.275T17.9 12.8q-1.375 1.375-3 2.388t-3.425 1.587zm8.313-2.425q.837 0 1.412-.575t.575-1.412t-.575-1.413t-1.412-.575t-1.413.575t-.575 1.413t.575 1.412t1.413.575m-2.113 11.45l-1.6-3.675q1.85-.725 3.163-1.5t2.912-2.125l.25 1.3q.1.5-.05.988t-.5.837zM4.05 16.05q.875-.875 2.125-.888t2.125.863t.875 2.125t-.875 2.125q-.625.625-2.088 1.075t-4.037.8q.35-2.575.8-4.025T4.05 16.05"/></svg>';
+const iconTarget =
+	'<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 36 36"><path fill="#EDEDED" d="M18 2a16 16 0 0 0-4.25.59l.77 1.86a14.07 14.07 0 1 1-10 10l-1.86-.78A16 16 0 1 0 18 2"/><path fill="#EDEDED" d="M7.45 15.7a10.81 10.81 0 1 0 8.3-8.26L16.37 9A9.24 9.24 0 1 1 9 16.32Z"/><path fill="#EDEDED" d="M18 22.09a4.08 4.08 0 0 1-4-3.68l-1.63-.68V18A5.69 5.69 0 1 0 18 12.31h-.24l.67 1.69a4.07 4.07 0 0 1-.43 8.09"/><path fill="#EDEDED" d="M8.2 13.34a.5.5 0 0 0 .35.15h3.65l5.37 5.37A1 1 0 0 0 19 17.44L13.53 12V8.51a.5.5 0 0 0-.15-.35L7.79 2.57a.5.5 0 0 0-.85.35v4H3a.5.5 0 0 0-.35.85Z"/><path fill="none" d="M0 0h36v36H0z"/></svg>';
+const valueProps = [
+	{
+		icon: iconBolt,
+		text: "Clean code & scalable architectures",
+	},
+	{
+		icon: iconBot,
+		text: "Real automation with n8n and webhooks",
+	},
+	{
+		icon: iconRocket,
+		text: "From idea to production with no middlemen",
+	},
+	{
+		icon: iconTarget,
+		text: "Full ownership: design, development & deploy",
+	},
+];
+---
+
+<BaseLayout
+	title="Rubén Pezuela García — Full Stack Developer & CTO"
+	description="Full Stack Developer y CTO de iCreate Group. Especializado en CRM, automatización con n8n, Astro, Kotlin y arquitecturas cloud. Construyo productos que escalan."
+>
+	<!-- ═══ HERO ═══ -->
+	<!-- -mt-16 cancels the pt-16 on <main> so the hero starts truly at top:0 and sticky works immediately -->
+	<section
+		class="sticky top-0 -mt-16 w-full h-screen overflow-hidden flex items-center z-0"
+		id="hero"
+	>
+		<!-- Prism background -->
+		<div
+			class="absolute inset-0 w-full h-full pointer-events-none"
+			aria-hidden="true"
+		>
+			<div
+				class="absolute inset-0"
+				style="width:100%;height:100%;position:relative;"
+			>
+				<Prism
+					height={2.5}
+					baseWidth={3.5}
+					animationType="rotate"
+					glow={1}
+					noise={0.9}
+					transparent={true}
+					scale={3.6}
+					hueShift={35}
+					colorFrequency={0.1}
+					hoverStrength={1}
+					inertia={0.1}
+					bloom={1}
+					timeScale={0.4}
+					client:load
+				/>
+			</div>
+			<!-- Gradientes para legibilidad -->
+			<div
+				class="absolute inset-0 bg-linear-to-r from-bg-primary/60 via-bg-primary/20 to-bg-primary/40"
+			>
+			</div>
+			<div
+				class="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(13,27,42,0.0)_15%,rgba(13,27,42,0.4)_65%,rgba(10,10,10,0.85)_100%)]"
+			>
+			</div>
+			<!-- Bottom fade to next section -->
+			<div
+				class="absolute bottom-0 left-0 right-0 h-32 bg-linear-to-t from-bg-primary to-transparent"
+			>
+			</div>
+		</div>
+
+		<Container size="xl" class="relative z-10">
+			<div
+				class="flex flex-col lg:flex-row items-center gap-12 lg:gap-20"
+			>
+				<!-- Text -->
+				<div class="flex-1 text-center lg:text-left animate-fade-in">
+					<!-- Role label -->
+					<div
+						class="motion-chip inline-flex items-center gap-2 bg-secondary/10 border border-secondary/25 rounded-full px-4 py-1.5 mb-6"
+						data-motion-active="false"
+					>
+						<span
+							class="w-2 h-2 bg-accent rounded-full animate-pulse"
+						></span>
+						<span
+							class="text-accent font-semibold text-xs uppercase tracking-widest"
+							>Available for projects</span
+						>
+					</div>
+
+					<h1
+						class="text-5xl sm:text-6xl lg:text-7xl font-black text-secondary leading-[1.05] mb-5 tracking-tight"
+					>
+						<span class="block">Full Stack</span>
+						<span
+							class="block text-transparent bg-clip-text bg-linear-to-r from-secondary via-secondary-hover to-secondary/80"
+							>Developer</span
+						>
+						<span
+							class="block text-3xl sm:text-4xl lg:text-5xl font-bold text-secondary/85 mt-2"
+							>& CTO at iCreate Group</span
+						>
+					</h1>
+
+					<p
+						class="text-lg sm:text-xl text-text-secondary max-w-xl mx-auto lg:mx-0 mb-8 leading-relaxed"
+					>
+						I build products that <strong class="text-text-primary"
+							>scale</strong
+						>. Custom CRMs, smart automations with n8n, desktop apps
+						and high-performance websites.
+					</p>
+
+					<!-- Stats row -->
+					<div
+						class="flex flex-wrap gap-6 justify-center lg:justify-start mb-8"
+					>
+						{
+							[
+								{
+									value: "3+",
+									label: "Products in production",
+								},
+								{ value: "100%", label: "Technical ownership" },
+								{
+									value: "n8n",
+									label: "Advanced automation",
+								},
+							].map((stat) => (
+								<div class="text-center lg:text-left">
+									<div class="text-2xl font-black text-accent">
+										{stat.value}
+									</div>
+									<div class="text-xs text-text-muted uppercase tracking-wide">
+										{stat.label}
+									</div>
+								</div>
+							))
+						}
+					</div>
+
+					<div
+						class="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start"
+					>
+						<Button
+							href="/en/proyectos"
+							variant="primary"
+							size="lg"
+						>
+							View projects
+							<svg
+								class="w-5 h-5"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+							</svg>
+						</Button>
+						<Button href="/en/contacto" variant="outline" size="lg">
+							Let's talk
+							<svg
+								class="w-5 h-5"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+								></path>
+							</svg>
+						</Button>
+					</div>
+				</div>
+
+				<!-- Photo -->
+				<div class="shrink-0 animate-slide-up relative">
+					<!-- Glow ring -->
+					<div
+						class="absolute -inset-4 rounded-full bg-linear-to-br from-secondary/30 via-accent/10 to-secondary/20 blur-2xl opacity-60"
+					>
+					</div>
+					<div
+						class="motion-surface w-52 h-52 sm:w-60 sm:h-60 lg:w-72 lg:h-72 rounded-full overflow-hidden border-2 border-secondary/40 shadow-[0_0_60px_rgba(59,130,246,0.32)] relative"
+						data-motion-active="false"
+					>
+						<img
+							src="/FotoPerfil.png"
+							alt={`Photo of ${site.name}`}
+							class="w-full h-full object-cover"
+							onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+						/>
+						<!-- Placeholder -->
+						<div
+							class="absolute inset-0 bg-bg-tertiary items-center justify-center hidden"
+							aria-hidden="true"
+						>
+							<svg
+								class="w-20 h-20 text-text-dim"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="1.5"
+									d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+								></path>
+							</svg>
+						</div>
+					</div>
+					<!-- Name tag -->
+					<div
+						class="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-bg-deep border border-ui-border rounded-full px-4 py-1.5 whitespace-nowrap"
+					>
+						<span class="text-sm font-semibold text-text-primary"
+							>Rubén<span class="text-accent">PG</span></span
+						>
+					</div>
+				</div>
+			</div>
+		</Container>
+
+		<!-- Scroll indicator -->
+		<div
+			class="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce opacity-50"
+		>
+			<svg
+				class="w-6 h-6 text-text-muted"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+			>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M19 9l-7 7-7-7"></path>
+			</svg>
+		</div>
+	</section>
+
+	<div class="relative z-20 bg-bg-primary">
+		<!-- ═══ VALUE PROPOSITION BAND ═══ -->
+		<section
+			class="py-12 border-y border-ui-border/50 bg-linear-to-b from-bg-secondary/35 to-bg-primary"
+		>
+			<Container size="xl">
+				<ValuePropsBand client:visible items={valueProps} />
+			</Container>
+		</section>
+
+		<!-- ═══ FEATURED PROJECTS ═══ -->
+		<section class="py-20 sm:py-28 scroll-mt-24" id="proyectos-destacados">
+			<Container size="xl">
+				<SectionTitle
+					title="Featured projects"
+					subtitle="Real products in production — from custom CRMs to headless e-commerce and automation platforms."
+				/>
+
+				<div
+					class="grid grid-cols-1 md:grid-cols-2 gap-6 stagger-children"
+				>
+					{
+						featuredProjects.map((project) => (
+							<ProjectCard project={project} />
+						))
+					}
+				</div>
+
+				<div class="text-center mt-12">
+					<Button href="/en/proyectos" variant="ghost" size="md">
+						View all projects
+						<svg
+							class="w-4 h-4"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+						</svg>
+					</Button>
+				</div>
+			</Container>
+		</section>
+
+		<!-- ═══ SKILLS ═══ -->
+		<section
+			class="py-20 sm:py-28 bg-bg-secondary/30 border-t border-ui-border/40"
+			id="habilidades"
+		>
+			<Container size="xl">
+				<SectionTitle
+					title="Tech Stack"
+					subtitle="Tools I've mastered and use in real projects — not tutorials, production."
+				/>
+
+				<div
+					class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 stagger-children"
+				>
+					{
+						skillCategories.map((category) => (
+							<div class="motion-surface bg-bg-secondary border border-ui-border rounded-2xl p-6 hover:border-secondary/40 hover:shadow-[0_0_24px_rgba(59,130,246,0.10)] transition-all duration-300 group" data-motion-active="false">
+								<div class="flex items-center gap-3 mb-5">
+									<span
+										class="text-3xl group-hover:scale-110 transition-transform duration-300"
+										set:html={category.icon}
+									/>
+									<h3 class="text-base font-bold text-text-primary">
+										{category.title}
+									</h3>
+								</div>
+								<div class="flex flex-wrap gap-1.5">
+									{category.skills.map((skill) => (
+										<TechBadge
+											label={skill.name}
+											variant="neutral"
+											size="sm"
+										/>
+									))}
+								</div>
+							</div>
+						))
+					}
+				</div>
+			</Container>
+		</section>
+
+		<!-- ═══ CTA STRIP ═══ -->
+		<section class="py-20 sm:py-28">
+			<Container size="md">
+				<div
+					class="motion-surface bg-bg-secondary/85 border border-secondary/20 rounded-3xl p-10 sm:p-14 text-center relative overflow-hidden shadow-[0_18px_60px_rgba(0,0,0,0.28)]"
+					data-motion-active="false"
+				>
+					<div
+						class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(59,130,246,0.16),transparent_58%)] pointer-events-none"
+					>
+					</div>
+					<div
+						class="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(255,255,0,0.08),transparent_52%)] pointer-events-none"
+					>
+					</div>
+					<div
+						class="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.03),transparent_32%,rgba(10,10,10,0.12)_100%)] pointer-events-none"
+					>
+					</div>
+					<div
+						class="absolute left-10 top-8 h-40 w-40 rounded-full bg-secondary/14 blur-3xl pointer-events-none"
+					>
+					</div>
+					<div
+						class="absolute right-10 top-1/2 h-28 w-28 -translate-y-1/2 rounded-full bg-secondary/8 blur-3xl pointer-events-none"
+					>
+					</div>
+					<div
+						class="absolute -bottom-12 right-12 h-36 w-36 rounded-full bg-accent/10 blur-3xl pointer-events-none"
+					>
+					</div>
+					<div
+						class="absolute inset-x-10 top-0 h-px bg-linear-to-r from-transparent via-secondary/40 to-transparent pointer-events-none"
+					>
+					</div>
+
+					<div class="relative z-10">
+						<span
+							class="inline-block text-accent text-sm font-semibold uppercase tracking-widest"
+							>Got a project?</span
+						>
+						<h2
+							class="text-3xl sm:text-4xl font-black text-text-primary mb-4 leading-tight"
+						>
+							Let's build something<br /><span
+								class="text-transparent bg-clip-text bg-linear-to-r from-accent to-secondary/80"
+								>that actually works</span
+							>
+						</h2>
+						<p
+							class="text-text-secondary text-lg mb-8 max-w-lg mx-auto leading-relaxed"
+						>
+							No middleman agencies. I talk directly with you,
+							understand your business logic, and deliver working
+							code.
+						</p>
+						<div
+							class="flex flex-col sm:flex-row items-center justify-center gap-4"
+						>
+							<Button
+								href="/en/contacto"
+								variant="primary"
+								size="lg"
+							>
+								<svg
+									class="w-5 h-5"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+									></path>
+								</svg>
+								Contact me now
+							</Button>
+							<Button
+								href="/en/sobre-mi"
+								variant="ghost"
+								size="lg"
+							>
+								Get to know me better →
+							</Button>
+						</div>
+					</div>
+				</div>
+			</Container>
+		</section>
+
+		<ProjectTechLogoLoop
+			client:visible
+			items={projectTechLogos}
+			ariaLabel="Technologies used in real projects"
+		/>
+	</div>
+</BaseLayout>

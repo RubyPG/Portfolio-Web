@@ -1,0 +1,125 @@
+---
+/* ── ProjectFilter Component ── 
+   This is rendered as static HTML. The interactivity is handled
+   by an inline script that filters projects client-side and syncs with URL params.
+*/
+import { projectTypes } from "../../data/projects";
+
+const allTypes = ["Todos", ...projectTypes];
+---
+
+<div
+    class="flex flex-wrap gap-2 mb-8"
+    id="project-filter"
+    role="group"
+    aria-label="Filtrar proyectos por tipo"
+>
+    {
+        allTypes.map((type) => (
+            <button
+                class="filter-chip motion-chip px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer border focus-visible:outline-2 focus-visible:outline-secondary focus-visible:outline-offset-2"
+                data-filter={type}
+                data-motion-active="false"
+                type="button"
+                aria-pressed="false"
+            >
+                {type}
+            </button>
+        ))
+    }
+</div>
+
+<script>
+    function initProjectFilter() {
+        const filterContainer = document.getElementById("project-filter");
+        const chips = filterContainer?.querySelectorAll(
+            ".filter-chip",
+        ) as NodeListOf<HTMLButtonElement>;
+        const grid = document.getElementById("project-grid");
+        const cards = grid?.querySelectorAll(
+            '[data-filter-types]',
+        ) as NodeListOf<HTMLElement>;
+
+        if (!filterContainer || !chips || !grid || !cards) return;
+
+        // Read initial filter from URL
+        const params = new URLSearchParams(window.location.search);
+        let activeFilter = params.get("tipo") || "Todos";
+
+        function setActiveFilter(filter: string) {
+            activeFilter = filter;
+
+            // Update URL without reload
+            const url = new URL(window.location.href);
+            if (filter === "Todos") {
+                url.searchParams.delete("tipo");
+            } else {
+                url.searchParams.set("tipo", filter);
+            }
+            window.history.replaceState({}, "", url.toString());
+
+            // Update chip styles
+            chips.forEach((chip) => {
+                const isActive = chip.dataset.filter === filter;
+                chip.setAttribute("aria-pressed", String(isActive));
+                if (isActive) {
+                    chip.classList.add(
+                        "bg-secondary/15",
+                        "text-secondary",
+                        "border-secondary/30",
+                    );
+                    chip.classList.remove(
+                        "bg-ui-surface",
+                        "text-text-secondary",
+                        "border-ui-border",
+                        "hover:border-secondary",
+                        "hover:text-secondary",
+                    );
+                } else {
+                    chip.classList.remove(
+                        "bg-secondary/15",
+                        "text-secondary",
+                        "border-secondary/30",
+                    );
+                    chip.classList.add(
+                        "bg-ui-surface",
+                        "text-text-secondary",
+                        "border-ui-border",
+                        "hover:border-secondary",
+                        "hover:text-secondary",
+                    );
+                }
+            });
+
+            // Filter cards
+            cards.forEach((card) => {
+                const cardTypes = (card.dataset.filterTypes || "")
+                    .split("|")
+                    .map((item) => item.trim())
+                    .filter(Boolean);
+
+                if (filter === "Todos" || cardTypes.includes(filter)) {
+                    card.style.display = "";
+                    card.style.animation = "slide-up 0.4s ease forwards";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        }
+
+        // Attach click handlers
+        chips.forEach((chip) => {
+            chip.addEventListener("click", () => {
+                setActiveFilter(chip.dataset.filter || "Todos");
+            });
+        });
+
+        // Set initial state
+        setActiveFilter(activeFilter);
+    }
+
+    // Initialize
+    document.addEventListener("DOMContentLoaded", initProjectFilter);
+    // Also support Astro view transitions
+    document.addEventListener("astro:page-load", initProjectFilter);
+</script>

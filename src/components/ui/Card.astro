@@ -1,0 +1,36 @@
+---
+/* ── Card Component ── */
+interface Props {
+    class?: string;
+    hover?: boolean;
+    padding?: "none" | "sm" | "md" | "lg";
+    id?: string;
+    [key: string]: unknown;
+}
+
+const {
+    class: className = "",
+    hover = true,
+    padding = "md",
+    id,
+    ...rest
+} = Astro.props;
+
+const paddingClasses: Record<string, string> = {
+    none: "",
+    sm: "p-3",
+    md: "p-5",
+    lg: "p-7",
+};
+
+const hoverClasses = hover
+    ? "hover:border-secondary/35 hover:shadow-[0_0_18px_rgba(59,130,246,0.14)]"
+    : "";
+
+const classes = `motion-surface bg-bg-secondary border border-ui-border rounded-xl transition-all duration-300 ${paddingClasses[padding]} ${hoverClasses} ${className}`;
+---
+
+<div class={classes} data-motion-active="false" id={id} {...rest}>
+    <slot />
+</div>
+

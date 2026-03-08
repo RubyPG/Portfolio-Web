@@ -1,0 +1,64 @@
+---
+/* ── Proyectos Page (/proyectos) ── */
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Container from "../../components/ui/Container.astro";
+import SectionTitle from "../../components/ui/SectionTitle.astro";
+import ProjectFilter from "../../components/projects/ProjectFilter.astro";
+import ProjectGrid from "../../components/projects/ProjectGrid.astro";
+import LetterGlitch from "../../components/LetterGlitch";
+import { projects } from "../../data/projects";
+---
+
+<BaseLayout
+    title="Proyectos"
+    description="Explora los proyectos de Rubén Pezuela García: desarrollo web, automatización, e-commerce headless, CRM y aplicaciones desktop."
+>
+    <!-- Banner -->
+    <section
+        class="py-12 sm:py-16 bg-bg-secondary/50 border-b border-ui-border relative overflow-hidden flex items-center min-h-[300px]"
+    >
+        <!-- Glitch Background -->
+        <div class="absolute inset-0 z-0 opacity-20 hidden sm:block">
+            <LetterGlitch
+                client:only="react"
+                glitchSpeed={50}
+                centerVignette={false}
+                outerVignette={true}
+                smooth={true}
+                glitchColors={["#3b82f6", "#1d4ed8", "#0f172a"]}
+            />
+        </div>
+        <div class="absolute inset-0 bg-bg-primary/40 pointer-events-none z-0">
+        </div>
+        <div
+            class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(59,130,246,0.15),transparent_60%)] pointer-events-none z-10"
+        >
+        </div>
+
+        <Container size="xl" class="relative z-20">
+            <div class="max-w-2xl relative z-20">
+                <h1
+                    class="text-3xl sm:text-4xl font-bold text-text-primary mb-4"
+                >
+                    Proyectos
+                    <span
+                        class="inline-block w-2 h-2 bg-accent rounded-full ml-1 align-middle"
+                    ></span>
+                </h1>
+                <p class="text-text-secondary text-lg leading-relaxed">
+                    Una colección de los proyectos en los que he trabajado,
+                    desde aplicaciones web y e-commerce hasta plataformas de
+                    automatización y herramientas desktop.
+                </p>
+            </div>
+        </Container>
+    </section>
+
+    <!-- Projects -->
+    <section class="py-12 sm:py-16">
+        <Container size="xl">
+            <ProjectFilter />
+            <ProjectGrid projects={projects} />
+        </Container>
+    </section>
+</BaseLayout>

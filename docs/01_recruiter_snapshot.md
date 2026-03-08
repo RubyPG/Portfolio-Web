@@ -1,0 +1,20 @@
+﻿# Recruiter Snapshot
+
+## ES (11 lineas)
+1. Este proyecto te posiciona como perfil **full-stack orientado a producto**: frontend desktop (Kotlin + Compose), datos (Supabase/PostgreSQL), automatizacion (n8n), pagos (Stripe) y observabilidad (Grafana). [Fuente: docs/FRONTEND.md -> "1) Stack y alcance"; docs/SUPABASE.md -> "2) Ejecutar SQL base (schema)", "6) Views de metricas y KPIs"; docs/N8N_STRIPE_WORKFLOWS.md -> "2) Workflows activos"; docs/GRAFANA.md -> "1) Objetivo"]
+2. Hay evidencia de diseno de arquitectura, no solo de implementacion: modulos `core/* + feature/*` y configuracion runtime por `client.json` + variables de entorno. [Fuente: docs/FRONTEND.md -> "1) Stack y alcance", "3) Carga de configuracion"]
+3. Muestras ownership del flujo comercial completo: captacion de leads, conversion a cliente, emision de factura, cobro y metricas operativas. [Fuente: docs/FRONTEND.md -> "5) Leads (flujo actual)", "8) Facturacion (resumen UI)"; docs/N8N_STRIPE_WORKFLOWS.md -> "6) Flujo Opcion B (recomendado)"; docs/SUPABASE.md -> "6) Views de metricas y KPIs"]
+4. La UX esta optimizada para productividad real de equipo comercial: tabla tipo hoja, filtros en cabecera, edicion inline y guardado automatico. [Fuente: docs/FRONTEND.md -> "4) Estado real de la UX", "5) Leads (flujo actual)"]
+5. La calidad de datos esta cubierta con import/export bidireccional y estrategia de merge anti-duplicados por 4 claves (`id`, `google_maps_url`, `website`, `business_name`). [Fuente: docs/FRONTEND.md -> "5) Leads (flujo actual)", "6) Importacion y scraper"; docs/SUPABASE.md -> "13) Export/Import Leads (modelo iLead)"]
+6. Hay automatizacion con tolerancia operativa: scraper con progreso en vivo, autoimport, limpieza temporal y fallback manual. [Fuente: docs/FRONTEND.md -> "6) Importacion y scraper"]
+7. En facturacion hay decisiones maduras de riesgo/legal: uso de factura oficial Stripe (Opcion B), webhooks de estado y anulacion controlada (`void` solo si `open`). [Fuente: docs/N8N_STRIPE_WORKFLOWS.md -> "1) Objetivo", "2) Workflows activos" (005/006/007), "6) Flujo Opcion B (recomendado)"]
+8. Integraste IA en un proceso de negocio concreto ("que venderle") con RAG: website/PDF + knowledge base interna en vector store + lotes encadenados. [Fuente: docs/N8N_LEADS_OFFER_RECOMMENDATION.md -> "1) Que queda montado", "5) Configuracion minima del 008"; docs/SUPABASE.md -> "12) Campo \"que venderle\" + automatizacion n8n"]
+9. El proyecto no se queda en "features": incorpora medicion con KPIs definidos (`leads_7d`, `conversion_30d_pct`, `revenue_month_cents`, etc.) y dashboard embebido en la app. [Fuente: docs/SUPABASE.md -> "6) Views de metricas y KPIs"; docs/GRAFANA.md -> "5) Hacerlo visible en iLead"; docs/grafana/ilead-crm-supabase-dashboard-fixed-supabase-crm.json -> panels 1-10]
+10. Hay foco en escalabilidad operativa por cliente: aislamiento por proyecto Supabase y configuracion de build/ejecucion por cliente. [Fuente: docs/SUPABASE.md -> "1) Crear proyecto Supabase por cliente"; docs/FRONTEND.md -> "2) Ejecucion", "3) Carga de configuracion"]
+11. La documentacion de troubleshooting y seguridad indica madurez de operacion y handoff tecnico. [Fuente: docs/FRONTEND.md -> "9) Troubleshooting rapido"; docs/GRAFANA.md -> "6) Troubleshooting rapido", "7) Seguridad recomendada"; docs/SUPABASE.md -> "9) Troubleshooting Supabase"]
+
+## EN (brief)
+- Interview-ready profile: product-focused full-stack delivery across desktop app, data layer, automation, billing, and observability. [Sources: docs/FRONTEND.md, docs/SUPABASE.md, docs/N8N_STRIPE_WORKFLOWS.md, docs/GRAFANA.md]
+- Strong ownership signal: lead-to-cash flow, AI-assisted offer recommendation, and KPI instrumentation in the same product. [Sources: docs/FRONTEND.md, docs/N8N_LEADS_OFFER_RECOMMENDATION.md, docs/SUPABASE.md]
+- Differentiator: combines execution speed (inline workflows) with reliability controls (webhooks, status sync, troubleshooting playbooks). [Sources: docs/FRONTEND.md, docs/N8N_STRIPE_WORKFLOWS.md, docs/SUPABASE.md]
+

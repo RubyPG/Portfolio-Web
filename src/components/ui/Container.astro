@@ -1,0 +1,25 @@
+---
+/* ── Container Component ── */
+interface Props {
+    size?: "sm" | "md" | "lg" | "xl" | "full";
+    class?: string;
+    as?: "div" | "section" | "main" | "article";
+    id?: string;
+}
+
+const { size = "lg", class: className = "", as: Tag = "div", id } = Astro.props;
+
+const sizeClasses: Record<string, string> = {
+    sm: "max-w-2xl",
+    md: "max-w-4xl",
+    lg: "max-w-6xl",
+    xl: "max-w-7xl",
+    full: "max-w-full",
+};
+
+const classes = `mx-auto px-4 sm:px-6 lg:px-8 ${sizeClasses[size]} ${className}`;
+---
+
+<Tag class={classes} id={id}>
+    <slot />
+</Tag>

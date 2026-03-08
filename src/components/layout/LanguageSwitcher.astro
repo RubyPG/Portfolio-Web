@@ -1,0 +1,78 @@
+---
+interface Props {
+    isEn: boolean;
+    alternativePath: string;
+    mobile?: boolean;
+}
+
+const { isEn, alternativePath, mobile = false } = Astro.props;
+
+const flagEs =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48"><path fill="#ffe500" stroke="#45413c" stroke-linecap="round" stroke-linejoin="round" d="M45 12.25h-6.32A45.9 45.9 0 0 1 24 9.88A45.7 45.7 0 0 0 9.37 7.5H3c-.58 0-1 .35-1 .79v26a.94.94 0 0 0 1 .79h6.37A46 46 0 0 1 24 37.46a45.6 45.6 0 0 0 14.65 2.38H45a.93.93 0 0 0 1-.79V13a.94.94 0 0 0-1-.75"/><path fill="#fff" stroke="#45413c" stroke-linecap="round" stroke-linejoin="round" d="M13 26.35c.89.07 1.77.16 2.65.28a1.8 1.8 0 0 0 2-1.79v-4.39a48 48 0 0 0-6.34-.71v4.81a1.8 1.8 0 0 0 1.69 1.8"/><path fill="#e04122" stroke="#45413c" stroke-linecap="round" stroke-linejoin="round" d="M46.05 33.33h-7.37A45.6 45.6 0 0 1 24 31a45.7 45.7 0 0 0-14.63-2.42H2v5.72a.94.94 0 0 0 1 .79h6.37A46 46 0 0 1 24 37.46a45.6 45.6 0 0 0 14.65 2.38H45a.93.93 0 0 0 1-.79Zm0-20.33a.94.94 0 0 0-1-.79h-6.37A45.9 45.9 0 0 1 24 9.88A45.7 45.7 0 0 0 9.37 7.5H3c-.58 0-1 .35-1 .79V14h7.37A46 46 0 0 1 24 16.38a45.6 45.6 0 0 0 14.65 2.38h7.37Z"/><path fill="#fff" stroke="#45413c" stroke-linecap="round" stroke-linejoin="round" d="M8.25 19.68h1.51v5.96H8.25zm12.52 7.36l-1.5-.39v-5.96l1.5.39z"/><path fill="#e04122" stroke="#45413c" stroke-linecap="round" stroke-linejoin="round" d="M15.63 26.63a1.8 1.8 0 0 0 2-1.79v-1.33c-1-.18-2.07-.33-3.11-.45v3.44ZM14.57 20c-1.07-.12-2.15-.2-3.23-.25v3.05c1.08 0 2.16.13 3.23.25Zm-1.52-1.7a24 24 0 0 1 3.18.39s1.31-.43.85-1.36c-.67-1.33-2.49-.55-2.49-.55s-1.41-1.09-2.28-.26s.74 1.78.74 1.78m4.63 4.48a3.44 3.44 0 0 1 3.09.4v2a3.44 3.44 0 0 0-3.09-.4Zm-9.43-1.04a3.44 3.44 0 0 1 3.09.4v2a3.44 3.44 0 0 0-3.09-.4Z"/><path fill="#45413c" d="M12.5 45.5a11.5 1.5 0 1 0 23 0a11.5 1.5 0 1 0-23 0" opacity=".15"/></svg>';
+
+const flagEn =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48"><path fill="#00b8f0" stroke="#45413c" stroke-linecap="round" stroke-linejoin="round" d="M45 12.25h-6.32A45.9 45.9 0 0 1 24 9.88A45.7 45.7 0 0 0 9.37 7.5H3c-.58 0-1 .35-1 .79v26a.94.94 0 0 0 1 .79h6.37A46 46 0 0 1 24 37.46a45.6 45.6 0 0 0 14.65 2.38H45a.93.93 0 0 0 1-.79V13a.94.94 0 0 0-1-.75"/><path fill="#fff" stroke="#45413c" stroke-linecap="round" stroke-linejoin="round" d="m26.22 28.08l19.83-11.22V13a.94.94 0 0 0-1-.79H39.1l-16.55 9.4Z"/><path fill="#ff6242" stroke="#45413c" stroke-linecap="round" stroke-linejoin="round" d="m25.26 26.39l20.79-11.75V13a.94.94 0 0 0-1-.79H43l-19.53 11Z"/><path fill="#fff" stroke="#45413c" stroke-linecap="round" stroke-linejoin="round" d="M17.56 21.77L2 30.57v3.73a.94.94 0 0 0 1 .79h6.12l12.1-6.85Z"/><path fill="#ff6242" stroke="#45413c" stroke-linecap="round" stroke-linejoin="round" d="M18.51 23.46L2 32.79v1.51a.94.94 0 0 0 1 .79h2.18l15.09-8.53Z"/><path fill="#fff" stroke="#45413c" stroke-linecap="round" stroke-linejoin="round" d="M46.05 39.05v-3.27L27.33 22.42l-4.32 6l15.93 11.42H45a.93.93 0 0 0 1.05-.79"/><path fill="#ff6242" stroke="#45413c" stroke-linecap="round" stroke-linejoin="round" d="m26.2 24l-2.07 2.9l18.15 13H45a.93.93 0 0 0 1-.79v-.89Z"/><path fill="#fff" stroke="#45413c" stroke-linecap="round" stroke-linejoin="round" d="M3 7.5c-.58 0-1 .35-1 .79v3.79L18.69 24l4.32-6L8.38 7.5Z"/><path fill="#ff6242" stroke="#45413c" stroke-linecap="round" stroke-linejoin="round" d="M3 7.5c-.58 0-1 .35-1 .79V9.7l17.81 12.72l2.07-2.9L5 7.5Z"/><path fill="#fff" stroke="#45413c" stroke-linecap="round" stroke-linejoin="round" d="M38.68 20.09a46.3 46.3 0 0 1-8-.7v-7.83A45.6 45.6 0 0 1 24 9.88a45 45 0 0 0-6.66-1.69V16a46 46 0 0 0-8-.69H2v11.94h7.37a46 46 0 0 1 8 .7v7.83A46 46 0 0 1 24 37.46a44.4 44.4 0 0 0 6.65 1.69v-7.84a46.3 46.3 0 0 0 8 .69h7.37V20.09Z"/><path fill="#ff6242" stroke="#45413c" stroke-linecap="round" stroke-linejoin="round" d="M38.68 22.45a46 46 0 0 1-10.4-1.18v-10.2A42 42 0 0 1 24 9.88a44 44 0 0 0-4.25-1.2v10.2A46.8 46.8 0 0 0 9.37 17.7H2v7.19h7.37a46.2 46.2 0 0 1 10.41 1.18v10.2A44 44 0 0 1 24 37.46a42 42 0 0 0 4.25 1.2v-10.2a46.7 46.7 0 0 0 10.4 1.18h7.37v-7.19Z"/><path fill="none" stroke="#45413c" stroke-linecap="round" stroke-linejoin="round" d="M24 9.88A45.7 45.7 0 0 0 9.37 7.5H3c-.58 0-1 .35-1 .79v26a.94.94 0 0 0 1 .79h6.37A46 46 0 0 1 24 37.46h0a45.6 45.6 0 0 0 14.65 2.38H45a.93.93 0 0 0 1-.79V13a.94.94 0 0 0-1-.79h-6.32A45.9 45.9 0 0 1 24 9.88"/><path fill="#45413c" d="M12.5 45.5a11.5 1.5 0 1 0 23 0a11.5 1.5 0 1 0-23 0" opacity=".15"/></svg>';
+
+const current = isEn
+    ? { code: "EN", label: "English", flag: flagEn }
+    : { code: "ES", label: "Español", flag: flagEs };
+
+const target = isEn
+    ? { code: "ES", label: "Español", flag: flagEs }
+    : { code: "EN", label: "English", flag: flagEn };
+---
+
+<details class={mobile ? "relative w-full group" : "relative group"}>
+    <summary
+        class:list={[
+            "list-none [&::-webkit-details-marker]:hidden inline-flex items-center gap-1.5 transition-all duration-200 cursor-pointer select-none rounded-lg font-medium",
+            "text-text-secondary hover:text-secondary hover:bg-ui-surface",
+            mobile
+                ? "w-full justify-between px-4 py-3 text-base"
+                : "px-2.5 py-1.5 text-sm",
+        ]}
+        aria-label={isEn ? "Language selector" : "Selector de idioma"}
+    >
+        <span
+            class="w-4 h-4 leading-none flex items-center justify-center shrink-0"
+            set:html={current.flag}
+        />
+        <span>{current.label}</span>
+        <svg
+            class="w-3.5 h-3.5 text-text-muted transition-transform duration-200 group-open:rotate-180"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+        >
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="m19 9-7 7-7-7"></path>
+        </svg>
+    </summary>
+
+    <div
+        class:list={[
+            "mt-1.5 rounded-lg border border-ui-border bg-bg-deep/95 backdrop-blur-md shadow-2xl overflow-hidden z-50",
+            mobile ? "w-full" : "absolute right-0 min-w-[140px]",
+        ]}
+    >
+        <a
+            href={alternativePath}
+            class="flex items-center justify-between gap-2.5 px-3 py-2 no-underline text-sm font-medium text-text-secondary hover:text-secondary hover:bg-secondary/10 transition-colors"
+        >
+            <span class="inline-flex items-center gap-1.5">
+                <span
+                    class="w-4 h-4 leading-none flex items-center justify-center shrink-0"
+                    set:html={target.flag}
+                />
+                <span>{target.label}</span>
+            </span>
+            <span
+                class="text-xs font-bold px-2 py-0.5 rounded-md bg-ui-surface text-text-muted"
+                >{target.code}</span
+            >
+        </a>
+    </div>
+</details>
