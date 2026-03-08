@@ -15,8 +15,8 @@ Portfolio personal de **Rubén Pezuela García** (RubénPG) — Programador Full
 | Astro | v5 | Framework principal (SSR/Static) |
 | Tailwind CSS | v4 | Estilos con design tokens y JIT |
 | TypeScript | strict | Tipado estricto en toda la app |
-| React | v18 | Componentes interactivos (Prism, Ballpit, Glitch) |
-| Three.js / GSAP | latest | Animaciones 3D y partículas interactivas |
+| React | v19 | Componentes interactivos (Prism, Ballpit, Glitch) |
+| OGL / Three.js / GSAP | latest | Animaciones 3D, fondos WebGL y partículas interactivas |
 | Framer Motion | latest | Orquestación de animaciones UI |
 
 **Features destacadas:**
@@ -33,16 +33,16 @@ Portfolio personal de **Rubén Pezuela García** (RubénPG) — Programador Full
 ## 📜 Scripts
 ```bash
 # Desarrollo local
-npm run dev
+pnpm dev
 
 # Build estático
-npm run build
+pnpm build
 
 # Preview del build
-npm run preview
+pnpm preview
 
 # Type check
-npx astro check
+pnpm astro check
 ```
 
 ---
@@ -254,9 +254,17 @@ Crea `public/projects/nuevo-proyecto/thumb.jpg` (16:9, ej: 1280x720)
 
 ### 4. Verificar
 ```bash
-npm run dev
+pnpm dev
 ```
 Navega a `/proyectos` y comprueba que aparece la card.
+
+---
+
+## Desarrollo local: incidencias conocidas
+
+- `Prism` usa `ogl` y el proyecto fuerza su prebundle en `astro.config.mjs`.
+- Si en local aparece un error de Vite tipo `Outdated Optimize Dep` o falla la hidratación de `Prism`, reinicia `pnpm dev` para regenerar las dependencias optimizadas.
+- En `/contacto`, `Ballpit` ya limita la captura táctil a su propio canvas para no bloquear la navbar móvil ni los enlaces del footer.
 
 ---
 

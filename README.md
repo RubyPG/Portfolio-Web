@@ -9,7 +9,7 @@ Mi portfolio personal como **Full Stack Developer & CTO**. Construido desde cero
 ## 🌟 Características Destacadas
 
 - **Estética Premium:** UI/UX de alto nivel con glassmorphism, efectos de iluminación dinámica, tipografía moderna (Inter) y un sistema de movimiento consistente (`motion-system`) sobre Tailwind CSS v4.
-- **Interactividad 3D:** Integración fluida de fondos y elementos interactivos mediante Three.js (Prism, Ballpit, LetterGlitch) para una experiencia "Wowed".
+- **Interactividad 3D:** Integración fluida de fondos y elementos interactivos mediante OGL, Three.js y canvas custom (Prism, Ballpit, LetterGlitch) para una experiencia "Wowed".
 - **Totalmente Bilingüe (i18n):** Soporte nativo multi-idioma con rutas limpias y cambio de idioma instantáneo.
 - **Rendimiento Extremo:** Optimización de carga mediante Astro v5, lazy loading inteligente y métricas Core Web Vitals en mente.
 - **Arquitectura Escalable:** Tipado estricto con TypeScript, colecciones de contenido para Case Studies y gestión centralizada de iconos tecnológicos.
@@ -19,7 +19,7 @@ Mi portfolio personal como **Full Stack Developer & CTO**. Construido desde cero
 - **Core:** [Astro v5](https://astro.build/) (Static/SSR)
 - **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
 - **UI Interaction:** [React](https://react.dev/) + [Framer Motion](https://www.framer.com/motion/)
-- **3D Engine:** [Three.js](https://threejs.org/) + [React Three Fiber](https://r3f.docs.pmnd.rs/)
+- **3D / Graphics:** [OGL](https://oframe.github.io/ogl/) + [Three.js](https://threejs.org/)
 - **Automation Integration:** [n8n](https://n8n.io/)
 - **Data & Auth:** [Supabase](https://supabase.com/)
 
@@ -39,6 +39,8 @@ Mi portfolio personal como **Full Stack Developer & CTO**. Construido desde cero
    ```bash
    pnpm build
    ```
+
+4. Si en desarrollo `Prism` deja de hidratar o Vite muestra errores tipo `Outdated Optimize Dep` con `ogl`, reinicia `pnpm dev` para forzar el re-optimize de dependencias.
 
 ## 📖 Documentación Completa
 Para detalles específicos sobre la arquitectura de carpetas, cómo agregar nuevos proyectos o cambiar el copy, consulta el archivo completo:
