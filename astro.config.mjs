@@ -11,7 +11,11 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {
+      include: ['ogl'],
       exclude: ['three'],
+    },
+    ssr: {
+      noExternal: ['ogl'],
     },
   },
   markdown: {

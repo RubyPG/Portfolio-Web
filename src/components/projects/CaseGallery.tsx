@@ -1,6 +1,7 @@
 import React, { startTransition, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { cn } from '../../lib/utils';
+import CaseGalleryMobileLightbox from './CaseGalleryMobileLightbox';
 
 export interface CaseGalleryItem {
   image: string;
@@ -106,6 +107,7 @@ const CaseGallery = ({
   const [isLightboxDragging, setIsLightboxDragging] = useState(false);
   const [isZoomInModifierActive, setIsZoomInModifierActive] = useState(false);
   const [isZoomOutModifierActive, setIsZoomOutModifierActive] = useState(false);
+  const [isCompactLayout, setIsCompactLayout] = useState(false);
   const [railHeight, setRailHeight] = useState<number | null>(null);
   const previewPanelRef = useRef<HTMLDivElement>(null);
   const lightboxFrameRef = useRef<HTMLDivElement>(null);
@@ -210,6 +212,22 @@ const CaseGallery = ({
 
     resetLightboxView();
   }, [lightboxIndex]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const compactQuery = window.matchMedia('(max-width: 1023px)');
+    const updateCompactLayout = () => {
+      setIsCompactLayout(compactQuery.matches);
+    };
+
+    updateCompactLayout();
+    compactQuery.addEventListener('change', updateCompactLayout);
+
+    return () => {
+      compactQuery.removeEventListener('change', updateCompactLayout);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -325,6 +343,18 @@ const CaseGallery = ({
     const isZoomIn = event.shiftKey || isZoomInModifierActive;
     const bounds = event.currentTarget.getBoundingClientRect();
     const isZoomOut = event.ctrlKey || isZoomOutModifierActive;
+
+    if (isCompactLayout && !isZoomIn && !isZoomOut) {
+      const nextZoom = lightboxZoom > 1 ? 1 : 2;
+      updateLightboxZoomAtPoint({
+        clientX: event.clientX,
+        clientY: event.clientY,
+        bounds,
+        nextZoom
+      });
+      return;
+    }
+
     const shouldZoomIn = isZoomIn || lightboxZoom === 1;
 
     if (!shouldZoomIn && !isZoomOut) return;
@@ -403,6 +433,21 @@ const CaseGallery = ({
     setIsLightboxDragging(false);
   };
 
+  const adjustLightboxZoomBy = (direction: -1 | 1) => {
+    const frame = lightboxFrameRef.current;
+    if (!frame) return;
+
+    const bounds = frame.getBoundingClientRect();
+    const nextZoom = clamp(lightboxZoom + direction * 0.35, 1, 3);
+
+    updateLightboxZoomAtPoint({
+      clientX: bounds.left + (bounds.width / 2),
+      clientY: bounds.top + (bounds.height / 2),
+      bounds,
+      nextZoom
+    });
+  };
+
   const lightboxItem = lightboxIndex !== null ? items[lightboxIndex] : null;
 
   return (
@@ -418,7 +463,7 @@ const CaseGallery = ({
             </h2>
           </div>
           <p className="max-w-xl text-sm leading-relaxed text-text-muted">
-            Navegacion visual del producto. Haz click en cualquier captura para verla
+            Navegacion visual del producto. Toca cualquier captura para verla
             a pantalla grande.
           </p>
         </div>
@@ -528,7 +573,7 @@ const CaseGallery = ({
               className="flex min-w-0 flex-col gap-4 overflow-hidden rounded-[1.75rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
               style={railHeight ? { height: `${railHeight}px` } : undefined}
             >
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-secondary/78">
                     Panel visual
@@ -542,7 +587,7 @@ const CaseGallery = ({
                 </div>
 
                 {items.length > 1 ? (
-                  <div className="flex shrink-0 gap-2">
+                  <div className="flex shrink-0 gap-2 self-start">
                     <ControlButton
                       label="Captura anterior"
                       direction="left"
@@ -558,8 +603,8 @@ const CaseGallery = ({
               </div>
 
               <div className="min-h-0 flex-1 overflow-hidden">
-                <div className="case-gallery-scroll h-full overflow-y-auto overscroll-contain pr-1">
-                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                <div className="case-gallery-scroll h-full overflow-x-auto overflow-y-hidden overscroll-x-contain pb-1 sm:overflow-x-hidden sm:overflow-y-auto sm:overscroll-contain sm:pr-1 sm:pb-0">
+                  <div className="flex gap-2 sm:grid sm:grid-cols-2 sm:gap-2 lg:grid-cols-1">
                     {items.map((item, index) => {
                       const isActive = index === activeIndex;
 
@@ -569,14 +614,14 @@ const CaseGallery = ({
                           type="button"
                           onClick={() => selectSlide(index)}
                           className={cn(
-                            'group relative overflow-hidden rounded-[1.3rem] border text-left transition duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70',
+                            'group relative w-[min(82vw,320px)] shrink-0 snap-start overflow-hidden rounded-[1.3rem] border text-left transition duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 sm:w-auto sm:shrink sm:snap-none',
                             isActive
                               ? 'border-secondary/55 bg-secondary/12 shadow-[0_0_0_1px_rgba(59,130,246,0.18),0_18px_45px_rgba(59,130,246,0.12)]'
                               : 'border-white/8 bg-black/24 hover:border-white/16 hover:bg-white/[0.03]'
                           )}
                         >
-                          <div className="flex min-w-0 items-stretch gap-3 p-2.5">
-                            <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-[1rem] border border-white/8 bg-black/35">
+                          <div className="flex min-w-0 flex-col gap-2 p-2.5 sm:flex-row sm:items-stretch sm:gap-3">
+                            <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-[1rem] border border-white/8 bg-black/35 sm:h-20 sm:w-24 sm:aspect-auto">
                               <img
                                 src={item.image}
                                 alt={item.alt}
@@ -589,7 +634,7 @@ const CaseGallery = ({
                               <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.45))]" />
                             </div>
 
-                            <div className="min-w-0 py-1">
+                            <div className="min-w-0 px-0.5 pb-0.5 sm:py-1">
                               <div className="mb-1 flex items-center gap-2">
                                 <span className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-accent/85">
                                   {formatSlideNumber(index)}
@@ -603,7 +648,7 @@ const CaseGallery = ({
 
                               <p
                                 className={cn(
-                                  'truncate text-sm font-semibold transition-colors',
+                                  'line-clamp-2 text-sm font-semibold transition-colors',
                                   isActive ? 'text-text-primary' : 'text-text-secondary'
                                 )}
                               >
@@ -647,18 +692,44 @@ const CaseGallery = ({
       <AnimatePresence>
         {lightboxIndex !== null && lightboxItem ? (
           <motion.div
-            className="fixed inset-0 z-[70] overflow-y-auto bg-black/88 px-4 py-5 backdrop-blur-md lg:px-6 lg:py-6"
+            className="fixed inset-0 z-[70] overflow-y-auto bg-[rgba(2,6,13,0.92)] px-0 py-0 backdrop-blur-md lg:px-6 lg:py-6"
             initial={reduceMotion ? { opacity: 0 } : { opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: reduceMotion ? 0.18 : 0.28 }}
             onClick={() => setLightboxIndex(null)}
           >
+            <CaseGalleryMobileLightbox
+              item={lightboxItem}
+              items={items}
+              currentIndex={lightboxIndex}
+              projectTitle={projectTitle}
+              totalSlidesLabel={totalSlidesLabel}
+              lightboxZoom={lightboxZoom}
+              lightboxPan={lightboxPan}
+              isLightboxDragging={isLightboxDragging}
+              isZoomInModifierActive={isZoomInModifierActive}
+              isZoomOutModifierActive={isZoomOutModifierActive}
+              reduceMotion={reduceMotion}
+              lightboxFrameRef={lightboxFrameRef}
+              onClose={() => setLightboxIndex(null)}
+              onPrev={() => shiftLightbox(-1)}
+              onNext={() => shiftLightbox(1)}
+              onSelect={openLightbox}
+              onResetZoom={resetLightboxView}
+              onAdjustZoom={adjustLightboxZoomBy}
+              onFrameClick={handleLightboxClick}
+              onFrameWheel={handleLightboxWheel}
+              onFramePointerDown={handleLightboxPointerDown}
+              onFramePointerMove={handleLightboxPointerMove}
+              onFramePointerUp={finishLightboxDrag}
+              formatSlideNumber={formatSlideNumber}
+            />
             <motion.div
               role="dialog"
               aria-modal="true"
               aria-label={`Galeria ampliada de ${projectTitle}`}
-              className="relative mx-auto w-full max-w-[1280px] overflow-hidden rounded-[1.75rem] border border-white/10 bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.92))] shadow-[0_28px_120px_rgba(0,0,0,0.55)] lg:max-h-[calc(100dvh-3rem)]"
+              className="relative mx-auto hidden w-full max-w-[1280px] overflow-hidden rounded-[1.75rem] border border-white/10 bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.92))] shadow-[0_28px_120px_rgba(0,0,0,0.55)] lg:block lg:max-h-[calc(100dvh-3rem)]"
               initial={
                 reduceMotion
                   ? { opacity: 1 }
@@ -673,11 +744,11 @@ const CaseGallery = ({
             >
               <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
-              <div className="absolute left-4 top-4 z-20 flex flex-wrap gap-2 lg:left-5 lg:top-5">
-                <span className="rounded-full border border-white/12 bg-black/60 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-accent">
+              <div className="absolute left-3 top-3 z-20 flex flex-wrap gap-1.5 sm:left-4 sm:top-4 sm:gap-2 lg:left-5 lg:top-5">
+                <span className="rounded-full border border-white/12 bg-black/60 px-2.5 py-1 text-[0.64rem] font-semibold uppercase tracking-[0.22em] text-accent sm:px-3 sm:text-[0.68rem] sm:tracking-[0.24em]">
                   {lightboxItem.label ?? 'Vista ampliada'}
                 </span>
-                <span className="rounded-full border border-white/12 bg-black/60 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-text-secondary">
+                <span className="rounded-full border border-white/12 bg-black/60 px-2.5 py-1 text-[0.64rem] font-semibold uppercase tracking-[0.22em] text-text-secondary sm:px-3 sm:text-[0.68rem] sm:tracking-[0.24em]">
                   {formatSlideNumber(lightboxIndex)} / {totalSlidesLabel}
                 </span>
               </div>
@@ -686,7 +757,7 @@ const CaseGallery = ({
                 type="button"
                 onClick={() => setLightboxIndex(null)}
                 aria-label="Cerrar galeria"
-                className="absolute right-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/12 bg-black/55 text-text-primary transition hover:border-accent/65 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
+                className="absolute right-3 top-3 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-black/55 text-text-primary transition hover:border-accent/65 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 sm:right-4 sm:top-4 sm:h-10 sm:w-10"
               >
                 <svg
                   aria-hidden="true"
@@ -701,7 +772,7 @@ const CaseGallery = ({
               </button>
 
               <div className="grid lg:h-[min(84vh,860px)] lg:grid-cols-[minmax(0,1fr)_360px]">
-                <div className="relative min-h-[320px] overflow-hidden bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.14),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.08))] lg:min-h-0">
+                <div className="relative min-h-[52vh] overflow-hidden bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.14),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.08))] sm:min-h-[420px] lg:min-h-0">
                   <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-24 bg-[linear-gradient(180deg,rgba(0,0,0,0.38),transparent)]" />
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-24 bg-[linear-gradient(0deg,rgba(0,0,0,0.42),transparent)]" />
 
@@ -791,10 +862,11 @@ const CaseGallery = ({
                       </AnimatePresence>
                     </div>
                   </div>
+
                 </div>
 
                 <div className="flex min-h-0 flex-col border-t border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] lg:border-l lg:border-t-0">
-                  <div className="border-b border-white/8 px-5 pb-5 pt-20 lg:px-6 lg:pb-6 lg:pt-22">
+                  <div className="border-b border-white/8 px-4 pb-4 pt-16 sm:px-5 sm:pb-5 sm:pt-20 lg:px-6 lg:pb-6 lg:pt-22">
                     <p className="text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-secondary/78">
                       Captura activa
                     </p>
@@ -806,8 +878,8 @@ const CaseGallery = ({
                     </p>
                   </div>
 
-                  <div className="case-gallery-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 lg:px-6 lg:py-6">
-                    <div className="space-y-3">
+                  <div className="case-gallery-scroll min-h-0 flex-1 overflow-x-auto overflow-y-hidden overscroll-x-contain px-4 py-4 lg:overflow-x-hidden lg:overflow-y-auto lg:overscroll-contain lg:px-6 lg:py-6">
+                    <div className="flex gap-2.5 lg:block lg:space-y-3">
                       {items.map((item, index) => {
                         const isCurrent = index === lightboxIndex;
 
@@ -817,7 +889,7 @@ const CaseGallery = ({
                             type="button"
                             onClick={() => openLightbox(index)}
                             className={cn(
-                              'flex w-full items-center gap-3 rounded-[1rem] border px-3 py-2.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70',
+                              'flex min-w-[230px] shrink-0 items-center gap-3 rounded-[1rem] border px-3 py-2.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 lg:min-w-0',
                               isCurrent
                                 ? 'border-accent/45 bg-[linear-gradient(90deg,rgba(255,255,0,0.14),rgba(255,255,255,0.02))] shadow-[0_0_0_1px_rgba(255,255,0,0.08)]'
                                 : 'border-white/8 bg-black/20 hover:border-white/16 hover:bg-white/[0.03]'

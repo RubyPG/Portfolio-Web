@@ -525,29 +525,59 @@ function processPointerInteraction() {
   }
 }
 
+function getActiveTouchEntries(target: EventTarget | null) {
+  if (!(target instanceof Element)) {
+    return [] as Array<[HTMLElement, PointerData, DOMRect]>;
+  }
+
+  const activeEntries: Array<[HTMLElement, PointerData, DOMRect]> = [];
+
+  for (const [elem, data] of pointerMap) {
+    const rect = elem.getBoundingClientRect();
+    const isTouchingRegisteredElement =
+      target === elem || elem.contains(target);
+
+    if (isTouchingRegisteredElement && isInside(rect)) {
+      activeEntries.push([elem, data, rect]);
+    }
+  }
+
+  return activeEntries;
+}
+
 function onTouchStart(e: TouchEvent) {
   if (e.touches.length > 0) {
-    e.preventDefault();
     pointerPosition.set(e.touches[0].clientX, e.touches[0].clientY);
-    for (const [elem, data] of pointerMap) {
-      const rect = elem.getBoundingClientRect();
-      if (isInside(rect)) {
-        data.touching = true;
-        updatePointerData(data, rect);
-        if (!data.hover) {
-          data.hover = true;
-          data.onEnter(data);
-        }
-        data.onMove(data);
+    const activeEntries = getActiveTouchEntries(e.target);
+    const shouldCaptureTouch = activeEntries.length > 0;
+
+    if (shouldCaptureTouch) {
+      e.preventDefault();
+    }
+
+    for (const [, data, rect] of activeEntries) {
+      data.touching = true;
+      updatePointerData(data, rect);
+      if (!data.hover) {
+        data.hover = true;
+        data.onEnter(data);
       }
+      data.onMove(data);
     }
   }
 }
 
 function onTouchMove(e: TouchEvent) {
   if (e.touches.length > 0) {
-    e.preventDefault();
     pointerPosition.set(e.touches[0].clientX, e.touches[0].clientY);
+    const shouldCaptureTouch =
+      getActiveTouchEntries(e.target).length > 0 ||
+      Array.from(pointerMap.values()).some((data) => data.touching);
+
+    if (shouldCaptureTouch) {
+      e.preventDefault();
+    }
+
     for (const [elem, data] of pointerMap) {
       const rect = elem.getBoundingClientRect();
       updatePointerData(data, rect);

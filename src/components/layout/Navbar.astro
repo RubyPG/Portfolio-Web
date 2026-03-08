@@ -173,13 +173,28 @@ const alternativePath = isEn
 </nav>
 
 <script>
-    const btn = document.getElementById("mobile-menu-btn");
-    const menu = document.getElementById("mobile-menu");
-    const menuIcon = document.getElementById("menu-icon");
-    const closeIcon = document.getElementById("close-icon");
+    function initNavbarMenu() {
+        const nav = document.getElementById("main-nav");
+        if (!(nav instanceof HTMLElement) || nav.dataset.menuReady === "true") {
+            return;
+        }
 
-    if (btn && menu && menuIcon && closeIcon) {
+        const btn = nav.querySelector("#mobile-menu-btn");
+        const menu = nav.querySelector("#mobile-menu");
+        const menuIcon = nav.querySelector("#menu-icon");
+        const closeIcon = nav.querySelector("#close-icon");
+
+        if (
+            !(btn instanceof HTMLButtonElement) ||
+            !(menu instanceof HTMLElement) ||
+            !(menuIcon instanceof SVGElement) ||
+            !(closeIcon instanceof SVGElement)
+        ) {
+            return;
+        }
+
         const openMenu = () => {
+            btn.setAttribute("aria-expanded", "true");
             menu.style.maxHeight = "calc(100dvh - 4rem)";
             menu.style.opacity = "1";
             menuIcon.classList.add("hidden");
@@ -196,7 +211,6 @@ const alternativePath = isEn
 
         btn.addEventListener("click", () => {
             const isOpen = btn.getAttribute("aria-expanded") === "true";
-            btn.setAttribute("aria-expanded", String(!isOpen));
 
             if (isOpen) {
                 closeMenu();
@@ -211,11 +225,16 @@ const alternativePath = isEn
             }
         });
 
-        // Close menu on link click
         menu.querySelectorAll("a").forEach((link) => {
             link.addEventListener("click", () => {
                 closeMenu();
             });
         });
+
+        nav.dataset.menuReady = "true";
+        closeMenu();
     }
+
+    document.addEventListener("DOMContentLoaded", initNavbarMenu);
+    document.addEventListener("astro:page-load", initNavbarMenu);
 </script>
