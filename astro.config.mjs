@@ -3,9 +3,13 @@ import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@astrojs/react';
 
+const basePath = process.env.BASE_PATH?.trim();
+const siteUrl = process.env.SITE_URL?.trim() || 'https://rubenpg.dev';
+
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://rubenpg.dev', // TODO: actualizar con dominio real
+  site: siteUrl,
+  base: basePath && basePath !== '/' ? basePath : undefined,
   output: 'static',
   integrations: [react()],
   vite: {
