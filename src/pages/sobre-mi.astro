@@ -6,6 +6,7 @@ import Badge from "../components/ui/Badge.astro";
 import Button from "../components/ui/Button.astro";
 import TechBadge from "../components/ui/TechBadge.astro";
 import BackgroundBeamsWithCollision from "../components/BackgroundBeamsWithCollision";
+import SkyBanner from "../components/SkyBanner";
 import { site } from "../data/site";
 import { skillCategories } from "../data/skills";
 
@@ -33,27 +34,28 @@ const iconWhatArchitecture =
 >
     <!-- ═══ HERO HEADER ═══ -->
     <section class="pt-16 sm:pt-24 min-h-[calc(100svh-10rem)] relative overflow-hidden flex flex-col">
-        <img
-            src="/sobre-mi.png"
-            alt={`Banner de ${site.name}`}
-            width="1536"
-            height="765"
-            class="absolute inset-0 h-full w-full object-cover object-center"
-            loading="eager"
-            decoding="async"
-        />
-        <div class="absolute inset-0 bg-linear-to-r from-bg-primary/95 via-bg-primary/72 to-bg-primary/45">
+        <div class="absolute inset-0 z-0">
+            <SkyBanner
+                client:load
+                sunSrc="/images/sol.png"
+                cloudsSrc="/images/nubes.png"
+                height="clamp(320px, 62vw, 720px)"
+                ariaLabel="Background banner"
+                className="h-full w-full !rounded-none"
+            />
         </div>
-        <div class="absolute inset-0 bg-linear-to-t from-bg-primary/60 via-transparent to-transparent">
+        <div class="absolute inset-0 z-[1] pointer-events-none bg-linear-to-r from-bg-primary/95 via-bg-primary/72 to-bg-primary/45">
+        </div>
+        <div class="absolute inset-0 z-[1] pointer-events-none bg-linear-to-t from-bg-primary/60 via-transparent to-transparent">
         </div>
 
         <!-- Background decoration -->
         <div
-            class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(59,130,246,0.12),transparent_60%)] pointer-events-none"
+            class="absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_top_left,rgba(59,130,246,0.12),transparent_60%)] pointer-events-none"
         >
         </div>
         <div
-            class="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(255,255,0,0.05),transparent_60%)] pointer-events-none"
+            class="absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_bottom_right,rgba(255,255,0,0.05),transparent_60%)] pointer-events-none"
         >
         </div>
 
@@ -169,9 +171,9 @@ const iconWhatArchitecture =
         </div>
 
         <div class="relative z-10 mt-auto">
-            <div class="absolute inset-0 bg-linear-to-b from-bg-primary/12 via-bg-primary/52 to-bg-primary/82">
+            <div class="absolute inset-0 pointer-events-none bg-linear-to-b from-bg-primary/12 via-bg-primary/52 to-bg-primary/82">
             </div>
-            <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_60%)]">
+            <div class="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_60%)]">
             </div>
             <Container size="md" class="relative z-10 py-8 sm:py-10">
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">

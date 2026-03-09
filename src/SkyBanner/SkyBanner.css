@@ -1,0 +1,85 @@
+.skybanner {
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  --drift-x: 0;
+  --drift-y: 0;
+  position: relative;
+  width: 100%;
+  min-height: var(--banner-height);
+  aspect-ratio: 1536 / 765;
+  overflow: hidden;
+  border-radius: clamp(24px, 3vw, 40px);
+  background: linear-gradient(180deg, #010409 0%, #061029 44%, #091d43 100%);
+}
+
+.skybanner__viewport {
+  position: absolute;
+  inset: 0;
+  perspective: 1800px;
+}
+
+.skybanner__scene {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--tilt-y)) rotateY(var(--tilt-x));
+  transition: transform 160ms linear;
+}
+
+.skybanner__layer {
+  position: absolute;
+  top: -8%;
+  left: -8%;
+  width: 116%;
+  height: 116%;
+  object-fit: cover;
+  object-position: center center;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  transition: transform 160ms linear;
+  transform:
+    translate3d(
+      calc(var(--drift-x) * var(--depth) * 34px),
+      calc(var(--drift-y) * var(--depth) * 28px),
+      calc(var(--depth) * 120px)
+    )
+    scale(calc(1.01 + (var(--depth) * 0.04)));
+}
+
+.skybanner__layer--clouds-back {
+  opacity: 0.94;
+}
+
+.skybanner__layer--sun {
+  opacity: 1;
+}
+
+.skybanner__layer--clouds-front {
+  opacity: 1;
+}
+
+.skybanner[data-motion='off'] .skybanner__scene,
+.skybanner[data-motion='off'] .skybanner__layer {
+  transition: none;
+}
+
+@media (max-width: 860px) {
+  .skybanner {
+    min-height: clamp(320px, 78vw, 560px);
+  }
+
+  .skybanner__layer {
+    top: -5%;
+    left: -5%;
+    width: 110%;
+    height: 110%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skybanner__scene,
+  .skybanner__layer {
+    transition: none;
+  }
+}
