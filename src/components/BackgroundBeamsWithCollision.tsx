@@ -16,19 +16,23 @@ interface BeamOptions {
 }
 
 const beams: BeamOptions[] = [
-  { x: 6, duration: 5.2, delay: 0, repeatDelay: 1.8 },
-  { x: 12, duration: 4.6, delay: 0.2, repeatDelay: 2.6, className: 'h-8' },
-  { x: 19, duration: 5.8, delay: 0.45, repeatDelay: 2.1 },
-  { x: 27, duration: 4.9, delay: 0.6, repeatDelay: 2.8, className: 'h-14' },
-  { x: 34, duration: 5.4, delay: 0.9, repeatDelay: 1.9 },
-  { x: 42, duration: 6.1, delay: 1.15, repeatDelay: 2.7, className: 'h-20' },
-  { x: 51, duration: 5, delay: 1.35, repeatDelay: 2.2 },
-  { x: 59, duration: 4.7, delay: 1.55, repeatDelay: 2.9, className: 'h-8' },
-  { x: 67, duration: 5.7, delay: 1.8, repeatDelay: 2.1 },
-  { x: 74, duration: 4.8, delay: 2.05, repeatDelay: 2.8, className: 'h-14' },
-  { x: 81, duration: 5.4, delay: 2.3, repeatDelay: 1.8 },
-  { x: 88, duration: 6.2, delay: 2.55, repeatDelay: 2.6, className: 'h-20' },
-  { x: 94, duration: 5.1, delay: 2.8, repeatDelay: 2.2 }
+  { x: 4, duration: 5.1, delay: 0, repeatDelay: 1.2 },
+  { x: 9, duration: 4.5, delay: 0.15, repeatDelay: 1.8, className: 'h-8' },
+  { x: 14, duration: 5.7, delay: 0.3, repeatDelay: 1.4 },
+  { x: 20, duration: 4.8, delay: 0.45, repeatDelay: 1.9, className: 'h-14' },
+  { x: 26, duration: 5.3, delay: 0.6, repeatDelay: 1.3 },
+  { x: 32, duration: 4.9, delay: 0.8, repeatDelay: 1.7, className: 'h-8' },
+  { x: 38, duration: 6, delay: 0.95, repeatDelay: 1.5, className: 'h-20' },
+  { x: 44, duration: 5.2, delay: 1.1, repeatDelay: 1.2 },
+  { x: 50, duration: 4.7, delay: 1.25, repeatDelay: 1.8, className: 'h-14' },
+  { x: 56, duration: 5.6, delay: 1.4, repeatDelay: 1.4 },
+  { x: 62, duration: 4.6, delay: 1.55, repeatDelay: 1.9, className: 'h-8' },
+  { x: 68, duration: 5.8, delay: 1.75, repeatDelay: 1.5, className: 'h-20' },
+  { x: 74, duration: 4.9, delay: 1.95, repeatDelay: 1.3 },
+  { x: 80, duration: 5.4, delay: 2.1, repeatDelay: 1.7, className: 'h-14' },
+  { x: 86, duration: 4.8, delay: 2.3, repeatDelay: 1.2 },
+  { x: 91, duration: 5.9, delay: 2.45, repeatDelay: 1.6, className: 'h-20' },
+  { x: 96, duration: 5, delay: 2.6, repeatDelay: 1.4 }
 ];
 
 export const BackgroundBeamsWithCollision = ({
@@ -83,7 +87,7 @@ export const BackgroundBeamsWithCollision = ({
 
       <div
         ref={collisionRef}
-        className="absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-transparent via-secondary/35 to-transparent"
+        className="absolute inset-x-0 bottom-0 h-px opacity-0"
       />
 
       {children ? <div className="relative z-10 h-full w-full">{children}</div> : null}
@@ -171,7 +175,7 @@ const CollisionBeam = ({
         key={beamKey}
         ref={beamRef}
         className={cn(
-          'absolute top-0 z-[1] w-px rounded-full bg-gradient-to-b from-transparent via-secondary/90 to-accent/90 opacity-80 shadow-[0_0_20px_rgba(59,130,246,0.28)]',
+          'absolute top-0 z-[1] w-[2px] rounded-full bg-gradient-to-b from-transparent via-secondary/90 to-accent/90 opacity-90 shadow-[0_0_24px_rgba(59,130,246,0.38)]',
           beamOptions.className
         )}
         style={{

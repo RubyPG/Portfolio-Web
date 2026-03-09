@@ -32,7 +32,21 @@ const iconWhatArchitecture =
     description="Full Stack Developer y CTO de iCreate Group. Construyo CRMs propios, automatizo procesos con n8n y desarrollo productos digitales de alto rendimiento desde cero hasta producción."
 >
     <!-- ═══ HERO HEADER ═══ -->
-    <section class="py-16 sm:py-24 relative overflow-hidden">
+    <section class="pt-16 sm:pt-24 min-h-[calc(100svh-10rem)] relative overflow-hidden flex flex-col">
+        <img
+            src="/sobre-mi.png"
+            alt={`Banner de ${site.name}`}
+            width="1536"
+            height="765"
+            class="absolute inset-0 h-full w-full object-cover object-center"
+            loading="eager"
+            decoding="async"
+        />
+        <div class="absolute inset-0 bg-linear-to-r from-bg-primary/95 via-bg-primary/72 to-bg-primary/45">
+        </div>
+        <div class="absolute inset-0 bg-linear-to-t from-bg-primary/60 via-transparent to-transparent">
+        </div>
+
         <!-- Background decoration -->
         <div
             class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(59,130,246,0.12),transparent_60%)] pointer-events-none"
@@ -43,32 +57,77 @@ const iconWhatArchitecture =
         >
         </div>
 
-        <Container size="md" class="relative z-10">
-            <div
-                class="flex flex-col sm:flex-row items-start gap-10 animate-fade-in"
-            >
-                <!-- Photo -->
-                <div class="shrink-0">
-                    <div class="relative">
-                        <div
-                            class="absolute -inset-3 rounded-2xl bg-linear-to-br from-secondary/30 to-accent/10 blur-xl opacity-60"
-                        >
-                        </div>
-                        <div
-                            class="w-36 h-36 sm:w-44 sm:h-44 rounded-2xl overflow-hidden border border-secondary/30 shadow-[0_0_40px_rgba(59,130,246,0.2)] relative"
-                        >
-                            <img
-                                src="/FotoPerfil.png"
-                                alt={`Foto de ${site.name}`}
-                                class="w-full h-full object-cover"
-                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                            />
+        <div class="relative z-10 overflow-hidden bg-bg-primary/10 shadow-[0_20px_80px_rgba(15,23,42,0.35)] animate-fade-in">
+            <Container size="lg" class="relative z-10">
+                <div
+                    class="relative z-10 flex min-h-[28rem] flex-col sm:flex-row items-start gap-10 py-8 sm:py-10 lg:min-h-[30rem] lg:py-12"
+                >
+                    <!-- Photo -->
+                    <div class="shrink-0">
+                        <div class="relative">
                             <div
-                                class="absolute inset-0 bg-bg-tertiary items-center justify-center hidden"
-                                aria-hidden="true"
+                                class="absolute -inset-3 rounded-2xl bg-linear-to-br from-secondary/30 to-accent/10 blur-xl opacity-60"
                             >
+                            </div>
+                            <div
+                                class="w-36 h-36 sm:w-44 sm:h-44 rounded-2xl overflow-hidden border border-secondary/30 shadow-[0_0_40px_rgba(59,130,246,0.2)] relative"
+                            >
+                                <img
+                                    src="/FotoPerfil.png"
+                                    alt={`Foto de ${site.name}`}
+                                    class="w-full h-full object-cover"
+                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                />
+                                <div
+                                    class="absolute inset-0 bg-bg-tertiary items-center justify-center hidden"
+                                    aria-hidden="true"
+                                >
+                                    <svg
+                                        class="w-16 h-16 text-text-dim"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="1.5"
+                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                        ></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Intro -->
+                    <div class="max-w-xl">
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <Badge variant="accent" size="md">Cofounder & CTO</Badge
+                            >
+                            <Badge variant="neutral" size="md">iCreate Group</Badge>
+                            <Badge variant="neutral" size="md">Full Stack Dev</Badge
+                            >
+                        </div>
+                        <h1
+                            class="text-3xl sm:text-5xl font-black text-white mb-3 leading-tight"
+                        >
+                            {site.name}
+                        </h1>
+                        <p class="text-secondary font-semibold text-lg mb-4">
+                            Full Stack Developer · CRM · Automatización · Cloud
+                        </p>
+                        <p class="text-white/85 leading-relaxed max-w-lg">
+                            Construyo productos digitales <strong
+                                class="text-white">de principio a fin</strong
+                            >, sin intermediarios. Del diseño técnico al deploy en
+                            producción.
+                        </p>
+
+                        <div class="flex flex-wrap gap-3 mt-6">
+                            <Button href="/contacto" variant="primary" size="md">
                                 <svg
-                                    class="w-16 h-16 text-text-dim"
+                                    class="w-4 h-4"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -76,81 +135,66 @@ const iconWhatArchitecture =
                                     <path
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
-                                        stroke-width="1.5"
-                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                        stroke-width="2"
+                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                                     ></path>
                                 </svg>
-                            </div>
+                                Contactar
+                            </Button>
+                            <Button
+                                href="/cv.pdf"
+                                variant="outline"
+                                size="md"
+                                external
+                            >
+                                <svg
+                                    class="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                    ></path>
+                                </svg>
+                                Descargar CV
+                            </Button>
                         </div>
                     </div>
                 </div>
+            </Container>
+        </div>
 
-                <!-- Intro -->
-                <div>
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <Badge variant="accent" size="md">Cofounder & CTO</Badge
-                        >
-                        <Badge variant="neutral" size="md">iCreate Group</Badge>
-                        <Badge variant="neutral" size="md">Full Stack Dev</Badge
-                        >
-                    </div>
-                    <h1
-                        class="text-3xl sm:text-5xl font-black text-text-primary mb-3 leading-tight"
-                    >
-                        {site.name}
-                    </h1>
-                    <p class="text-secondary font-semibold text-lg mb-4">
-                        Full Stack Developer · CRM · Automatización · Cloud
-                    </p>
-                    <p class="text-text-secondary leading-relaxed max-w-lg">
-                        Construyo productos digitales <strong
-                            class="text-text-primary">de principio a fin</strong
-                        >, sin intermediarios. Del diseño técnico al deploy en
-                        producción.
-                    </p>
-
-                    <div class="flex flex-wrap gap-3 mt-6">
-                        <Button href="/contacto" variant="primary" size="md">
-                            <svg
-                                class="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                                ></path>
-                            </svg>
-                            Contactar
-                        </Button>
-                        <Button
-                            href="/cv.pdf"
-                            variant="outline"
-                            size="md"
-                            external
-                        >
-                            <svg
-                                class="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                ></path>
-                            </svg>
-                            Descargar CV
-                        </Button>
-                    </div>
-                </div>
+        <div class="relative z-10 mt-auto">
+            <div class="absolute inset-0 bg-linear-to-b from-bg-primary/12 via-bg-primary/52 to-bg-primary/82">
             </div>
-        </Container>
+            <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_60%)]">
+            </div>
+            <Container size="md" class="relative z-10 py-8 sm:py-10">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
+                    {
+                        [
+                            { value: "2025", label: "Desde" },
+                            { value: "3+", label: "Productos vivos" },
+                            { value: "100%", label: "Full ownership" },
+                            { value: "iCreate", label: "Group CTO" },
+                        ].map((stat) => (
+                            <div>
+                                <div class="text-3xl font-black text-accent mb-1">
+                                    {stat.value}
+                                </div>
+                                <div class="text-xs text-text-muted uppercase tracking-widest">
+                                    {stat.label}
+                                </div>
+                            </div>
+                        ))
+                    }
+                </div>
+            </Container>
+        </div>
     </section>
 
     <div class="relative isolate overflow-hidden">
@@ -160,31 +204,6 @@ const iconWhatArchitecture =
         />
 
         <div class="relative z-10">
-            <!-- ═══ METRICS ═══ -->
-            <section class="py-8 border-y border-ui-border/50 bg-bg-secondary/30">
-                <Container size="md">
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
-                        {
-                            [
-                                { value: "2025", label: "Desde" },
-                                { value: "3+", label: "Productos vivos" },
-                                { value: "100%", label: "Full ownership" },
-                                { value: "iCreate", label: "Group CTO" },
-                            ].map((stat) => (
-                                <div>
-                                    <div class="text-3xl font-black text-accent mb-1">
-                                        {stat.value}
-                                    </div>
-                                    <div class="text-xs text-text-muted uppercase tracking-widest">
-                                        {stat.label}
-                                    </div>
-                                </div>
-                            ))
-                        }
-                    </div>
-                </Container>
-            </section>
-
             <section class="py-16 sm:py-20">
                 <Container size="md">
             <!-- ── Quién soy ── -->
