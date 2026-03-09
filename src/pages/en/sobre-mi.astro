@@ -34,7 +34,9 @@ const iconWhatArchitecture =
     description="Full Stack Developer and CTO at iCreate Group. I build custom CRMs, automate processes with n8n and develop high performance digital products from idea to production."
 >
     <!-- ═══ HERO HEADER ═══ -->
-    <section class="pt-16 sm:pt-24 min-h-[calc(100svh-10rem)] relative overflow-hidden flex flex-col">
+    <section
+        class="pt-16 sm:pt-24 min-h-[calc(100svh-10rem)] relative overflow-hidden flex flex-col"
+    >
         <div class="absolute inset-0 z-0">
             <SkyBanner
                 client:load
@@ -42,28 +44,34 @@ const iconWhatArchitecture =
                 cloudsSrc={withBasePath("/images/nubes.png")}
                 height="clamp(320px, 62vw, 720px)"
                 ariaLabel="Background banner"
-                className="h-full w-full !rounded-none"
+                className="h-full w-full rounded-none!"
             />
         </div>
-        <div class="absolute inset-0 z-[1] pointer-events-none bg-linear-to-r from-bg-primary/95 via-bg-primary/72 to-bg-primary/45">
+        <div
+            class="absolute inset-0 z-1 pointer-events-none bg-linear-to-r from-bg-primary/95 via-bg-primary/72 to-bg-primary/45"
+        >
         </div>
-        <div class="absolute inset-0 z-[1] pointer-events-none bg-linear-to-t from-bg-primary/60 via-transparent to-transparent">
+        <div
+            class="absolute inset-0 z-1 pointer-events-none bg-linear-to-t from-bg-primary/60 via-transparent to-transparent"
+        >
         </div>
 
         <!-- Background decoration -->
         <div
-            class="absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_top_left,rgba(59,130,246,0.12),transparent_60%)] pointer-events-none"
+            class="absolute inset-0 z-1 bg-[radial-gradient(ellipse_at_top_left,rgba(59,130,246,0.12),transparent_60%)] pointer-events-none"
         >
         </div>
         <div
-            class="absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_bottom_right,rgba(255,255,0,0.05),transparent_60%)] pointer-events-none"
+            class="absolute inset-0 z-1 bg-[radial-gradient(ellipse_at_bottom_right,rgba(255,255,0,0.05),transparent_60%)] pointer-events-none"
         >
         </div>
 
-        <div class="relative z-10 overflow-hidden bg-bg-primary/10 shadow-[0_20px_80px_rgba(15,23,42,0.35)] animate-fade-in">
+        <div
+            class="relative z-10 overflow-hidden bg-bg-primary/10 shadow-[0_20px_80px_rgba(15,23,42,0.35)] animate-fade-in"
+        >
             <Container size="lg" class="relative z-10">
                 <div
-                    class="relative z-10 flex min-h-[25rem] flex-col items-start gap-6 py-6 sm:min-h-[28rem] sm:flex-row sm:gap-10 sm:py-10 lg:min-h-[30rem] lg:py-12"
+                    class="relative z-10 flex min-h-100 flex-col items-start gap-6 py-6 sm:min-h-112 sm:flex-row sm:gap-10 sm:py-10 lg:min-h-120 lg:py-12"
                 >
                     <!-- Photo -->
                     <div class="shrink-0 mx-auto sm:mx-0">
@@ -104,12 +112,18 @@ const iconWhatArchitecture =
                     </div>
 
                     <!-- Intro -->
-                    <div class="max-w-xl w-full rounded-[1.4rem] border border-white/10 bg-[linear-gradient(160deg,rgba(5,10,18,0.58),rgba(5,10,18,0.22))] p-4 backdrop-blur-sm sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+                    <div
+                        class="max-w-xl w-full rounded-[1.4rem] border border-white/10 bg-[linear-gradient(160deg,rgba(5,10,18,0.58),rgba(5,10,18,0.22))] p-4 backdrop-blur-sm sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none"
+                    >
                         <div class="flex flex-wrap gap-1.5 mb-3 sm:mb-4">
-                            <Badge variant="accent" size="md">Cofounder & CTO</Badge
+                            <Badge variant="accent" size="md"
+                                >Cofounder & CTO</Badge
                             >
-                            <Badge variant="neutral" size="md">iCreate Group</Badge>
-                            <Badge variant="neutral" size="md">Full Stack Dev</Badge
+                            <Badge variant="neutral" size="md"
+                                >iCreate Group</Badge
+                            >
+                            <Badge variant="neutral" size="md"
+                                >Full Stack Dev</Badge
                             >
                         </div>
                         <h1
@@ -117,19 +131,29 @@ const iconWhatArchitecture =
                         >
                             {site.name}
                         </h1>
-                        <p class="text-secondary font-semibold text-sm sm:text-lg mb-3 sm:mb-4 tracking-[0.08em] uppercase sm:tracking-normal sm:normal-case">
+                        <p
+                            class="text-secondary font-semibold text-sm sm:text-lg mb-3 sm:mb-4 tracking-[0.08em] uppercase sm:tracking-normal sm:normal-case"
+                        >
                             Full Stack Developer · CRM · Automation · Cloud
                         </p>
-                        <p class="text-white/85 text-sm sm:text-base leading-relaxed max-w-lg">
-                            I build digital products <strong
-                                class="text-white"
+                        <p
+                            class="text-white/85 text-sm sm:text-base leading-relaxed max-w-lg"
+                        >
+                            I build digital products <strong class="text-white"
                                 >from start to finish</strong
                             >, no middlemen. From technical design to production
                             deployment.
                         </p>
 
-                        <div class="mt-5 flex flex-col gap-2.5 sm:mt-6 sm:flex-row sm:flex-wrap sm:gap-3">
-                            <Button href="/en/contacto" variant="primary" size="md" class="w-full sm:w-auto">
+                        <div
+                            class="mt-5 flex flex-col gap-2.5 sm:mt-6 sm:flex-row sm:flex-wrap sm:gap-3"
+                        >
+                            <Button
+                                href="/en/contacto"
+                                variant="primary"
+                                size="md"
+                                class="w-full sm:w-auto"
+                            >
                                 <svg
                                     class="w-4 h-4"
                                     fill="none"
@@ -174,9 +198,13 @@ const iconWhatArchitecture =
         </div>
 
         <div class="relative z-10 mt-auto">
-            <div class="absolute inset-0 pointer-events-none bg-linear-to-b from-bg-primary/12 via-bg-primary/52 to-bg-primary/82">
+            <div
+                class="absolute inset-0 pointer-events-none bg-linear-to-b from-bg-primary/12 via-bg-primary/52 to-bg-primary/82"
+            >
             </div>
-            <div class="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_60%)]">
+            <div
+                class="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_60%)]"
+            >
             </div>
             <Container size="md" class="relative z-10 py-8 sm:py-10">
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
@@ -211,363 +239,406 @@ const iconWhatArchitecture =
         <div class="relative z-10">
             <section class="py-16 sm:py-20">
                 <Container size="md">
-            <!-- ── Quién soy ── -->
-            <div
-                class="motion-surface space-y-5 mb-16 bg-ui-surface p-8 rounded-2xl border border-ui-border relative overflow-hidden"
-                data-motion-active="false"
-            >
-                <div
-                    class="absolute top-0 left-0 w-1 h-full bg-accent rounded-l-2xl"
-                >
-                </div>
-                <h2
-                    class="text-xl font-black text-text-primary flex items-center gap-3"
-                >
-                    <span class="text-accent">01</span>
-                    About me
-                </h2>
-                <div class="text-text-secondary leading-relaxed text-base">
-                    <div class="hidden sm:block space-y-4">
-                        <p>
-                            I'm <strong class="text-text-primary"
-                                >Rubén Pezuela García</strong
-                            >, a Full Stack Developer obsessed with automation and
-                            products that actually work in production. Currently I'm
-                            the <strong class="text-text-primary"
-                                >Cofounder and CTO at iCreate Group</strong
-                            >, where I design and implement the entire technical
-                            infrastructure — no 20-person teams, no slow processes,
-                            just clean code and scalable solutions.
-                        </p>
-                        <p>
-                            My expertise lies at the intersection of <strong
-                                class="text-text-primary"
-                                >product, code and business</strong
-                            >: I understand what the business needs, translate it
-                            into technical architecture and execute it. From CRM
-                            iLead (lead-to-cash), to automation platforms with n8n,
-                            headless e-commerce and desktop apps with Kotlin.
-                        </p>
-                        <p>
-                            I don't care about code just for the sake of coding. I
-                            care about <strong class="text-text-primary"
-                                >real impact</strong
-                            >: time saved, processes automated, products that users
-                            love.
-                        </p>
-                    </div>
-
-                    <div class="space-y-4 sm:hidden">
-                        <p>
-                            I'm <strong class="text-text-primary"
-                                >Rubén Pezuela García</strong
-                            >, a Full Stack Developer obsessed with automation and
-                            products that actually work in production. Currently I'm
-                            the <strong class="text-text-primary"
-                                >Cofounder and CTO at iCreate Group</strong
-                            >, where I design and implement the entire technical
-                            infrastructure — no 20-person teams, no slow processes,
-                            just clean code and scalable solutions.
-                        </p>
-
-                        <details class="group rounded-xl border border-ui-border bg-bg-secondary/40">
-                            <summary class="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-accent [&::-webkit-details-marker]:hidden">
-                                <span class="group-open:hidden">...more</span>
-                                <span class="hidden group-open:inline"
-                                    >show less</span
-                                >
-                            </summary>
-
-                            <div class="space-y-4 px-4 pb-4">
+                    <!-- ── Quién soy ── -->
+                    <div
+                        class="motion-surface space-y-5 mb-16 bg-ui-surface p-8 rounded-2xl border border-ui-border relative overflow-hidden"
+                        data-motion-active="false"
+                    >
+                        <div
+                            class="absolute top-0 left-0 w-1 h-full bg-accent rounded-l-2xl"
+                        >
+                        </div>
+                        <h2
+                            class="text-xl font-black text-text-primary flex items-center gap-3"
+                        >
+                            <span class="text-accent">01</span>
+                            About me
+                        </h2>
+                        <div
+                            class="text-text-secondary leading-relaxed text-base"
+                        >
+                            <div class="hidden sm:block space-y-4">
+                                <p>
+                                    I'm <strong class="text-text-primary"
+                                        >Rubén Pezuela García</strong
+                                    >, a Full Stack Developer obsessed with
+                                    automation and products that actually work
+                                    in production. Currently I'm the <strong
+                                        class="text-text-primary"
+                                        >Cofounder and CTO at iCreate Group</strong
+                                    >, where I design and implement the entire
+                                    technical infrastructure — no 20-person
+                                    teams, no slow processes, just clean code
+                                    and scalable solutions.
+                                </p>
                                 <p>
                                     My expertise lies at the intersection of <strong
                                         class="text-text-primary"
                                         >product, code and business</strong
-                                    >: I understand what the business needs, translate it
-                                    into technical architecture and execute it. From CRM
-                                    iLead (lead-to-cash), to automation platforms with n8n,
-                                    headless e-commerce and desktop apps with Kotlin.
+                                    >: I understand what the business needs,
+                                    translate it into technical architecture and
+                                    execute it. From CRM iLead (lead-to-cash),
+                                    to automation platforms with n8n, headless
+                                    e-commerce and desktop apps with Kotlin.
                                 </p>
                                 <p>
-                                    I don't care about code just for the sake of coding. I
-                                    care about <strong class="text-text-primary"
+                                    I don't care about code just for the sake of
+                                    coding. I care about <strong
+                                        class="text-text-primary"
                                         >real impact</strong
-                                    >: time saved, processes automated, products that users
-                                    love.
+                                    >: time saved, processes automated, products
+                                    that users love.
                                 </p>
                             </div>
-                        </details>
-                    </div>
-                </div>
-            </div>
 
-            <!-- ── Lo que hago ── -->
-            <div class="space-y-6 mb-16">
-                <h2
-                    class="text-xl font-black text-text-primary flex items-center gap-3"
-                >
-                    <span class="text-accent">02</span>
-                    What I do
-                </h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {
-                        [
-                            {
-                                icon: iconWhatWeb,
-                                text: "Web & apps with Astro, Tailwind CSS, React and TypeScript",
-                                iconClass: "border-secondary/30 bg-secondary/10 text-secondary",
-                            },
-                            {
-                                icon: iconWhatSupabase,
-                                text: "Backends & APIs with Supabase/PostgreSQL and Firebase",
-                                iconClass: "border-secondary/30 bg-secondary/10 text-secondary",
-                            },
-                            {
-                                icon: iconWhatAutomation,
-                                text: "Business process automation with n8n and webhooks",
-                                iconClass: "border-accent/25 bg-accent/10 text-accent",
-                            },
-                            {
-                                icon: iconWhatTalk,
-                                text: "AI Chatbots and assistants for lead generation and support",
-                                iconClass: "border-accent/25 bg-accent/10 text-accent",
-                            },
-                            {
-                                icon: iconWhatDesktop,
-                                text: "Desktop apps with Java, Kotlin, Compose Multiplatform",
-                                iconClass: "border-secondary/30 bg-secondary/10 text-secondary",
-                            },
-                            {
-                                icon: iconWhatCloud,
-                                text: "Infrastructure with Docker, Traefik, DigitalOcean and VPS",
-                                iconClass: "border-secondary/30 bg-secondary/10 text-secondary",
-                            },
-                            {
-                                icon: iconWhatCommerce,
-                                text: "Headless e-commerce with WooCommerce API",
-                                iconClass: "border-accent/25 bg-accent/10 text-accent",
-                            },
-                            {
-                                icon: iconWhatArchitecture,
-                                text: "Scalable multi-tenant architectures",
-                                iconClass: "border-accent/25 bg-accent/10 text-accent",
-                            },
-                        ].map((item) => (
-                            <div class="motion-surface flex items-start gap-3 bg-bg-secondary border border-ui-border rounded-xl p-4 hover:border-secondary/30 transition-colors" data-motion-active="false">
-                                <span
-                                    class={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border mt-0.5 leading-none [&>svg]:block [&>svg]:h-4.5 [&>svg]:w-4.5 ${item.iconClass}`}
-                                    set:html={item.icon}
-                                />
-                                <span class="text-text-secondary text-sm leading-relaxed">
-                                    {item.text}
-                                </span>
+                            <div class="space-y-4 sm:hidden">
+                                <p>
+                                    I'm <strong class="text-text-primary"
+                                        >Rubén Pezuela García</strong
+                                    >, a Full Stack Developer obsessed with
+                                    automation and products that actually work
+                                    in production. Currently I'm the <strong
+                                        class="text-text-primary"
+                                        >Cofounder and CTO at iCreate Group</strong
+                                    >, where I design and implement the entire
+                                    technical infrastructure — no 20-person
+                                    teams, no slow processes, just clean code
+                                    and scalable solutions.
+                                </p>
+
+                                <details
+                                    class="group rounded-xl border border-ui-border bg-bg-secondary/40"
+                                >
+                                    <summary
+                                        class="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-accent [&::-webkit-details-marker]:hidden"
+                                    >
+                                        <span class="group-open:hidden"
+                                            >...more</span
+                                        >
+                                        <span class="hidden group-open:inline"
+                                            >show less</span
+                                        >
+                                    </summary>
+
+                                    <div class="space-y-4 px-4 pb-4">
+                                        <p>
+                                            My expertise lies at the
+                                            intersection of <strong
+                                                class="text-text-primary"
+                                                >product, code and business</strong
+                                            >: I understand what the business
+                                            needs, translate it into technical
+                                            architecture and execute it. From
+                                            CRM iLead (lead-to-cash), to
+                                            automation platforms with n8n,
+                                            headless e-commerce and desktop apps
+                                            with Kotlin.
+                                        </p>
+                                        <p>
+                                            I don't care about code just for the
+                                            sake of coding. I care about <strong
+                                                class="text-text-primary"
+                                                >real impact</strong
+                                            >: time saved, processes automated,
+                                            products that users love.
+                                        </p>
+                                    </div>
+                                </details>
                             </div>
-                        ))
-                    }
-                </div>
-            </div>
-
-            <!-- ── Stack principal ── -->
-            <div class="space-y-6 mb-16">
-                <h2
-                    class="text-xl font-black text-text-primary flex items-center gap-3"
-                >
-                    <span class="text-accent">03</span>
-                    Stack in production
-                </h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {
-                        skillCategories.map((cat) => (
-                            <div class="motion-surface bg-bg-secondary border border-ui-border rounded-2xl p-5 hover:border-secondary/30 transition-all duration-300" data-motion-active="false">
-                                <h3 class="text-sm font-bold text-text-primary mb-3 flex items-center gap-2">
-                                    <span
-                                        class="text-2xl"
-                                        set:html={cat.icon}
-                                    />
-                                    {cat.title}
-                                </h3>
-                                <div class="flex flex-wrap gap-1.5">
-                                    {cat.skills.map((skill) => (
-                                        <TechBadge
-                                            label={skill.name}
-                                            variant="neutral"
-                                            size="sm"
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        ))
-                    }
-                </div>
-            </div>
-
-            <!-- ── Ahora mismo ── -->
-            <div class="space-y-5 mb-16">
-                <h2
-                    class="text-xl font-black text-text-primary flex items-center gap-3"
-                >
-                    <span class="text-accent">04</span>
-                    Currently focused on...
-                </h2>
-                <div
-                    class="motion-surface bg-secondary/8 border border-secondary/25 rounded-2xl p-6 relative overflow-hidden"
-                    data-motion-active="false"
-                >
-                    <div
-                        class="absolute top-4 right-4 w-2 h-2 bg-accent rounded-full animate-pulse"
-                    >
-                    </div>
-                    <p class="text-text-secondary leading-relaxed">
-                        <strong class="text-secondary"
-                            >AI Voice Agent for calls</strong
-                        > — System that handles incoming calls, speaks naturally and
-                        automatically schedules appointments. Integrated with <strong
-                            class="text-text-primary">Supabase</strong
-                        > for persistence and <strong class="text-text-primary"
-                            >Docker + Traefik</strong
-                        > on DigitalOcean. The goal: zero human intervention in the
-                        qualification and scheduling process.
-                    </p>
-                </div>
-            </div>
-
-            <!-- ── Experiencia ── -->
-            <div class="space-y-6">
-                <h2
-                    class="text-xl font-black text-text-primary flex items-center gap-3"
-                >
-                    <span class="text-accent">05</span>
-                    Experience
-                </h2>
-                <div class="relative">
-                    <div
-                        class="absolute left-5 top-0 bottom-0 w-px bg-ui-border"
-                    >
-                    </div>
-                    <div class="relative pl-14">
-                        <div
-                            class="absolute left-3.5 top-1 w-3.5 h-3.5 bg-secondary rounded-full border-2 border-bg-primary shadow-[0_0_12px_rgba(59,130,246,0.5)]"
-                        >
                         </div>
+                    </div>
+
+                    <!-- ── Lo que hago ── -->
+                    <div class="space-y-6 mb-16">
+                        <h2
+                            class="text-xl font-black text-text-primary flex items-center gap-3"
+                        >
+                            <span class="text-accent">02</span>
+                            What I do
+                        </h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {
+                                [
+                                    {
+                                        icon: iconWhatWeb,
+                                        text: "Web & apps with Astro, Tailwind CSS, React and TypeScript",
+                                        iconClass:
+                                            "border-secondary/30 bg-secondary/10 text-secondary",
+                                    },
+                                    {
+                                        icon: iconWhatSupabase,
+                                        text: "Backends & APIs with Supabase/PostgreSQL and Firebase",
+                                        iconClass:
+                                            "border-secondary/30 bg-secondary/10 text-secondary",
+                                    },
+                                    {
+                                        icon: iconWhatAutomation,
+                                        text: "Business process automation with n8n and webhooks",
+                                        iconClass:
+                                            "border-accent/25 bg-accent/10 text-accent",
+                                    },
+                                    {
+                                        icon: iconWhatTalk,
+                                        text: "AI Chatbots and assistants for lead generation and support",
+                                        iconClass:
+                                            "border-accent/25 bg-accent/10 text-accent",
+                                    },
+                                    {
+                                        icon: iconWhatDesktop,
+                                        text: "Desktop apps with Java, Kotlin, Compose Multiplatform",
+                                        iconClass:
+                                            "border-secondary/30 bg-secondary/10 text-secondary",
+                                    },
+                                    {
+                                        icon: iconWhatCloud,
+                                        text: "Infrastructure with Docker, Traefik, DigitalOcean and VPS",
+                                        iconClass:
+                                            "border-secondary/30 bg-secondary/10 text-secondary",
+                                    },
+                                    {
+                                        icon: iconWhatCommerce,
+                                        text: "Headless e-commerce with WooCommerce API",
+                                        iconClass:
+                                            "border-accent/25 bg-accent/10 text-accent",
+                                    },
+                                    {
+                                        icon: iconWhatArchitecture,
+                                        text: "Scalable multi-tenant architectures",
+                                        iconClass:
+                                            "border-accent/25 bg-accent/10 text-accent",
+                                    },
+                                ].map((item) => (
+                                    <div
+                                        class="motion-surface flex items-start gap-3 bg-bg-secondary border border-ui-border rounded-xl p-4 hover:border-secondary/30 transition-colors"
+                                        data-motion-active="false"
+                                    >
+                                        <span
+                                            class={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border mt-0.5 leading-none [&>svg]:block [&>svg]:h-4.5 [&>svg]:w-4.5 ${item.iconClass}`}
+                                            set:html={item.icon}
+                                        />
+                                        <span class="text-text-secondary text-sm leading-relaxed">
+                                            {item.text}
+                                        </span>
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    </div>
+
+                    <!-- ── Stack principal ── -->
+                    <div class="space-y-6 mb-16">
+                        <h2
+                            class="text-xl font-black text-text-primary flex items-center gap-3"
+                        >
+                            <span class="text-accent">03</span>
+                            Stack in production
+                        </h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {
+                                skillCategories.map((cat) => (
+                                    <div
+                                        class="motion-surface bg-bg-secondary border border-ui-border rounded-2xl p-5 hover:border-secondary/30 transition-all duration-300"
+                                        data-motion-active="false"
+                                    >
+                                        <h3 class="text-sm font-bold text-text-primary mb-3 flex items-center gap-2">
+                                            <span
+                                                class="text-2xl"
+                                                set:html={cat.icon}
+                                            />
+                                            {cat.title}
+                                        </h3>
+                                        <div class="flex flex-wrap gap-1.5">
+                                            {cat.skills.map((skill) => (
+                                                <TechBadge
+                                                    label={skill.name}
+                                                    variant="neutral"
+                                                    size="sm"
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    </div>
+
+                    <!-- ── Ahora mismo ── -->
+                    <div class="space-y-5 mb-16">
+                        <h2
+                            class="text-xl font-black text-text-primary flex items-center gap-3"
+                        >
+                            <span class="text-accent">04</span>
+                            Currently focused on...
+                        </h2>
                         <div
-                            class="motion-surface bg-bg-secondary border border-ui-border rounded-2xl p-6"
+                            class="motion-surface bg-secondary/8 border border-secondary/25 rounded-2xl p-6 relative overflow-hidden"
                             data-motion-active="false"
                         >
                             <div
-                                class="flex flex-wrap items-start justify-between gap-3 mb-3"
+                                class="absolute top-4 right-4 w-2 h-2 bg-accent rounded-full animate-pulse"
                             >
-                                <div>
-                                    <h3
-                                        class="text-xl font-black text-text-primary"
-                                    >
-                                        Cofounder & CTO
-                                    </h3>
-                                    <p class="text-secondary font-semibold">
-                                        iCreate Group
-                                    </p>
-                                </div>
-                                <span
-                                    class="text-xs text-text-muted bg-bg-tertiary border border-ui-border rounded-full px-3 py-1"
-                                    >2025 – Present</span
-                                >
                             </div>
-                            <p
-                                class="text-text-secondary text-base leading-relaxed mb-4"
-                            >
-                                Responsible for the entire technical
-                                infrastructure of the company. System design,
-                                full stack development and operations. No
-                                external teams, no agencies.
+                            <p class="text-text-secondary leading-relaxed">
+                                <strong class="text-secondary"
+                                    >AI Voice Agent for calls</strong
+                                > — System that handles incoming calls, speaks naturally
+                                and automatically schedules appointments. Integrated
+                                with <strong class="text-text-primary"
+                                    >Supabase</strong
+                                > for persistence and <strong
+                                    class="text-text-primary"
+                                    >Docker + Traefik</strong
+                                > on DigitalOcean. The goal: zero human intervention
+                                in the qualification and scheduling process.
                             </p>
-                            <div class="flex flex-wrap gap-1.5">
-                                {
-                                    [
-                                        "CRM iLead",
-                                        "n8n",
-                                        "Supabase",
-                                        "Astro",
-                                        "Kotlin",
-                                        "Docker",
-                                        "DigitalOcean",
-                                    ].map((t) => (
-                                        <TechBadge
-                                            label={t}
-                                            variant="neutral"
-                                            size="sm"
-                                        />
-                                    ))
-                                }
+                        </div>
+                    </div>
+
+                    <!-- ── Experiencia ── -->
+                    <div class="space-y-6">
+                        <h2
+                            class="text-xl font-black text-text-primary flex items-center gap-3"
+                        >
+                            <span class="text-accent">05</span>
+                            Experience
+                        </h2>
+                        <div class="relative">
+                            <div
+                                class="absolute left-5 top-0 bottom-0 w-px bg-ui-border"
+                            >
+                            </div>
+                            <div class="relative pl-14">
+                                <div
+                                    class="absolute left-3.5 top-1 w-3.5 h-3.5 bg-secondary rounded-full border-2 border-bg-primary shadow-[0_0_12px_rgba(59,130,246,0.5)]"
+                                >
+                                </div>
+                                <div
+                                    class="motion-surface bg-bg-secondary border border-ui-border rounded-2xl p-6"
+                                    data-motion-active="false"
+                                >
+                                    <div
+                                        class="flex flex-wrap items-start justify-between gap-3 mb-3"
+                                    >
+                                        <div>
+                                            <h3
+                                                class="text-xl font-black text-text-primary"
+                                            >
+                                                Cofounder & CTO
+                                            </h3>
+                                            <p
+                                                class="text-secondary font-semibold"
+                                            >
+                                                iCreate Group
+                                            </p>
+                                        </div>
+                                        <span
+                                            class="text-xs text-text-muted bg-bg-tertiary border border-ui-border rounded-full px-3 py-1"
+                                            >2025 – Present</span
+                                        >
+                                    </div>
+                                    <p
+                                        class="text-text-secondary text-base leading-relaxed mb-4"
+                                    >
+                                        Responsible for the entire technical
+                                        infrastructure of the company. System
+                                        design, full stack development and
+                                        operations. No external teams, no
+                                        agencies.
+                                    </p>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        {
+                                            [
+                                                "CRM iLead",
+                                                "n8n",
+                                                "Supabase",
+                                                "Astro",
+                                                "Kotlin",
+                                                "Docker",
+                                                "DigitalOcean",
+                                            ].map((t) => (
+                                                <TechBadge
+                                                    label={t}
+                                                    variant="neutral"
+                                                    size="sm"
+                                                />
+                                            ))
+                                        }
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- ── CTA final ── -->
-            <div
-                class="motion-surface mt-16 text-center relative overflow-hidden rounded-3xl border border-secondary/20 bg-bg-secondary/85 p-8 sm:p-12 shadow-[0_18px_60px_rgba(0,0,0,0.28)]"
-                data-motion-active="false"
-            >
-                <div
-                    class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(59,130,246,0.16),transparent_58%)]"
-                >
-                </div>
-                <div
-                    class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(255,255,0,0.08),transparent_52%)]"
-                >
-                </div>
-                <div
-                    class="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.03),transparent_32%,rgba(10,10,10,0.12)_100%)]"
-                >
-                </div>
-                <div
-                    class="pointer-events-none absolute left-10 top-8 h-40 w-40 rounded-full bg-secondary/14 blur-3xl"
-                >
-                </div>
-                <div
-                    class="pointer-events-none absolute right-10 top-1/2 h-28 w-28 -translate-y-1/2 rounded-full bg-secondary/8 blur-3xl"
-                >
-                </div>
-                <div
-                    class="pointer-events-none absolute -bottom-12 right-12 h-36 w-36 rounded-full bg-accent/10 blur-3xl"
-                >
-                </div>
-                <div
-                    class="pointer-events-none absolute inset-x-10 top-0 h-px bg-linear-to-r from-transparent via-secondary/40 to-transparent"
-                >
-                </div>
-
-                <div class="relative z-10">
-                    <h2 class="text-2xl font-black text-text-primary mb-3">
-                        Should we work together?
-                    </h2>
-                    <p
-                        class="text-text-secondary mb-6 max-w-md mx-auto leading-relaxed"
+                    <!-- ── CTA final ── -->
+                    <div
+                        class="motion-surface mt-16 text-center relative overflow-hidden rounded-3xl border border-secondary/20 bg-bg-secondary/85 p-8 sm:p-12 shadow-[0_18px_60px_rgba(0,0,0,0.28)]"
+                        data-motion-active="false"
                     >
-                        If you have a project that needs serious technical
-                        development, let me know. I reply in less than 24h.
-                    </p>
-                    <Button href="/en/contacto" variant="primary" size="lg">
-                        Let's talk about it
-                        <svg
-                            class="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                        <div
+                            class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(59,130,246,0.16),transparent_58%)]"
                         >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                        </svg>
-                    </Button>
-                </div>
-            </div>
+                        </div>
+                        <div
+                            class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(255,255,0,0.08),transparent_52%)]"
+                        >
+                        </div>
+                        <div
+                            class="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.03),transparent_32%,rgba(10,10,10,0.12)_100%)]"
+                        >
+                        </div>
+                        <div
+                            class="pointer-events-none absolute left-10 top-8 h-40 w-40 rounded-full bg-secondary/14 blur-3xl"
+                        >
+                        </div>
+                        <div
+                            class="pointer-events-none absolute right-10 top-1/2 h-28 w-28 -translate-y-1/2 rounded-full bg-secondary/8 blur-3xl"
+                        >
+                        </div>
+                        <div
+                            class="pointer-events-none absolute -bottom-12 right-12 h-36 w-36 rounded-full bg-accent/10 blur-3xl"
+                        >
+                        </div>
+                        <div
+                            class="pointer-events-none absolute inset-x-10 top-0 h-px bg-linear-to-r from-transparent via-secondary/40 to-transparent"
+                        >
+                        </div>
+
+                        <div class="relative z-10">
+                            <h2
+                                class="text-2xl font-black text-text-primary mb-3"
+                            >
+                                Should we work together?
+                            </h2>
+                            <p
+                                class="text-text-secondary mb-6 max-w-md mx-auto leading-relaxed"
+                            >
+                                If you have a project that needs serious
+                                technical development, let me know. I reply in
+                                less than 24h.
+                            </p>
+                            <Button
+                                href="/en/contacto"
+                                variant="primary"
+                                size="lg"
+                            >
+                                Let's talk about it
+                                <svg
+                                    class="w-5 h-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                                </svg>
+                            </Button>
+                        </div>
+                    </div>
                 </Container>
             </section>
         </div>
     </div>
 </BaseLayout>
-
-
