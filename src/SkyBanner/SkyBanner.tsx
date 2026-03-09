@@ -12,6 +12,8 @@ export type SkyBannerProps = {
   className?: string
 }
 
+type MotionMode = 'pointer' | 'scroll' | 'off'
+
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
 const lerp = (start: number, end: number, factor: number) => start + (end - start) * factor
 
@@ -48,7 +50,7 @@ export default function SkyBanner({
     currentY: 0,
     targetX: 0,
     targetY: 0,
-    enabled: true,
+    mode: 'pointer' as MotionMode,
   })
 
   const layerSources = {
@@ -97,16 +99,52 @@ export default function SkyBanner({
     const coarsePointerQuery = window.matchMedia('(pointer: coarse)')
 
     const syncMotionPreference = () => {
-      const enabled = !reducedMotionQuery.matches && !coarsePointerQuery.matches
+      let mode: MotionMode = 'pointer'
 
-      motionRef.current.enabled = enabled
+      if (reducedMotionQuery.matches) {
+        mode = 'off'
+      } else if (coarsePointerQuery.matches) {
+        mode = 'scroll'
+      }
+
+      motionRef.current.mode = mode
       motionRef.current.currentX = 0
       motionRef.current.currentY = 0
       motionRef.current.targetX = 0
       motionRef.current.targetY = 0
 
-      node.dataset.motion = enabled ? 'on' : 'off'
+      node.dataset.motion = mode === 'off' ? 'off' : 'on'
+      node.dataset.motionSource = mode
       applyMotion(node, 0, 0)
+
+      if (mode === 'scroll') {
+        handleWindowScroll()
+      }
+    }
+
+    const handleWindowScroll = () => {
+      if (motionRef.current.mode !== 'scroll') {
+        return
+      }
+
+      const bounds = node.getBoundingClientRect()
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1
+      const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 1
+      const centerY = bounds.top + bounds.height / 2
+      const centerX = bounds.left + bounds.width / 2
+
+      const normalizedY = clamp(
+        (viewportHeight * 0.5 - centerY) / Math.max(viewportHeight * 0.62, 1),
+        -1,
+        1,
+      )
+      const normalizedX = clamp(
+        (viewportWidth * 0.5 - centerX) / Math.max(viewportWidth * 0.92, 1),
+        -0.45,
+        0.45,
+      )
+
+      updateTarget(normalizedX * 0.78, normalizedY)
     }
 
     syncMotionPreference()
@@ -120,7 +158,7 @@ export default function SkyBanner({
     )
 
     const handleWindowPointerMove = (event: PointerEvent) => {
-      if (!motionRef.current.enabled) {
+      if (motionRef.current.mode !== 'pointer') {
         return
       }
 
@@ -142,17 +180,23 @@ export default function SkyBanner({
     }
 
     const handleWindowPointerLeave = () => {
-      updateTarget(0, 0)
+      if (motionRef.current.mode === 'pointer') {
+        updateTarget(0, 0)
+      }
     }
 
     window.addEventListener('pointermove', handleWindowPointerMove, { passive: true })
     window.addEventListener('pointerleave', handleWindowPointerLeave)
+    window.addEventListener('scroll', handleWindowScroll, { passive: true })
+    window.addEventListener('resize', handleWindowScroll, { passive: true })
 
     return () => {
       unsubscribeReducedMotion()
       unsubscribeCoarsePointer()
       window.removeEventListener('pointermove', handleWindowPointerMove)
       window.removeEventListener('pointerleave', handleWindowPointerLeave)
+      window.removeEventListener('scroll', handleWindowScroll)
+      window.removeEventListener('resize', handleWindowScroll)
 
       if (frameRef.current !== 0) {
         window.cancelAnimationFrame(frameRef.current)
@@ -161,7 +205,7 @@ export default function SkyBanner({
   }, [])
 
   const updateTarget = (x: number, y: number) => {
-    if (!motionRef.current.enabled) {
+    if (motionRef.current.mode === 'off') {
       return
     }
 
@@ -173,7 +217,7 @@ export default function SkyBanner({
   const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const node = bannerRef.current
 
-    if (!node || !motionRef.current.enabled) {
+    if (!node || motionRef.current.mode !== 'pointer') {
       return
     }
 

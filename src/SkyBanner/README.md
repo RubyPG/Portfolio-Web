@@ -57,8 +57,11 @@ import SkyBanner from '@/components/SkyBanner/SkyBanner.tsx'
 
 ## Notas Tecnicas
 - No necesita dependencias nuevas (solo React, ya presente en Astro al usar integracion React).
-- El componente ya respeta `prefers-reduced-motion` y punteros tactiles.
-- Si quieres que sea solo fondo sin interaccion, elimina `onPointerMove` y `onPointerLeave` de `SkyBanner.tsx`.
+- Modo de movimiento automatico:
+  - Desktop: parallax 3D por puntero.
+  - Movil/tactil: parallax 3D por scroll.
+  - `prefers-reduced-motion`: animacion desactivada.
+- Si quieres usarlo como fondo estatico, fija `data-motion='off'` o elimina los handlers/eventos de movimiento en `SkyBanner.tsx`.
 
 ## Checklist Rapido
 - [ ] Archivos `SkyBanner.*` + `layers.ts` copiados en `src/components/SkyBanner/`

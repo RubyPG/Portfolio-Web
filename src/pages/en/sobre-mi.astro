@@ -63,10 +63,10 @@ const iconWhatArchitecture =
         <div class="relative z-10 overflow-hidden bg-bg-primary/10 shadow-[0_20px_80px_rgba(15,23,42,0.35)] animate-fade-in">
             <Container size="lg" class="relative z-10">
                 <div
-                    class="relative z-10 flex min-h-[28rem] flex-col sm:flex-row items-start gap-10 py-8 sm:py-10 lg:min-h-[30rem] lg:py-12"
+                    class="relative z-10 flex min-h-[25rem] flex-col items-start gap-6 py-6 sm:min-h-[28rem] sm:flex-row sm:gap-10 sm:py-10 lg:min-h-[30rem] lg:py-12"
                 >
                     <!-- Photo -->
-                    <div class="shrink-0">
+                    <div class="shrink-0 mx-auto sm:mx-0">
                         <div class="relative">
                             <div
                                 class="absolute -inset-3 rounded-2xl bg-linear-to-br from-secondary/30 to-accent/10 blur-xl opacity-60"
@@ -104,8 +104,8 @@ const iconWhatArchitecture =
                     </div>
 
                     <!-- Intro -->
-                    <div class="max-w-xl">
-                        <div class="flex flex-wrap gap-2 mb-4">
+                    <div class="max-w-xl w-full rounded-[1.4rem] border border-white/10 bg-[linear-gradient(160deg,rgba(5,10,18,0.58),rgba(5,10,18,0.22))] p-4 backdrop-blur-sm sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+                        <div class="flex flex-wrap gap-1.5 mb-3 sm:mb-4">
                             <Badge variant="accent" size="md">Cofounder & CTO</Badge
                             >
                             <Badge variant="neutral" size="md">iCreate Group</Badge>
@@ -113,14 +113,14 @@ const iconWhatArchitecture =
                             >
                         </div>
                         <h1
-                            class="text-3xl sm:text-5xl font-black text-white mb-3 leading-tight"
+                            class="text-2xl sm:text-5xl font-black text-white mb-2 sm:mb-3 leading-tight"
                         >
                             {site.name}
                         </h1>
-                        <p class="text-secondary font-semibold text-lg mb-4">
+                        <p class="text-secondary font-semibold text-sm sm:text-lg mb-3 sm:mb-4 tracking-[0.08em] uppercase sm:tracking-normal sm:normal-case">
                             Full Stack Developer · CRM · Automation · Cloud
                         </p>
-                        <p class="text-white/85 leading-relaxed max-w-lg">
+                        <p class="text-white/85 text-sm sm:text-base leading-relaxed max-w-lg">
                             I build digital products <strong
                                 class="text-white"
                                 >from start to finish</strong
@@ -128,8 +128,8 @@ const iconWhatArchitecture =
                             deployment.
                         </p>
 
-                        <div class="flex flex-wrap gap-3 mt-6">
-                            <Button href="/en/contacto" variant="primary" size="md">
+                        <div class="mt-5 flex flex-col gap-2.5 sm:mt-6 sm:flex-row sm:flex-wrap sm:gap-3">
+                            <Button href="/en/contacto" variant="primary" size="md" class="w-full sm:w-auto">
                                 <svg
                                     class="w-4 h-4"
                                     fill="none"
@@ -149,6 +149,7 @@ const iconWhatArchitecture =
                                 href="/cv.pdf"
                                 variant="outline"
                                 size="md"
+                                class="w-full sm:w-auto"
                                 external
                             >
                                 <svg

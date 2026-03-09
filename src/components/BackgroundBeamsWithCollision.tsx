@@ -11,29 +11,30 @@ interface BeamOptions {
   x: number;
   duration: number;
   delay: number;
-  repeatDelay: number;
   className?: string;
 }
 
 const beams: BeamOptions[] = [
-  { x: 4, duration: 5.1, delay: 0, repeatDelay: 1.2 },
-  { x: 9, duration: 4.5, delay: 0.15, repeatDelay: 1.8, className: 'h-8' },
-  { x: 14, duration: 5.7, delay: 0.3, repeatDelay: 1.4 },
-  { x: 20, duration: 4.8, delay: 0.45, repeatDelay: 1.9, className: 'h-14' },
-  { x: 26, duration: 5.3, delay: 0.6, repeatDelay: 1.3 },
-  { x: 32, duration: 4.9, delay: 0.8, repeatDelay: 1.7, className: 'h-8' },
-  { x: 38, duration: 6, delay: 0.95, repeatDelay: 1.5, className: 'h-20' },
-  { x: 44, duration: 5.2, delay: 1.1, repeatDelay: 1.2 },
-  { x: 50, duration: 4.7, delay: 1.25, repeatDelay: 1.8, className: 'h-14' },
-  { x: 56, duration: 5.6, delay: 1.4, repeatDelay: 1.4 },
-  { x: 62, duration: 4.6, delay: 1.55, repeatDelay: 1.9, className: 'h-8' },
-  { x: 68, duration: 5.8, delay: 1.75, repeatDelay: 1.5, className: 'h-20' },
-  { x: 74, duration: 4.9, delay: 1.95, repeatDelay: 1.3 },
-  { x: 80, duration: 5.4, delay: 2.1, repeatDelay: 1.7, className: 'h-14' },
-  { x: 86, duration: 4.8, delay: 2.3, repeatDelay: 1.2 },
-  { x: 91, duration: 5.9, delay: 2.45, repeatDelay: 1.6, className: 'h-20' },
-  { x: 96, duration: 5, delay: 2.6, repeatDelay: 1.4 }
+  { x: 4, duration: 5.1, delay: 0 },
+  { x: 9, duration: 4.5, delay: 0.15, className: 'h-8' },
+  { x: 14, duration: 5.7, delay: 0.3 },
+  { x: 20, duration: 4.8, delay: 0.45, className: 'h-14' },
+  { x: 26, duration: 5.3, delay: 0.6 },
+  { x: 32, duration: 4.9, delay: 0.8, className: 'h-8' },
+  { x: 38, duration: 6, delay: 0.95, className: 'h-20' },
+  { x: 44, duration: 5.2, delay: 1.1 },
+  { x: 50, duration: 4.7, delay: 1.25, className: 'h-14' },
+  { x: 56, duration: 5.6, delay: 1.4 },
+  { x: 62, duration: 4.6, delay: 1.55, className: 'h-8' },
+  { x: 68, duration: 5.8, delay: 1.75, className: 'h-20' },
+  { x: 74, duration: 4.9, delay: 1.95 },
+  { x: 80, duration: 5.4, delay: 2.1, className: 'h-14' },
+  { x: 86, duration: 4.8, delay: 2.3 },
+  { x: 91, duration: 5.9, delay: 2.45, className: 'h-20' },
+  { x: 96, duration: 5, delay: 2.6 }
 ];
+
+const randomBetween = (min: number, max: number) => min + Math.random() * (max - min);
 
 export const BackgroundBeamsWithCollision = ({
   children,
@@ -117,6 +118,19 @@ const CollisionBeam = ({
   const [beamKey, setBeamKey] = useState(0);
   const [cycleCollisionDetected, setCycleCollisionDetected] = useState(false);
 
+  const cycleConfig = useMemo(() => {
+    const initialCycle = beamKey === 0;
+
+    return {
+      delay: initialCycle ? beamOptions.delay : randomBetween(0.03, 0.34),
+      duration: beamOptions.duration * randomBetween(0.88, 1.16),
+      startY: randomBetween(-360, -240),
+      endY: travelDistance + randomBetween(24, 90),
+      driftX: randomBetween(-8, 8),
+      peakOpacity: randomBetween(0.84, 0.98)
+    };
+  }, [beamKey, beamOptions.delay, beamOptions.duration, travelDistance]);
+
   useEffect(() => {
     const checkCollision = () => {
       if (
@@ -147,25 +161,19 @@ const CollisionBeam = ({
       }
     };
 
-    const animationInterval = window.setInterval(checkCollision, 40);
+    const animationInterval = window.setInterval(checkCollision, 34);
     return () => window.clearInterval(animationInterval);
-  }, [collisionRef, cycleCollisionDetected, parentRef, travelDistance]);
+  }, [collisionRef, cycleCollisionDetected, parentRef, travelDistance, beamKey]);
 
   useEffect(() => {
     if (!collision.detected) return;
 
     const clearCollisionTimer = window.setTimeout(() => {
       setCollision({ detected: false, coordinates: null });
-      setCycleCollisionDetected(false);
-    }, 1200);
-
-    const resetBeamTimer = window.setTimeout(() => {
-      setBeamKey((prevKey) => prevKey + 1);
-    }, 1350);
+    }, 920);
 
     return () => {
       window.clearTimeout(clearCollisionTimer);
-      window.clearTimeout(resetBeamTimer);
     };
   }, [collision.detected]);
 
@@ -189,20 +197,23 @@ const CollisionBeam = ({
                 : '3rem'
         }}
         initial={{
-          translateY: -280,
+          translateY: cycleConfig.startY,
+          x: cycleConfig.driftX * -0.3,
           opacity: 0
         }}
         animate={{
-          translateY: travelDistance,
-          opacity: [0, 0.95, 0.95]
+          translateY: cycleConfig.endY,
+          x: cycleConfig.driftX,
+          opacity: [0, cycleConfig.peakOpacity, cycleConfig.peakOpacity * 0.92]
         }}
         transition={{
-          duration: beamOptions.duration,
-          repeat: Number.POSITIVE_INFINITY,
-          repeatType: 'loop',
+          duration: cycleConfig.duration,
           ease: 'linear',
-          delay: beamOptions.delay,
-          repeatDelay: beamOptions.repeatDelay
+          delay: cycleConfig.delay
+        }}
+        onAnimationComplete={() => {
+          setCycleCollisionDetected(false);
+          setBeamKey((prevKey) => prevKey + 1);
         }}
       />
 
