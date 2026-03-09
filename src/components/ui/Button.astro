@@ -6,6 +6,7 @@ interface Props {
     href?: string;
     variant?: "primary" | "secondary" | "ghost" | "outline";
     size?: "sm" | "md" | "lg";
+    type?: "button" | "submit" | "reset";
     class?: string;
     ariaLabel?: string;
     external?: boolean;
@@ -16,6 +17,7 @@ const {
     href,
     variant = "primary",
     size = "md",
+    type = "button",
     class: className = "",
     ariaLabel,
     external = false,
@@ -81,7 +83,7 @@ const resolvedHref = href ? withBasePath(href) : undefined;
             aria-label={ariaLabel}
             id={id}
             style={inlineStyle}
-            type="button"
+            type={type}
         >
             <span class={contentClasses}>
                 <slot />
