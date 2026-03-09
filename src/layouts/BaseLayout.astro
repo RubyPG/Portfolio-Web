@@ -6,6 +6,7 @@ import MotionEffectsController from "../components/layout/MotionEffectsControlle
 import ScrollChrome from "../components/layout/ScrollChrome";
 import ScrollRevealController from "../components/layout/ScrollRevealController";
 import { site } from "../data/site";
+import { stripBasePath, withBasePath } from "../utils/base-path";
 import "../styles/globals.css";
 
 interface Props {
@@ -26,17 +27,19 @@ const pageTitle = title
     ? site.seo.titleTemplate.replace("%s", title)
     : site.seo.defaultTitle;
 
+const canonicalOrigin = Astro.site ?? new URL(site.siteUrl);
 const canonicalUrl =
-    canonical || new URL(Astro.url.pathname, site.siteUrl).href;
+    canonical || new URL(Astro.url.pathname, canonicalOrigin).href;
 
-const isEn = Astro.url.pathname.startsWith("/en");
+const routePath = stripBasePath(Astro.url.pathname);
+const isEn = routePath.startsWith("/en");
 const htmlLang = isEn ? "en" : "es";
 const ogLocale = isEn ? "en_US" : site.locale;
 
 const normalizedPath =
-    Astro.url.pathname.endsWith("/") && Astro.url.pathname !== "/"
-        ? Astro.url.pathname.slice(0, -1)
-        : Astro.url.pathname;
+    routePath.endsWith("/") && routePath !== "/"
+        ? routePath.slice(0, -1)
+        : routePath;
 
 const revealPages = new Set([
     "/",
@@ -70,7 +73,7 @@ const enableScrollReveal = revealPages.has(normalizedPath);
         <meta property="og:url" content={canonicalUrl} />
         <meta
             property="og:image"
-            content={new URL(ogImage, site.siteUrl).href}
+            content={new URL(withBasePath(ogImage), canonicalOrigin).href}
         />
         <meta property="og:type" content="website" />
         <meta property="og:locale" content={ogLocale} />
@@ -82,11 +85,11 @@ const enableScrollReveal = revealPages.has(normalizedPath);
         <meta name="twitter:description" content={description} />
         <meta
             name="twitter:image"
-            content={new URL(ogImage, site.siteUrl).href}
+            content={new URL(withBasePath(ogImage), canonicalOrigin).href}
         />
 
         <!-- Favicon -->
-        <link rel="icon" type="image/png" href="/favicon.png" />
+        <link rel="icon" type="image/png" href={withBasePath("/favicon.png")} />
 
         <!-- Theme color -->
         <meta name="theme-color" content="#111111" />

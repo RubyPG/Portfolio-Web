@@ -2,8 +2,9 @@
 /* ── Navbar Component ── */
 import Container from "../ui/Container.astro";
 import LanguageSwitcher from "./LanguageSwitcher.astro";
+import { stripBasePath, withBasePath } from "../../utils/base-path";
 
-const currentPath = Astro.url.pathname;
+const currentPath = stripBasePath(Astro.url.pathname);
 const isEn = currentPath.startsWith("/en");
 
 const navLinks = isEn
@@ -37,12 +38,12 @@ const alternativePath = isEn
             <!-- Logo -->
             <div class="flex-1 flex justify-start">
                 <a
-                    href={isEn ? "/en" : "/"}
+                    href={withBasePath(isEn ? "/en" : "/")}
                     class="flex items-center gap-2.5 text-lg font-bold text-text-primary hover:text-secondary transition-colors duration-200 no-underline group"
                     aria-label={isEn ? "Go to home" : "Ir al inicio"}
                 >
                     <img
-                        src="/favicon.png"
+                        src={withBasePath("/favicon.png")}
                         alt="Logo"
                         class="w-10 h-10 rounded-md group-hover:scale-110 transition-transform duration-200"
                     />
@@ -66,7 +67,7 @@ const alternativePath = isEn
                                 currentPath.startsWith(link.href));
                         return (
                             <a
-                                href={link.href}
+                                href={withBasePath(link.href)}
                                 class:list={[
                                     "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 no-underline",
                                     isActive
@@ -145,7 +146,7 @@ const alternativePath = isEn
                                 currentPath.startsWith(link.href));
                         return (
                             <a
-                                href={link.href}
+                                href={withBasePath(link.href)}
                                 class:list={[
                                     "px-4 py-3 rounded-lg text-base font-medium transition-all duration-200 no-underline",
                                     isActive

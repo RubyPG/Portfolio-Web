@@ -1,4 +1,6 @@
 ---
+import { withBasePath } from "../../utils/base-path";
+
 interface Props {
     isEn: boolean;
     alternativePath: string;
@@ -59,7 +61,7 @@ const target = isEn
         ]}
     >
         <a
-            href={alternativePath}
+            href={withBasePath(alternativePath)}
             class="flex items-center justify-between gap-2.5 px-3 py-2 no-underline text-sm font-medium text-text-secondary hover:text-secondary hover:bg-secondary/10 transition-colors"
         >
             <span class="inline-flex items-center gap-1.5">

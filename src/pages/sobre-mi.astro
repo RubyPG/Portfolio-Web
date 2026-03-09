@@ -9,6 +9,7 @@ import BackgroundBeamsWithCollision from "../components/BackgroundBeamsWithColli
 import SkyBanner from "../components/SkyBanner";
 import { site } from "../data/site";
 import { skillCategories } from "../data/skills";
+import { withBasePath } from "../utils/base-path";
 
 const iconWhatWeb =
     '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h16q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm0-2h10.5v-3.5H4zm12.5 0H20V9h-3.5zM4 12.5h10.5V9H4z"/></svg>';
@@ -37,8 +38,8 @@ const iconWhatArchitecture =
         <div class="absolute inset-0 z-0">
             <SkyBanner
                 client:load
-                sunSrc="/images/sol.png"
-                cloudsSrc="/images/nubes.png"
+                sunSrc={withBasePath("/images/sol.png")}
+                cloudsSrc={withBasePath("/images/nubes.png")}
                 height="clamp(320px, 62vw, 720px)"
                 ariaLabel="Background banner"
                 className="h-full w-full !rounded-none"
@@ -75,7 +76,7 @@ const iconWhatArchitecture =
                                 class="w-36 h-36 sm:w-44 sm:h-44 rounded-2xl overflow-hidden border border-secondary/30 shadow-[0_0_40px_rgba(59,130,246,0.2)] relative"
                             >
                                 <img
-                                    src="/FotoPerfil.png"
+                                    src={withBasePath("/FotoPerfil.png")}
                                     alt={`Foto de ${site.name}`}
                                     class="w-full h-full object-cover"
                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"

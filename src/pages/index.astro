@@ -13,6 +13,7 @@ import { site } from "../data/site";
 import { getFeaturedProjects } from "../data/projects";
 import { getProjectTechLogos } from "../data/project-tech-logos";
 import { skillCategories } from "../data/skills";
+import { withBasePath } from "../utils/base-path";
 
 const featuredProjects = getFeaturedProjects();
 const projectTechLogos = getProjectTechLogos();
@@ -112,7 +113,7 @@ const heroStats = [
 					<div class="mb-6 inline-flex items-center gap-3 rounded-full border border-white/10 bg-[rgba(6,10,18,0.82)] px-3 py-2 backdrop-blur-xl lg:hidden">
 						<div class="h-11 w-11 overflow-hidden rounded-full border border-secondary/35 bg-bg-tertiary">
 							<img
-								src="/FotoPerfil.png"
+								src={withBasePath("/FotoPerfil.png")}
 								alt={`Foto de ${site.name}`}
 								class="h-full w-full object-cover"
 							/>
@@ -187,7 +188,7 @@ const heroStats = [
 							class="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start"
 						>
 							<Button
-								href="/proyectos"
+								href={withBasePath("/proyectos")}
 								variant="primary"
 								size="lg"
 								class="w-full sm:w-auto"
@@ -207,7 +208,7 @@ const heroStats = [
 								</svg>
 							</Button>
 							<Button
-								href="/contacto"
+								href={withBasePath("/contacto")}
 								variant="outline"
 								size="lg"
 								class="w-full sm:w-auto"
@@ -246,7 +247,7 @@ const heroStats = [
 								data-motion-active="false"
 							>
 								<img
-									src="/FotoPerfil.png"
+									src={withBasePath("/FotoPerfil.png")}
 									alt={`Foto de ${site.name}`}
 									class="h-full w-full object-cover"
 									onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
@@ -358,7 +359,7 @@ const heroStats = [
 					<div
 						class="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start"
 					>
-						<Button href="/proyectos" variant="primary" size="lg">
+						<Button href={withBasePath("/proyectos")} variant="primary" size="lg">
 							Ver proyectos
 							<svg
 								class="w-5 h-5"
@@ -373,7 +374,7 @@ const heroStats = [
 									d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
 							</svg>
 						</Button>
-						<Button href="/contacto" variant="outline" size="lg">
+						<Button href={withBasePath("/contacto")} variant="outline" size="lg">
 							Hablemos
 							<svg
 								class="w-5 h-5"
@@ -402,7 +403,7 @@ const heroStats = [
 						data-motion-active="false"
 					>
 						<img
-							src="/FotoPerfil.png"
+							src={withBasePath("/FotoPerfil.png")}
 							alt={`Foto de ${site.name}`}
 							class="w-full h-full object-cover"
 							onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
@@ -485,7 +486,7 @@ const heroStats = [
 				</div>
 
 				<div class="text-center mt-12">
-					<Button href="/proyectos" variant="ghost" size="md">
+					<Button href={withBasePath("/proyectos")} variant="ghost" size="md">
 						Ver todos los proyectos
 						<svg
 							class="w-4 h-4"
@@ -683,7 +684,7 @@ const heroStats = [
 							class="flex flex-col sm:flex-row items-center justify-center gap-4"
 						>
 							<Button
-								href="/contacto"
+								href={withBasePath("/contacto")}
 								variant="primary"
 								size="lg"
 							>
@@ -702,7 +703,7 @@ const heroStats = [
 								</svg>
 								Contactar ahora
 							</Button>
-							<Button href="/sobre-mi" variant="ghost" size="lg">
+							<Button href={withBasePath("/sobre-mi")} variant="ghost" size="lg">
 								Conocerme mejor →
 							</Button>
 						</div>
@@ -718,3 +719,4 @@ const heroStats = [
 		/>
 	</div>
 </BaseLayout>
+

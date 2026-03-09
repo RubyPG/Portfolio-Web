@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
 import skyBannerLayers from './layers'
 import './SkyBanner.css'
+import { withBasePath } from '../utils/base-path'
 
 export type SkyBannerProps = {
   sunSrc?: string
@@ -51,8 +52,8 @@ export default function SkyBanner({
   })
 
   const layerSources = {
-    sun: sunSrc,
-    clouds: cloudsSrc,
+    sun: withBasePath(sunSrc),
+    clouds: withBasePath(cloudsSrc),
   } as const
 
   const scheduleFrame = () => {

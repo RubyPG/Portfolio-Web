@@ -3,6 +3,7 @@
 import Container from "../ui/Container.astro";
 import GitHubMark from "../icons/GitHubMark.astro";
 import { site } from "../../data/site";
+import { withBasePath } from "../../utils/base-path";
 
 const navLinks = [
     { label: "Inicio", href: "/" },
@@ -41,11 +42,11 @@ const contactLinks = [
                 class="rounded-[1.75rem] border border-ui-border bg-bg-secondary/65 p-5 shadow-[0_18px_55px_rgba(0,0,0,0.22)]"
             >
                 <a
-                    href="/"
+                    href={withBasePath("/")}
                     class="flex items-center gap-2.5 text-lg font-bold text-text-primary hover:text-secondary transition-colors no-underline group"
                 >
                     <img
-                        src="/favicon.png"
+                        src={withBasePath("/favicon.png")}
                         alt="Logo"
                         class="w-8 h-8 rounded-md group-hover:scale-110 transition-transform duration-200"
                     />
@@ -114,7 +115,7 @@ const contactLinks = [
                                         navLinks.map((link) => (
                                             <li>
                                                 <a
-                                                    href={link.href}
+                                                    href={withBasePath(link.href)}
                                                     class="text-sm font-medium text-text-muted hover:text-secondary transition-colors no-underline"
                                                 >
                                                     {link.label}
@@ -343,11 +344,11 @@ const contactLinks = [
         <div class="hidden py-12 lg:grid lg:grid-cols-4 lg:gap-8">
             <div>
                 <a
-                    href="/"
+                    href={withBasePath("/")}
                     class="flex items-center gap-2.5 text-lg font-bold text-text-primary hover:text-secondary transition-colors no-underline group"
                 >
                     <img
-                        src="/favicon.png"
+                        src={withBasePath("/favicon.png")}
                         alt="Logo"
                         class="w-8 h-8 rounded-md group-hover:scale-110 transition-transform duration-200"
                     />
@@ -372,7 +373,7 @@ const contactLinks = [
                         navLinks.map((link) => (
                             <li>
                                 <a
-                                    href={link.href}
+                                    href={withBasePath(link.href)}
                                     class="text-sm text-text-muted hover:text-secondary transition-colors no-underline"
                                 >
                                     {link.label}

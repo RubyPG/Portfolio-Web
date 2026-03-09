@@ -1,5 +1,7 @@
 ---
 /* ── Button Component ── */
+import { withBasePath } from "../../utils/base-path";
+
 interface Props {
     href?: string;
     variant?: "primary" | "secondary" | "ghost" | "outline";
@@ -54,12 +56,13 @@ const Tag = href ? "a" : "button";
 const externalAttrs = external
     ? { target: "_blank", rel: "noopener noreferrer" }
     : {};
+const resolvedHref = href ? withBasePath(href) : undefined;
 ---
 
 {
     href ? (
         <a
-            href={href}
+            href={resolvedHref}
             class={classes}
             data-motion-active="false"
             aria-label={ariaLabel}

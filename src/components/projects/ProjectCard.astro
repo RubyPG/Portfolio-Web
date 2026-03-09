@@ -6,6 +6,7 @@ import Button from "../ui/Button.astro";
 import TechBadge from "../ui/TechBadge.astro";
 import GitHubMark from "../icons/GitHubMark.astro";
 import type { Project } from "../../data/projects";
+import { withBasePath } from "../../utils/base-path";
 
 interface Props {
     project: Project;
@@ -29,7 +30,7 @@ const thumbnailIframeStyle = thumbnailIframeScale < 1
 >
     <!-- Thumbnail 16:9 -->
     <a
-        href={project.casePath}
+        href={withBasePath(project.casePath)}
         class="block no-underline"
         aria-label={`Ver case de ${project.title}`}
     >
@@ -49,7 +50,7 @@ const thumbnailIframeStyle = thumbnailIframeScale < 1
                 ) : (
                     <>
                         <img
-                            src={project.thumbnail}
+                            src={withBasePath(project.thumbnail)}
                             alt={`Miniatura de ${project.title}`}
                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             loading="lazy"
@@ -108,7 +109,7 @@ const thumbnailIframeStyle = thumbnailIframeScale < 1
             class="text-lg font-bold text-text-primary mb-2 group-hover:text-secondary transition-colors"
         >
             <a
-                href={project.casePath}
+                href={withBasePath(project.casePath)}
                 class="no-underline text-inherit hover:text-secondary"
             >
                 {project.title}
