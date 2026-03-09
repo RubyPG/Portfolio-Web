@@ -169,11 +169,11 @@ const heroStats = [
 						<div class="mt-6 grid grid-cols-3 gap-2.5 sm:gap-3 lg:max-w-2xl">
 							{
 								heroStats.map((stat) => (
-									<div class="rounded-[1.25rem] border border-white/10 bg-black/25 px-3 py-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] lg:text-left">
+									<div class="min-w-0 rounded-[1.25rem] border border-white/10 bg-black/25 px-2.5 py-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:px-3 lg:text-left">
 										<div class="text-xl font-black text-accent sm:text-2xl">
 											{stat.value}
 										</div>
-										<div class="mt-1 text-[0.62rem] uppercase tracking-[0.16em] text-text-muted sm:text-[0.68rem]">
+										<div class="mt-1 break-words text-[0.56rem] leading-tight uppercase tracking-[0.08em] text-text-muted sm:text-[0.68rem] sm:tracking-[0.16em]">
 											{stat.label}
 										</div>
 									</div>
@@ -536,11 +536,11 @@ const heroStats = [
 									data-accordion-trigger
 									aria-expanded="false"
 									aria-controls={`skill-panel-en-${index}`}
-								>
-									<span
-										class="flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem] border border-white/8 bg-black/20 text-3xl"
-										set:html={category.icon}
-									/>
+									>
+										<span
+											class="flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem] border border-white/8 bg-black/20 text-3xl [&>svg]:block [&>svg]:h-full [&>svg]:w-full"
+											set:html={category.icon}
+										/>
 									<span class="min-w-0 flex-1">
 										<span class="site-accordion-heading block text-base font-bold text-text-primary">
 											{category.title}
@@ -597,11 +597,11 @@ const heroStats = [
 					{
 						skillCategories.map((category) => (
 							<div class="motion-surface bg-bg-secondary border border-ui-border rounded-2xl p-6 hover:border-secondary/40 hover:shadow-[0_0_24px_rgba(59,130,246,0.10)] transition-all duration-300 group" data-motion-active="false">
-								<div class="flex items-center gap-3 mb-5">
-									<span
-										class="text-3xl group-hover:scale-110 transition-transform duration-300"
-										set:html={category.icon}
-									/>
+									<div class="flex items-center gap-3 mb-5">
+										<span
+											class="text-3xl inline-block h-[1em] w-[1em] [&>svg]:block [&>svg]:h-full [&>svg]:w-full group-hover:scale-110 transition-transform duration-300"
+											set:html={category.icon}
+										/>
 									<h3 class="text-base font-bold text-text-primary">
 										{category.title}
 									</h3>

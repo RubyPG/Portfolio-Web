@@ -27,7 +27,7 @@ export const skillCategories: SkillCategory[] = [
     },
     {
         title: 'Backend & Data',
-        icon: '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="#3ecf8e" d="M11.9 1.036c-.015-.986-1.26-1.41-1.874-.637L.764 12.05C-.33 13.427.65 15.455 2.409 15.455h9.579l.113 7.51c.014.985 1.259 1.408 1.873.636l9.262-11.653c1.093-1.375.113-3.403-1.645-3.403h-9.642z"/></svg>',
+        icon: '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 109 113"><path fill="#3ecf8e" d="M63.708 110.284c-3.648 4.616-11.168 2.038-11.168-3.846V66.6l37.239-47.147c3.648-4.617 11.168-2.039 11.168 3.845v39.839z"/><path fill="#3ecf8e" fill-opacity=".24" d="M45.212 2.03c3.648-4.617 11.168-2.04 11.168 3.845v39.839L19.14 92.86c-3.647 4.616-11.167 2.039-11.167-3.846V49.175z"/></svg>',
         skills: [
             { name: 'Supabase', level: 'advanced' },
             { name: 'PostgreSQL', level: 'advanced' },

@@ -7,6 +7,7 @@ import Button from "../components/ui/Button.astro";
 import TechBadge from "../components/ui/TechBadge.astro";
 import GitHubMark from "../components/icons/GitHubMark.astro";
 import CaseGallery from "../components/projects/CaseGallery";
+import { withBasePath } from "../utils/base-path";
 
 interface Props {
     frontmatter: {
@@ -37,6 +38,11 @@ interface Props {
 }
 
 const { frontmatter } = Astro.props;
+const coverSrc = frontmatter.cover ? withBasePath(frontmatter.cover) : undefined;
+const galleryItems = frontmatter.gallery?.map((item) => ({
+    ...item,
+    image: withBasePath(item.image),
+}));
 ---
 
 <BaseLayout title={frontmatter.title} description={frontmatter.summary}>
@@ -194,13 +200,21 @@ const { frontmatter } = Astro.props;
                                 scrolling="no"
                             ></iframe>
                         ) : (
-                            <img
-                                src={frontmatter.cover}
-                                alt={`Portada de ${frontmatter.title}`}
-                                class="w-full h-full object-cover"
-                                loading="lazy"
-                                onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'flex items-center justify-center h-full text-text-dim text-sm\'>📸 Imagen pendiente</div>';"
-                            />
+                            <>
+                                <img
+                                    src={coverSrc}
+                                    alt={`Portada de ${frontmatter.title}`}
+                                    class="w-full h-full object-cover"
+                                    loading="lazy"
+                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                />
+                                <div
+                                    class="hidden h-full w-full items-center justify-center text-text-dim text-sm"
+                                    aria-hidden="true"
+                                >
+                                    📸 Imagen pendiente
+                                </div>
+                            </>
                         )}
                     </div>
                 )
@@ -212,10 +226,10 @@ const { frontmatter } = Astro.props;
             </div>
 
             {
-                frontmatter.gallery && frontmatter.gallery.length > 0 && (
+                galleryItems && galleryItems.length > 0 && (
                     <CaseGallery
                         client:visible
-                        items={frontmatter.gallery}
+                        items={galleryItems}
                         projectTitle={frontmatter.title}
                     />
                 )

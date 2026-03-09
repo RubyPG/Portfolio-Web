@@ -15,7 +15,7 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {
-      include: ['ogl'],
+      include: ['ogl', 'framer-motion'],
       exclude: ['three'],
     },
     ssr: {

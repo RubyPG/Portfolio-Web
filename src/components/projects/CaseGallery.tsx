@@ -468,7 +468,86 @@ const CaseGallery = ({
           </p>
         </div>
 
-        <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(145deg,rgba(18,18,18,0.98),rgba(10,10,10,0.86))] shadow-[0_30px_120px_rgba(0,0,0,0.35)]">
+        <div className="relative overflow-hidden rounded-[1.7rem] border border-white/10 bg-[linear-gradient(145deg,rgba(18,18,18,0.98),rgba(10,10,10,0.9))] p-3 shadow-[0_24px_90px_rgba(0,0,0,0.34)] lg:hidden">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,0,0.14),transparent_30%),radial-gradient(circle_at_82%_18%,rgba(59,130,246,0.18),transparent_34%)]" />
+            <div className="relative overflow-hidden rounded-[1.3rem] border border-white/10 bg-black/35">
+              <button
+                type="button"
+                onClick={() => openLightbox(activeIndex)}
+                className="group block w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
+                aria-label={`Abrir captura ${activeItem.title} de ${projectTitle}`}
+              >
+                <div className="relative aspect-[16/10] overflow-hidden">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={activeItem.image}
+                      className="absolute inset-0"
+                      initial={
+                        reduceMotion
+                          ? false
+                          : { opacity: 0, y: 16, scale: 0.99, filter: 'blur(6px)' }
+                      }
+                      animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                      exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -12, scale: 1.01 }}
+                      transition={{
+                        duration: reduceMotion ? 0.18 : 0.45,
+                        ease: transitionCurve
+                      }}
+                    >
+                      <img
+                        src={activeItem.image}
+                        alt={activeItem.alt}
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]"
+                        loading="lazy"
+                      />
+                    </motion.div>
+                  </AnimatePresence>
+                  <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.06),rgba(0,0,0,0.5))]" />
+                  <div className="absolute left-3 top-3 z-20 flex flex-wrap gap-2">
+                    <span className="rounded-full border border-white/12 bg-black/60 px-2.5 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-accent">
+                      {activeItem.label ?? 'Vista'}
+                    </span>
+                    <span className="rounded-full border border-white/12 bg-black/60 px-2.5 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-text-secondary">
+                      {formatSlideNumber(activeIndex)} / {totalSlidesLabel}
+                    </span>
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            <div className="relative mt-3 flex items-center justify-between gap-2">
+              {items.length > 1 ? (
+                <div className="flex items-center gap-2">
+                  <ControlButton
+                    label="Captura anterior"
+                    direction="left"
+                    onClick={() => shiftPreview(-1)}
+                    className="h-9 w-9"
+                  />
+                  <ControlButton
+                    label="Siguiente captura"
+                    direction="right"
+                    onClick={() => shiftPreview(1)}
+                    className="h-9 w-9"
+                  />
+                </div>
+              ) : (
+                <span className="text-[0.66rem] font-semibold uppercase tracking-[0.2em] text-text-muted">
+                  1 vista
+                </span>
+              )}
+
+              <button
+                type="button"
+                onClick={() => openLightbox(activeIndex)}
+                className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-black/35 px-3 py-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-text-primary transition hover:border-secondary/45 hover:bg-secondary/10 hover:text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
+              >
+                Ver en grande
+                <ArrowIcon className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        <div className="relative hidden overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(145deg,rgba(18,18,18,0.98),rgba(10,10,10,0.86))] shadow-[0_30px_120px_rgba(0,0,0,0.35)] lg:block">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,0,0.16),transparent_28%),radial-gradient(circle_at_82%_18%,rgba(59,130,246,0.20),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.04),transparent_38%)]" />
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
@@ -710,7 +789,7 @@ const CaseGallery = ({
               isLightboxDragging={isLightboxDragging}
               isZoomInModifierActive={isZoomInModifierActive}
               isZoomOutModifierActive={isZoomOutModifierActive}
-              reduceMotion={reduceMotion}
+              reduceMotion={Boolean(reduceMotion)}
               lightboxFrameRef={lightboxFrameRef}
               onClose={() => setLightboxIndex(null)}
               onPrev={() => shiftLightbox(-1)}
