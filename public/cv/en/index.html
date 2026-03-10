@@ -1,0 +1,284 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CV — Rubén Pezuela García (EN)</title>
+
+  <style>
+    @page { size: A4; margin: 0; }
+    @media print {
+      html, body { background: #111 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .page { box-shadow: none !important; }
+      a { color: var(--accent) !important; text-decoration: none; }
+    }
+
+    :root{
+      --bg-primary:#111111;
+      --bg-secondary:#1A1A1A;
+      --bg-tertiary:#222222;
+      --bg-deep:#0A0A0A;
+
+      --text-primary:#EDEDED;
+      --text-secondary:#BDBDBD;
+      --text-muted:#888888;
+      --text-dim:#5F5F5F;
+
+      --accent:#FFFF00;
+      --accent-muted:#CCCC00;
+      --secondary:#3B82F6;
+
+      --ui-border:#333333;
+      --ui-surface:#2A2A2A;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      margin:0;
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      line-height: 1.2;
+    }
+
+    .page{
+      width: 210mm;
+      height: 297mm;
+      margin: 0 auto;
+      padding: 10mm;
+      background: var(--bg-primary);
+      position: relative;
+      box-shadow: 0 16px 48px rgba(0,0,0,.45);
+    }
+
+    .grid{ display: grid; gap: 4.5mm; }
+    .row-2{ grid-template-columns: 70% calc(30% - 4.5mm); align-items: stretch; }
+    .row-2b{ grid-template-columns: 66% calc(34% - 4.5mm); align-items: stretch; }
+
+    .card{
+      background: var(--bg-secondary);
+      border: 1px solid var(--ui-border);
+      border-radius: 14px;
+      padding: 8px 10px;
+    }
+
+    .header{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items:center;
+      padding: 10px 12px;
+    }
+    .name{ font-size: 22px; font-weight: 800; color: var(--text-primary); letter-spacing: .2px; margin: 0 0 4px 0; }
+    .role{ font-size: 13px; color: var(--text-secondary); margin: 0 0 6px 0; }
+    .meta{ font-size: 11px; color: var(--text-muted); margin: 0 0 5px 0; }
+    .links{ font-size: 11px; margin: 0; }
+    .links a{ color: var(--accent); text-decoration: none; font-weight: 700; }
+    .summary{ margin-top: 5px; font-size: 11px; color: var(--text-secondary); }
+
+    .photo{
+      width: 110px;
+      height: 110px;
+      border: 2px solid var(--accent-muted);
+      border-radius: 6px;
+      overflow: hidden;
+      background: #0f0f0f;
+    }
+    .photo img{ width:100%; height:100%; object-fit: cover; object-position: 50% 35%; display:block; }
+
+    .section-title{
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--accent-muted);
+      margin: 0 0 6px 0;
+      letter-spacing: .3px;
+      text-transform: uppercase;
+      display:flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .section-title::after{
+      content:"";
+      height:1px;
+      flex:1;
+      background: var(--ui-border);
+      transform: translateY(1px);
+    }
+
+    .tech-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .tech-cat{ font-size: 11px; }
+    .tech-cat b{ color: var(--secondary); font-weight: 800; font-size: 11px; }
+    .tech-cat p{ margin: 3px 0 0 0; color: var(--text-secondary); }
+
+    ul{ margin: 0; padding-left: 16px; }
+    li{ margin: 0 0 2px 0; }
+    .bullets-accent li::marker{ color: var(--accent-muted); }
+    .bullets-secondary li::marker{ color: var(--secondary); }
+
+    .exp-role{ font-size: 12px; font-weight: 800; color: var(--text-primary); margin: 0 0 5px 0; }
+    .exp-sub{ font-size: 11px; font-weight: 800; color: var(--text-primary); margin: 6px 0 4px 0; }
+    .exp-layout{ display:grid; grid-template-columns: 1fr; gap: 8px; }
+
+    .prev-stack{ display:grid; gap: 8px; }
+    .prev-item b{
+      display:block;
+      color: var(--text-primary);
+      font-weight: 700;
+      font-size: 11px;
+      margin-bottom: 3px;
+      line-height: 1.3;
+      font-family: "Segoe UI", Tahoma, Verdana, sans-serif;
+    }
+    .prev-item p{ margin: 0 0 6px 0; font-size: 10.5px; color: var(--text-secondary); line-height: 1.32; }
+
+    .small-list{ font-size: 11px; color: var(--text-secondary); }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <section class="card header">
+      <div>
+        <h1 class="name">Rubén Pezuela García</h1>
+        <p class="role">Full Stack Developer (Junior) — Automation with n8n</p>
+        <p class="meta">Guadalajara, Spain · +34 618 856 782 · ruben.pezuelagarcia@gmail.com</p>
+        <p class="links">
+          <span style="color:var(--accent);font-weight:800;">GitHub:</span>
+          <a href="https://github.com/RubyPG">github.com/RubyPG</a>
+          <span style="color:var(--text-dim);"> · </span>
+          <span style="color:var(--accent);font-weight:800;">Portfolio:</span>
+          <a href="https://rubypg.github.io/Portfolio-Web">rubypg.github.io/Portfolio-Web</a>
+        </p>
+        <div class="summary">
+          Junior Full Stack profile focused on product and automation: Astro/TypeScript, Supabase/PostgreSQL and n8n (webhooks, validation and routing). Web/desktop products with billing and automation; RAG chatbots with n8n.
+        </div>
+      </div>
+
+      <div class="photo">
+        <img src="../../FotoPerfil.png" alt="Photo of Rubén" onerror="this.onerror=null;this.src='/FotoPerfil.png';" />
+      </div>
+    </section>
+
+    <section class="grid row-2" style="margin-top:4.5mm;">
+      <div class="card">
+        <div class="section-title">Technologies</div>
+        <div class="tech-grid">
+          <div class="tech-cat">
+            <b>Frontend:</b>
+            <p>Astro, TypeScript, React (selectively), Tailwind CSS, SSR, REST</p>
+          </div>
+          <div class="tech-cat">
+            <b>Automation/Infra:</b>
+            <p>n8n, RAG, Webhooks, Docker Compose, Traefik, Grafana, Amazon SES, GitHub Actions</p>
+          </div>
+          <div class="tech-cat">
+            <b>Backend/Data:</b>
+            <p>Supabase, PostgreSQL, SQL, RLS, Realtime, Node.js, Firebase</p>
+          </div>
+          <div class="tech-cat">
+            <b>Desktop:</b>
+            <p>Kotlin, Compose Multiplatform (JVM), Java 21, Maven, Gradle</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">About Me</div>
+        <ul class="small-list bullets-secondary">
+          <li>Proactive and solution-oriented; quick learner.</li>
+          <li>Maintainable code, clear documentation and iterative deliveries.</li>
+          <li>Consistent, improvement-focused mindset.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:4.5mm;">
+      <div class="section-title">Experience (Tech)</div>
+
+      <div class="exp-layout">
+        <div>
+          <div class="exp-role">iCreate Group — Cofounder & CTO</div>
+
+          <div class="exp-sub">iLead CRM (Lead-to-Cash):</div>
+          <ul class="small-list bullets-accent">
+            <li>Lead-to-Cash desktop CRM: lead→customer→invoice→collection with operational UX (table, filters, inline editing, autosave).</li>
+            <li>Supabase/PostgreSQL as source of truth + logical multi-tenant setup and runtime configuration (client.json + env vars).</li>
+            <li>Stripe Invoicing + invoice state synchronization via n8n webhooks, with consistency rules.</li>
+            <li>KPIs via SQL views + operational metrics in Grafana (pipeline observability).</li>
+          </ul>
+
+          <div class="exp-sub">Other contributions:</div>
+          <ul class="small-list bullets-secondary">
+            <li>Automation platform (n8n-hub + Supabase + Traefik/Docker) for multi-client workflows.</li>
+            <li>Transactional email with Amazon SES (SPF/DKIM/DMARC) integrated from workflows.</li>
+            <li>iServices CRM (Astro SSR + Supabase): Auth, RLS, Realtime and modular architecture.</li>
+            <li>RAG chatbots with n8n for automation and support.</li>
+          </ul>
+
+          <div class="exp-sub">Higuer S.L.U — Internship</div>
+          <ul class="small-list bullets-secondary">
+            <li>Desktop application development using Java.</li>
+            <li>Image and pattern recognition project with Java and ONNX Runtime.</li>
+            <li>Data analysis focused on Meta Ads campaigns.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid row-2b" style="margin-top:4.5mm;">
+      <div class="card">
+        <div class="section-title">Previous Experience</div>
+        <div class="prev-stack">
+          <div class="prev-item">
+            <b>LQS — Refurbish and software (Amazon and InPost lockers)</b>
+            <p>• Software/hardware issue resolution and physical maintenance of Amazon and InPost locker equipment.</p>
+          </div>
+          <div class="prev-item">
+            <b>Trillo Nuclear Power Plant — Nuclear instrumentation</b>
+            <p>• Installation, calibration and maintenance of nuclear equipment and telecommunication systems.</p>
+          </div>
+          <div class="prev-item">
+            <b>KiK Guadalajara — Store associate</b>
+            <p>• Daily cash custody, stock control and replenishment under protocols and visual standards.</p>
+          </div>
+          <div class="prev-item">
+            <b>XPO — Logistics (Picking and put-away)</b>
+            <p>• Picking, stock placement and support for inventory/operations.</p>
+          </div>
+          <div class="prev-item">
+            <b>S.D.C — Telecommunications (Installer)</b>
+            <p>• Antenna installation, router setup and network maintenance; customer support.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">Education</div>
+        <ul class="small-list bullets-secondary">
+          <li>Higher Technician in DAM (Multiplatform Application Development).</li>
+          <li>Higher Technician in DAW (Web Application Development).</li>
+          <li>Intermediate Vocational Degree: Telecommunications Installation.</li>
+          <li>Compulsory Secondary Education (ESO).</li>
+        </ul>
+
+        <div style="height:6px;"></div>
+        <div class="section-title">Languages</div>
+        <ul class="small-list bullets-secondary">
+          <li>English: B2 (Trinity Grade 10 — with merit).</li>
+          <li>Spanish: Native.</li>
+        </ul>
+
+        <div style="height:6px;"></div>
+        <div class="section-title">Other</div>
+        <ul class="small-list bullets-secondary">
+          <li>Remote work and flexible hourly availability.</li>
+          <li>Driving license and own vehicle.</li>
+          <li>Forklift license.</li>
+          <li>Available to travel (Spain/United Kingdom).</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

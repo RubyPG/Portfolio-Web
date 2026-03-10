@@ -1,12 +1,41 @@
----
-/* ── Proyectos Page (/en/proyectos) ── */
+﻿---
+/* —— Proyectos Page (/en/proyectos) —— */
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import Container from "../../../components/ui/Container.astro";
-import SectionTitle from "../../../components/ui/SectionTitle.astro";
 import ProjectFilter from "../../../components/projects/ProjectFilter.astro";
 import ProjectGrid from "../../../components/projects/ProjectGrid.astro";
 import LetterGlitch from "../../../components/LetterGlitch";
 import { projects } from "../../../data/projects";
+
+const projectCount = projects.length;
+const featuredCount = projects.filter((project) => project.featured).length;
+const coverageCount = new Set(
+    projects.flatMap((project) => [project.type, ...(project.categories ?? [])]),
+).size;
+
+const timelineYears = projects.flatMap((project) =>
+    project.year
+        .split("-")
+        .map((yearPart) => Number.parseInt(yearPart, 10))
+        .filter((yearValue) => Number.isFinite(yearValue)),
+);
+const timelineStart = timelineYears.length ? Math.min(...timelineYears) : null;
+const timelineEnd = timelineYears.length ? Math.max(...timelineYears) : null;
+const timelineLabel =
+    timelineStart !== null && timelineEnd !== null
+        ? `${timelineStart} - ${timelineEnd}`
+        : "Current";
+
+const typeFrequency = new Map<string, number>();
+for (const project of projects) {
+    const relatedTypes = [project.type, ...(project.categories ?? [])];
+    for (const relatedType of relatedTypes) {
+        typeFrequency.set(relatedType, (typeFrequency.get(relatedType) ?? 0) + 1);
+    }
+}
+const topTypes = [...typeFrequency.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4);
 ---
 
 <BaseLayout
@@ -15,7 +44,7 @@ import { projects } from "../../../data/projects";
 >
     <!-- Banner -->
     <section
-        class="py-12 sm:py-16 bg-bg-secondary/50 border-b border-ui-border relative overflow-hidden flex items-center min-h-[300px]"
+        class="py-12 sm:py-16 bg-bg-secondary/50 border-b border-ui-border relative overflow-hidden flex items-center min-h-[330px]"
     >
         <!-- Glitch Background -->
         <div class="absolute inset-0 z-0 opacity-15 sm:opacity-20">
@@ -36,20 +65,60 @@ import { projects } from "../../../data/projects";
         </div>
 
         <Container size="xl" class="relative z-20">
-            <div class="max-w-2xl relative z-20">
-                <h1
-                    class="text-3xl sm:text-4xl font-bold text-text-primary mb-4"
-                >
-                    Projects
-                    <span
-                        class="inline-block w-2.5 h-2.5 bg-accent rounded-full ml-1.5 align-middle"
-                    ></span>
-                </h1>
-                <p class="text-text-secondary text-lg leading-relaxed">
-                    A collection of projects I've worked on, from web
-                    applications and e-commerce to automation platforms and
-                    desktop tools.
-                </p>
+            <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] relative z-20">
+                <div class="max-w-3xl">
+                    <div class="motion-chip inline-flex items-center gap-2 bg-accent/10 border border-accent/25 rounded-full px-4 py-1.5 mb-5" data-motion-active="false">
+                        <span class="w-2 h-2 bg-accent rounded-full animate-pulse"></span>
+                        <span class="text-accent font-semibold text-xs uppercase tracking-widest">Active portfolio</span>
+                    </div>
+                    <h1
+                        class="text-3xl sm:text-4xl lg:text-5xl font-black text-text-primary mb-4 leading-tight"
+                    >
+                        Projects focused on
+                        <span class="text-secondary"> product, automation and business value</span>
+                        <span
+                            class="inline-block w-2.5 h-2.5 bg-accent rounded-full ml-1.5 align-middle"
+                        ></span>
+                    </h1>
+                    <p class="text-text-secondary text-base sm:text-lg leading-relaxed max-w-2xl">
+                        Real-world work where I combine frontend, backend and infrastructure to ship useful systems:
+                        from CRM and SaaS to headless e-commerce and n8n automation pipelines.
+                    </p>
+                    <div class="mt-6 flex flex-wrap gap-2">
+                        {topTypes.map(([typeName, typeCount]) => (
+                            <span class="inline-flex items-center gap-2 rounded-full border border-secondary/35 bg-bg-deep/70 px-3 py-1 text-xs font-semibold text-text-secondary">
+                                <span class="h-1.5 w-1.5 rounded-full bg-secondary"></span>
+                                {typeName}
+                                <span class="text-text-dim">{typeCount}</span>
+                            </span>
+                        ))}
+                    </div>
+                </div>
+
+                <aside class="rounded-2xl border border-ui-border/90 bg-bg-deep/75 p-5 backdrop-blur-sm shadow-[0_16px_48px_rgba(0,0,0,0.28)]">
+                    <p class="text-[0.68rem] font-bold tracking-[0.18em] uppercase text-accent">
+                        Quick snapshot
+                    </p>
+                    <dl class="mt-4 grid grid-cols-3 gap-2.5">
+                        <div class="rounded-xl border border-ui-border bg-bg-secondary/70 p-3 text-center">
+                            <dt class="text-[0.62rem] uppercase tracking-[0.16em] text-text-dim">Projects</dt>
+                            <dd class="mt-1 text-2xl font-black text-text-primary">{projectCount}</dd>
+                        </div>
+                        <div class="rounded-xl border border-ui-border bg-bg-secondary/70 p-3 text-center">
+                            <dt class="text-[0.62rem] uppercase tracking-[0.16em] text-text-dim">Featured</dt>
+                            <dd class="mt-1 text-2xl font-black text-secondary">{featuredCount}</dd>
+                        </div>
+                        <div class="rounded-xl border border-ui-border bg-bg-secondary/70 p-3 text-center">
+                            <dt class="text-[0.62rem] uppercase tracking-[0.16em] text-text-dim">Domains</dt>
+                            <dd class="mt-1 text-2xl font-black text-accent">{coverageCount}</dd>
+                        </div>
+                    </dl>
+                    <p class="mt-4 text-xs text-text-muted leading-relaxed">
+                        Portfolio timeline:
+                        <span class="text-text-secondary font-semibold"> {timelineLabel}</span>.
+                        Each case includes stack, scope and implementation decisions.
+                    </p>
+                </aside>
             </div>
         </Container>
     </section>
@@ -57,8 +126,6 @@ import { projects } from "../../../data/projects";
     <!-- Projects -->
     <section class="py-12 sm:py-16">
         <Container size="xl">
-            <!-- Filter currently displays categories in Spanish by default since it uses the constants.
-                 Since this is static content mostly from projects.ts, we leave it as is for now. -->
             <ProjectFilter />
             <ProjectGrid projects={projects} />
         </Container>

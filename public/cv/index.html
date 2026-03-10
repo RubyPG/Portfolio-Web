@@ -1,0 +1,384 @@
+﻿<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CV — Rubén Pezuela García (Visual v14)</title>
+
+  <style>
+    /* ---------- Print setup ---------- */
+    @page { size: A4; margin: 0; }
+    @media print {
+      html, body { background: #111 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .page { box-shadow: none !important; }
+      a { color: var(--accent) !important; text-decoration: none; }
+    }
+
+    /* ---------- Palette (adapted to CV) ---------- */
+    :root{
+      --bg-primary:#111111;
+      --bg-secondary:#1A1A1A;
+      --bg-tertiary:#222222;
+      --bg-deep:#0A0A0A;
+
+      --text-primary:#EDEDED;
+      --text-secondary:#BDBDBD;
+      --text-muted:#888888;
+      --text-dim:#5F5F5F;
+
+      --accent:#FFFF00;
+      --accent-muted:#CCCC00;
+
+      --secondary:#3B82F6;
+
+      --ui-border:#333333;
+      --ui-surface:#2A2A2A;
+    }
+
+    /* ---------- Base ---------- */
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      margin:0;
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      line-height: 1.2;
+    }
+
+    /* A4 canvas */
+    .page{
+      width: 210mm;
+      height: 297mm;
+      margin: 0 auto;
+      padding: 10mm;
+      background: var(--bg-primary);
+      position: relative;
+      box-shadow: 0 16px 48px rgba(0,0,0,.45);
+    }
+
+    /* Grid system (v14) */
+    .grid{
+      display: grid;
+      gap: 4.5mm;
+    }
+    .row-2{
+      grid-template-columns: 70% calc(30% - 4.5mm);
+      align-items: stretch;
+    }
+    .row-2b{
+      grid-template-columns: 66% calc(34% - 4.5mm);
+      align-items: stretch;
+    }
+
+    /* Card */
+    .card{
+      background: var(--bg-secondary);
+      border: 1px solid var(--ui-border);
+      border-radius: 14px;
+      padding: 8px 10px;
+    }
+
+    /* Header card */
+    .header{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items:center;
+      padding: 10px 12px;
+    }
+    .name{
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: .2px;
+      margin: 0 0 4px 0;
+    }
+    .role{
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin: 0 0 6px 0;
+    }
+    .meta{
+      font-size: 11px;
+      color: var(--text-muted);
+      margin: 0 0 5px 0;
+    }
+    .links{
+      font-size: 11px;
+      margin: 0;
+    }
+    .links a{
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .summary{
+      margin-top: 5px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .photo{
+      width: 110px;
+      height: 110px;
+      border: 2px solid var(--accent-muted);
+      border-radius: 6px;
+      overflow: hidden;
+      background: #0f0f0f;
+    }
+    .photo img{
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      object-position: 50% 35%;
+      display:block;
+    }
+
+    /* Section title */
+    .section-title{
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--accent-muted);
+      margin: 0 0 6px 0;
+      letter-spacing: .3px;
+      text-transform: uppercase;
+      display:flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .section-title::after{
+      content:"";
+      height:1px;
+      flex:1;
+      background: var(--ui-border);
+      transform: translateY(1px);
+    }
+
+    /* Technologies block */
+    .tech-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .tech-cat{
+      font-size: 11px;
+    }
+    .tech-cat b{
+      color: var(--secondary);
+      font-weight: 800;
+      font-size: 11px;
+    }
+    .tech-cat p{
+      margin: 3px 0 0 0;
+      color: var(--text-secondary);
+    }
+
+    /* Lists */
+    ul{
+      margin: 0;
+      padding-left: 16px;
+    }
+    li{ margin: 0 0 2px 0; }
+    .bullets-accent li::marker{ color: var(--accent-muted); }
+    .bullets-secondary li::marker{ color: var(--secondary); }
+
+    /* Experience (tech) */
+    .exp-role{
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin: 0 0 5px 0;
+    }
+    .exp-sub{
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin: 6px 0 4px 0;
+    }
+    .exp-layout{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    /* Bottom: prev exp split columns */
+    .prev-stack{ display:grid; gap: 8px; }
+    .prev-item b{
+      display:block;
+      color: var(--text-primary);
+      font-weight: 700;
+      font-size: 11px;
+      margin-bottom: 3px;
+      line-height: 1.3;
+      font-family: "Segoe UI", Tahoma, Verdana, sans-serif;
+    }
+    .prev-item p{
+      margin: 0 0 6px 0;
+      font-size: 10.5px;
+      color: var(--text-secondary);
+      line-height: 1.32;
+    }
+
+    /* Small blocks */
+    .small-list{
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <!-- HEADER -->
+    <section class="card header">
+      <div>
+        <h1 class="name">Rubén Pezuela García</h1>
+        <p class="role">Programador Full Stack (Junior) — Automatización con n8n</p>
+        <p class="meta">Guadalajara, España · +34 618 856 782 · ruben.pezuelagarcia@gmail.com</p>
+        <p class="links">
+          <span style="color:var(--accent);font-weight:800;">GitHub:</span>
+          <a href="https://github.com/RubyPG">github.com/RubyPG</a>
+          <span style="color:var(--text-dim);"> · </span>
+          <span style="color:var(--accent);font-weight:800;">Portfolio:</span>
+          <a href="https://rubypg.github.io/Portfolio-Web">rubypg.github.io/Portfolio-Web</a>
+        </p>
+        <div class="summary">
+          Full Stack junior orientado a producto y automatización: Astro/TypeScript, Supabase/PostgreSQL y n8n (webhooks, validación y routing). Web/desktop con facturación y automatizaciones; chatbots RAG con n8n.
+        </div>
+      </div>
+
+      <!-- FOTO -->
+      <div class="photo">
+        <img src="../FotoPerfil.png" alt="Foto de Rubén" onerror="this.onerror=null;this.src='/FotoPerfil.png';" />
+      </div>
+    </section>
+
+    <!-- ROW 1 -->
+    <section class="grid row-2" style="margin-top:4.5mm;">
+      <!-- TECNOLOGÍAS -->
+      <div class="card">
+        <div class="section-title">Tecnologías</div>
+        <div class="tech-grid">
+          <div class="tech-cat">
+            <b>Frontend:</b>
+            <p>Astro, TypeScript, React (puntual), Tailwind CSS, SSR, REST</p>
+          </div>
+          <div class="tech-cat">
+            <b>Automatización/Infra:</b>
+            <p>n8n, RAG, Webhooks, Docker Compose, Traefik, Grafana, Amazon SES, GitHub Actions</p>
+          </div>
+          <div class="tech-cat">
+            <b>Backend/Datos:</b>
+            <p>Supabase, PostgreSQL, SQL, RLS, Realtime, Node.js, Firebase</p>
+          </div>
+          <div class="tech-cat">
+            <b>Desktop:</b>
+            <p>Kotlin, Compose Multiplatform (JVM), Java 21, Maven, Gradle</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SOBRE MÍ -->
+      <div class="card">
+        <div class="section-title">Sobre mí</div>
+        <ul class="small-list bullets-secondary">
+          <li>Proactivo y orientado a soluciones; aprendizaje rápido.</li>
+          <li>Código mantenible, documentación clara y entregas iterativas.</li>
+          <li>Disciplina aplicada a mejora continua.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- EXPERIENCIA TECH -->
+    <section class="card" style="margin-top:4.5mm;">
+      <div class="section-title">Experiencia (Tech)</div>
+
+      <div class="exp-layout">
+        <div>
+          <div class="exp-role">iCreate Group — Cofounder & CTO</div>
+
+          <div class="exp-sub">CRM iLead (Lead-to-Cash):</div>
+          <ul class="small-list bullets-accent">
+            <li>CRM desktop Lead-to-Cash: lead→cliente→factura→cobro con UX operativa (tabla, filtros, edición inline, autosave).</li>
+            <li>Supabase/PostgreSQL como fuente de verdad + multi-tenant lógico y configuración runtime (client.json + variables de entorno).</li>
+            <li>Stripe Invoicing + sincronización de estados por webhooks en n8n, con reglas de consistencia.</li>
+            <li>KPIs con vistas SQL + métricas operativas en Grafana (observabilidad del pipeline).</li>
+          </ul>
+
+          <div class="exp-sub">Otros aportes:</div>
+          <ul class="small-list bullets-secondary">
+            <li>Plataforma de automatización (n8n-hub + Supabase + Traefik/Docker) para workflows multi-cliente.</li>
+            <li>Email transaccional con Amazon SES (SPF/DKIM/DMARC) integrado desde workflows.</li>
+            <li>iServices CRM (Astro SSR + Supabase): Auth, RLS, Realtime y arquitectura modular.</li>
+            <li>Chatbots RAG con n8n para automatizaciones y atención.</li>
+          </ul>
+
+          <div class="exp-role" style="margin-top:10px;">Higuer S.L.U — Prácticas</div>
+          <ul class="small-list bullets-accent">
+            <li>Desarrollo de aplicaciones de escritorio usando Java.</li>
+            <li>Proyecto de reconocimiento de imágenes y patrones con Java y ONNX Runtime.</li>
+            <li>Análisis de datos orientado a campañas en Meta Ads.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- BOTTOM ROW -->
+    <section class="grid row-2b" style="margin-top:4.5mm;">
+      <!-- EXPERIENCIA PREVIA -->
+      <div class="card">
+        <div class="section-title">Experiencia previa</div>
+        <div class="prev-stack">
+          <div class="prev-item">
+            <b>LQS — Refurbish y software (Armarios Amazon e InPost)</b>
+            <p>• Resolución de incidencias software/hardware y mantenimiento físico de equipos (armarios Amazon e InPost).</p>
+          </div>
+          <div class="prev-item">
+            <b>Central Nuclear de Trillo — Instrumentación nuclear</b>
+            <p>• Instalación, calibración y mantenimiento de equipos nucleares y sistemas de telecomunicaciones.</p>
+          </div>
+          <div class="prev-item">
+            <b>KiK Guadalajara — Colaborador de tienda</b>
+            <p>• Custodia de ingresos diarios, control de stock y reposición bajo protocolos y normativa visual.</p>
+          </div>
+          <div class="prev-item">
+            <b>XPO — Logística (Picker y ubicación)</b>
+            <p>• Picking, ubicación de mercancías y apoyo en inventario/operaciones.</p>
+          </div>
+          <div class="prev-item">
+            <b>S.D.C — Telecomunicaciones (Instalador)</b>
+            <p>• Instalación de antenas, configuración de routers y mantenimiento de redes; soporte al cliente.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- FORMACIÓN / IDIOMAS / OTROS -->
+      <div class="card">
+        <div class="section-title">Formación</div>
+        <ul class="small-list bullets-secondary">
+          <li>Técnico Superior DAM (Desarrollo de Aplicaciones Multiplataforma).</li>
+          <li>Técnico Superior DAW (Desarrollo de Aplicaciones Web).</li>
+          <li>Grado Medio: Instalación de Telecomunicaciones.</li>
+          <li>ESO.</li>
+        </ul>
+
+        <div style="height:6px;"></div>
+        <div class="section-title">Idiomas</div>
+        <ul class="small-list bullets-secondary">
+          <li>Inglés: B2 (Trinity Grade 10 — with merit).</li>
+        </ul>
+
+        <div style="height:6px;"></div>
+        <div class="section-title">Otros</div>
+        <ul class="small-list bullets-secondary">
+          <li>Remoto y bolsa de horas.</li>
+          <li>Carnet de conducir y coche propio.</li>
+          <li>Carnet de carretillero.</li>
+          <li>Disponibilidad para viajar (España/Reino Unido).</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
