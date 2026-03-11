@@ -1,5 +1,5 @@
 import React, { startTransition, useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
 import CaseGalleryMobileLightbox from './CaseGalleryMobileLightbox';
 
@@ -99,7 +99,7 @@ const CaseGallery = ({
   eyebrow = 'Capturas reales',
   className
 }: CaseGalleryProps) => {
-  const reduceMotion = useReducedMotion();
+  const [reduceMotion, setReduceMotion] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [lightboxZoom, setLightboxZoom] = useState(1);
@@ -132,6 +132,16 @@ const CaseGallery = ({
       setLightboxIndex(0);
     }
   }, [activeIndex, items.length, lightboxIndex]);
+
+  // Defer reduced-motion detection to after mount to avoid hydration mismatch.
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReduceMotion(mediaQuery.matches);
+
+    const handler = (event: MediaQueryListEvent) => setReduceMotion(event.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
 
   useEffect(() => {
     if (lightboxIndex === null || typeof document === 'undefined') return;
@@ -477,7 +487,7 @@ const CaseGallery = ({
                 className="group block w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
                 aria-label={`Abrir captura ${activeItem.title} de ${projectTitle}`}
               >
-                <div className="relative aspect-[16/10] overflow-hidden">
+                <div className="relative aspect-16/10 overflow-hidden">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={activeItem.image}
@@ -547,9 +557,9 @@ const CaseGallery = ({
               </button>
             </div>
           </div>
-        <div className="relative hidden overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(145deg,rgba(18,18,18,0.98),rgba(10,10,10,0.86))] shadow-[0_30px_120px_rgba(0,0,0,0.35)] lg:block">
+        <div className="relative hidden overflow-hidden rounded-4xl border border-white/10 bg-[linear-gradient(145deg,rgba(18,18,18,0.98),rgba(10,10,10,0.86))] shadow-[0_30px_120px_rgba(0,0,0,0.35)] lg:block">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,0,0.16),transparent_28%),radial-gradient(circle_at_82%_18%,rgba(59,130,246,0.20),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.04),transparent_38%)]" />
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-white/20 to-transparent" />
 
           <div className="grid items-start gap-5 p-4 sm:p-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(300px,0.95fr)] lg:p-6">
             <div ref={previewPanelRef} className="relative min-w-0 self-start">
@@ -574,7 +584,7 @@ const CaseGallery = ({
                     className="group relative block w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
                     aria-label={`Abrir captura ${activeItem.title} de ${projectTitle}`}
                   >
-                    <div className="relative aspect-[16/10] overflow-hidden">
+                    <div className="relative aspect-16/10 overflow-hidden">
                       <AnimatePresence mode="wait">
                         <motion.div
                           key={activeItem.image}
@@ -696,11 +706,11 @@ const CaseGallery = ({
                             'group relative w-[min(82vw,320px)] shrink-0 snap-start overflow-hidden rounded-[1.3rem] border text-left transition duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 sm:w-auto sm:shrink sm:snap-none',
                             isActive
                               ? 'border-secondary/55 bg-secondary/12 shadow-[0_0_0_1px_rgba(59,130,246,0.18),0_18px_45px_rgba(59,130,246,0.12)]'
-                              : 'border-white/8 bg-black/24 hover:border-white/16 hover:bg-white/[0.03]'
+                              : 'border-white/8 bg-black/24 hover:border-white/16 hover:bg-white/3'
                           )}
                         >
                           <div className="flex min-w-0 flex-col gap-2 p-2.5 sm:flex-row sm:items-stretch sm:gap-3">
-                            <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-[1rem] border border-white/8 bg-black/35 sm:h-20 sm:w-24 sm:aspect-auto">
+                            <div className="relative aspect-16/10 w-full shrink-0 overflow-hidden rounded-2xl border border-white/8 bg-black/35 sm:h-20 sm:w-24 sm:aspect-auto">
                               <img
                                 src={item.image}
                                 alt={item.alt}
@@ -771,7 +781,7 @@ const CaseGallery = ({
       <AnimatePresence>
         {lightboxIndex !== null && lightboxItem ? (
           <motion.div
-            className="fixed inset-0 z-[70] overflow-y-auto bg-[rgba(2,6,13,0.92)] px-0 py-0 backdrop-blur-md lg:px-6 lg:py-6"
+            className="fixed inset-0 z-70 overflow-y-auto bg-[rgba(2,6,13,0.92)] px-0 py-0 backdrop-blur-md lg:px-6 lg:py-6"
             initial={reduceMotion ? { opacity: 0 } : { opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -821,7 +831,7 @@ const CaseGallery = ({
               transition={{ duration: reduceMotion ? 0.18 : 0.34, ease: transitionCurve }}
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+              <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-px bg-linear-to-r from-transparent via-white/20 to-transparent" />
 
               <div className="absolute left-3 top-3 z-20 flex flex-wrap gap-1.5 sm:left-4 sm:top-4 sm:gap-2 lg:left-5 lg:top-5">
                 <span className="rounded-full border border-white/12 bg-black/60 px-2.5 py-1 text-[0.64rem] font-semibold uppercase tracking-[0.22em] text-accent sm:px-3 sm:text-[0.68rem] sm:tracking-[0.24em]">
@@ -872,7 +882,7 @@ const CaseGallery = ({
                     </>
                   ) : null}
 
-                  <div className="flex aspect-[16/10] items-center justify-center p-4 sm:p-5 lg:h-full lg:aspect-auto lg:p-6">
+                  <div className="flex aspect-16/10 items-center justify-center p-4 sm:p-5 lg:h-full lg:aspect-auto lg:p-6">
                     <div
                       ref={lightboxFrameRef}
                       className={cn(
@@ -906,7 +916,7 @@ const CaseGallery = ({
                             event.stopPropagation();
                             resetLightboxView();
                           }}
-                          className="pointer-events-auto absolute bottom-4 right-4 z-[24] inline-flex items-center gap-2 rounded-full border border-white/14 bg-black/70 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-text-primary transition hover:border-accent/45 hover:bg-white/10 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
+                          className="pointer-events-auto absolute bottom-4 right-4 z-20 inline-flex items-center gap-2 rounded-full border border-white/14 bg-black/70 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-text-primary transition hover:border-accent/45 hover:bg-white/10 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
                         >
                           Reset
                         </button>
@@ -915,7 +925,7 @@ const CaseGallery = ({
                       <AnimatePresence mode="wait">
                         <motion.div
                           key={lightboxItem.image}
-                          className="relative z-[1] flex h-full w-full items-center justify-center"
+                          className="relative z-1 flex h-full w-full items-center justify-center"
                           initial={
                             reduceMotion
                               ? false
@@ -968,10 +978,10 @@ const CaseGallery = ({
                             type="button"
                             onClick={() => openLightbox(index)}
                             className={cn(
-                              'flex min-w-[230px] shrink-0 items-center gap-3 rounded-[1rem] border px-3 py-2.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 lg:min-w-0',
+                              'flex min-w-[230px] shrink-0 items-center gap-3 rounded-2xl border px-3 py-2.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 lg:min-w-0',
                               isCurrent
                                 ? 'border-accent/45 bg-[linear-gradient(90deg,rgba(255,255,0,0.14),rgba(255,255,255,0.02))] shadow-[0_0_0_1px_rgba(255,255,0,0.08)]'
-                                : 'border-white/8 bg-black/20 hover:border-white/16 hover:bg-white/[0.03]'
+                                : 'border-white/8 bg-black/20 hover:border-white/16 hover:bg-white/3'
                             )}
                           >
                             <span className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-accent/85">

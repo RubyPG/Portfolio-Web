@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Renderer, Triangle, Program, Mesh } from 'ogl';
 
 type PrismProps = {
@@ -334,6 +334,7 @@ const Prism: React.FC<PrismProps> = ({
     const wZ = (0.1 + rnd() * 0.5) * RSZ;
     const phX = rnd() * Math.PI * 2;
     const phZ = rnd() * Math.PI * 2;
+
 
     let yaw = 0,
       pitch = 0,

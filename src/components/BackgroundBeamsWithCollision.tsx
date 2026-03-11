@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '../lib/utils';
 
 interface BackgroundBeamsWithCollisionProps {
@@ -42,8 +42,20 @@ export const BackgroundBeamsWithCollision = ({
 }: BackgroundBeamsWithCollisionProps) => {
   const collisionRef = useRef<HTMLDivElement>(null);
   const parentRef = useRef<HTMLDivElement>(null);
-  const reduceMotion = useReducedMotion();
+  const [reduceMotion, setReduceMotion] = useState(false);
   const [travelDistance, setTravelDistance] = useState(1800);
+
+  // Defer reduced-motion detection to after mount to avoid hydration mismatch.
+  // useReducedMotion() returns null on the server, which would differ from
+  // the client's true/false and cause React error #418.
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReduceMotion(mediaQuery.matches);
+
+    const handler = (event: MediaQueryListEvent) => setReduceMotion(event.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
 
   useEffect(() => {
     const parent = parentRef.current;
@@ -183,7 +195,7 @@ const CollisionBeam = ({
         key={beamKey}
         ref={beamRef}
         className={cn(
-          'absolute top-0 z-[1] w-[2px] rounded-full bg-gradient-to-b from-transparent via-secondary/90 to-accent/90 opacity-90 shadow-[0_0_24px_rgba(59,130,246,0.38)]',
+          'absolute top-0 z-1 w-[2px] rounded-full bg-linear-to-b from-transparent via-secondary/90 to-accent/90 opacity-90 shadow-[0_0_24px_rgba(59,130,246,0.38)]',
           beamOptions.className
         )}
         style={{
@@ -247,10 +259,10 @@ const Explosion = ({ className, ...props }: React.HTMLProps<HTMLDivElement>) => 
   return (
     <div
       {...props}
-      className={cn('absolute z-[2] h-2 w-2', className)}
+      className={cn('absolute z-2 h-2 w-2', className)}
     >
       <motion.div
-        className="absolute -inset-x-12 top-0 m-auto h-2 w-24 rounded-full bg-gradient-to-r from-transparent via-secondary/80 to-transparent blur-sm"
+        className="absolute -inset-x-12 top-0 m-auto h-2 w-24 rounded-full bg-linear-to-r from-transparent via-secondary/80 to-transparent blur-sm"
         initial={{ opacity: 0, scaleX: 0.4 }}
         animate={{ opacity: 1, scaleX: 1 }}
         exit={{ opacity: 0 }}
@@ -266,7 +278,7 @@ const Explosion = ({ className, ...props }: React.HTMLProps<HTMLDivElement>) => 
       {particles.map((particle) => (
         <motion.span
           key={particle.id}
-          className="absolute h-1.5 w-1.5 rounded-full bg-gradient-to-b from-accent to-secondary"
+          className="absolute h-1.5 w-1.5 rounded-full bg-linear-to-b from-accent to-secondary"
           initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
           animate={{
             x: particle.directionX,
