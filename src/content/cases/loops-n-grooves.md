@@ -18,8 +18,7 @@ tags:
   - "Headless"
   - "WooCommerce"
   - "E-commerce"
-cover: "/projects/loops-grooves/thumb.jpg"
-coverIframe: "https://loopsngrooves.com"
+cover: "/projects/loopsngrooves/thumb.png"
 links:
   demo: "https://loopsngrooves.com"
   repo: null
@@ -89,4 +88,4 @@ Piezas relevantes:
 
 ## Galería
 
-> TODO: sube capturas a `public/projects/loops-grooves/` y enlázalas aquí.
+> TODO: sube capturas a `public/projects/loopsngrooves/` y enlázalas aquí.

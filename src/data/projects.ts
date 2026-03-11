@@ -36,8 +36,6 @@ export interface Project {
     links: ProjectLinks;
     casePath: string;
     thumbnail: string;
-    thumbnailIframe?: string;
-    thumbnailIframeScale?: number;
     featured: boolean;
 }
 
@@ -158,8 +156,7 @@ export const projects: Project[] = [
             docs: null,
         },
         casePath: "/cases/loops-n-grooves",
-        thumbnail: "/projects/loops-grooves/thumb.jpg",
-        thumbnailIframe: "https://loopsngrooves.com",
+        thumbnail: "/projects/loopsngrooves/thumb.png",
         featured: true,
     },
     {
@@ -230,9 +227,7 @@ export const projects: Project[] = [
             docs: null,
         },
         casePath: "/cases/icreategroup-web",
-        thumbnail: "/projects/icreategroup-web/thumb.jpg",
-        thumbnailIframe: "https://icreategroup.net",
-        thumbnailIframeScale: 0.55,
+        thumbnail: "/projects/icreate-web/thumb.png",
         featured: true,
     },
 ];

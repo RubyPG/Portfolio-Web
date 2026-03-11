@@ -15,7 +15,6 @@ const casesCollection = defineCollection({
         stack: z.array(z.string()),
         tags: z.array(z.string()),
         cover: z.string().optional(),
-        coverIframe: z.string().url().optional(),
         links: z
             .object({
                 repo: z.string().nullable().optional(),

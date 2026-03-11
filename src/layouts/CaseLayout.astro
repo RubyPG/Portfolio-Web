@@ -1,5 +1,5 @@
 ---
-/* ── CaseLayout — layout for case study pages ── */
+/* CaseLayout - layout for case study pages */
 import BaseLayout from "./BaseLayout.astro";
 import Container from "../components/ui/Container.astro";
 import Badge from "../components/ui/Badge.astro";
@@ -21,7 +21,6 @@ interface Props {
         status: string;
         year: string;
         cover?: string;
-        coverIframe?: string;
         links?: {
             repo?: string | null;
             demo?: string | null;
@@ -61,7 +60,8 @@ const galleryItems = frontmatter.gallery?.map((item) => ({
                             stroke-linecap="round"
                             stroke-linejoin="round"
                             stroke-width="2"
-                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                        ></path>
                     </svg>
                     Volver a proyectos
                 </Button>
@@ -178,7 +178,7 @@ const galleryItems = frontmatter.gallery?.map((item) => ({
                                     external
                                 >
                                     <GitHubMark class="w-4 h-4" />
-                                    Código fuente
+                                    Codigo fuente
                                 </Button>
                             )}
                         </div>
@@ -188,34 +188,21 @@ const galleryItems = frontmatter.gallery?.map((item) => ({
 
             <!-- Cover image -->
             {
-                (frontmatter.coverIframe || frontmatter.cover) && (
+                frontmatter.cover && (
                     <div class="mb-12 aspect-video bg-bg-tertiary rounded-lg overflow-hidden">
-                        {frontmatter.coverIframe ? (
-                            <iframe
-                                src={frontmatter.coverIframe}
-                                title={`Portada de ${frontmatter.title}`}
-                                class="h-full border-0 pointer-events-none"
-                                style="width: calc(100% + 16px); margin-right: -16px;"
-                                loading="lazy"
-                                scrolling="no"
-                            ></iframe>
-                        ) : (
-                            <>
-                                <img
-                                    src={coverSrc}
-                                    alt={`Portada de ${frontmatter.title}`}
-                                    class="w-full h-full object-cover"
-                                    loading="lazy"
-                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                                />
-                                <div
-                                    class="hidden h-full w-full items-center justify-center text-text-dim text-sm"
-                                    aria-hidden="true"
-                                >
-                                    📸 Imagen pendiente
-                                </div>
-                            </>
-                        )}
+                        <img
+                            src={coverSrc}
+                            alt={`Portada de ${frontmatter.title}`}
+                            class="w-full h-full object-cover"
+                            loading="lazy"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                        />
+                        <div
+                            class="hidden h-full w-full items-center justify-center text-text-dim text-sm"
+                            aria-hidden="true"
+                        >
+                            Imagen pendiente
+                        </div>
                     </div>
                 )
             }
@@ -250,7 +237,8 @@ const galleryItems = frontmatter.gallery?.map((item) => ({
                             stroke-linecap="round"
                             stroke-linejoin="round"
                             stroke-width="2"
-                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                        ></path>
                     </svg>
                     Todos los proyectos
                 </Button>
@@ -267,7 +255,8 @@ const galleryItems = frontmatter.gallery?.map((item) => ({
                             stroke-linecap="round"
                             stroke-linejoin="round"
                             stroke-width="2"
-                            d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                            d="M14 5l7 7m0 0l-7 7m7-7H3"
+                        ></path>
                     </svg>
                 </Button>
             </div>

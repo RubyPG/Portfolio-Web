@@ -16,8 +16,7 @@ tags:
   - "Lead Gen"
   - "Chatbot"
   - "Automation"
-cover: "/projects/icreategroup-web/thumb.jpg"
-coverIframe: "https://icreategroup.net"
+cover: "/projects/icreate-web/thumb.png"
 links:
   demo: "https://icreategroup.net"
   repo: null
