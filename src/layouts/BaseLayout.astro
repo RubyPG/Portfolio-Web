@@ -12,6 +12,8 @@ interface Props {
     description?: string;
     ogImage?: string;
     canonical?: string;
+    /* One-page home integrates its own footer into the final scene */
+    showFooter?: boolean;
 }
 
 const routePath = stripBasePath(Astro.url.pathname);
@@ -29,6 +31,7 @@ const {
     description = defaultDescription,
     ogImage = site.seo.ogImage,
     canonical,
+    showFooter = true,
 } = Astro.props;
 
 /* Full titles (containing the site name) are used as-is; short page titles
@@ -97,6 +100,6 @@ const canonicalUrl =
             <slot />
         </main>
 
-        <Footer />
+        {showFooter && <Footer />}
     </body>
 </html>

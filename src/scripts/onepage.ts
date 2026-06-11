@@ -111,6 +111,8 @@ function initScrollSpy() {
 interface SceneWipe {
     from: string;
     to: string;
+    /* desktop-only: delay the wipe to a later point of the cover zone */
+    coverStart?: string;
 }
 
 const SCENE_ORDER = [
@@ -133,20 +135,21 @@ const SCENE_WIPES: Record<string, SceneWipe> = {
         from: "inset(0% 50% 0% 50%)",
         to: "inset(0% 0% 0% 0%)",
     },
-    // Iris opening from the start of the timeline.
+    // Slanted sweep left → right, like the timeline advancing.
     experiencia: {
-        from: "circle(7% at 18% 14%)",
-        to: "circle(142% at 18% 14%)",
+        from: "polygon(0% 0%, 16% 0%, 1% 100%, 0% 100%)",
+        to: "polygon(0% 0%, 116% 0%, 101% 100%, 0% 100%)",
     },
-    // Diagonal sweep, like a film wipe.
+    // Diagonal light-beam widening until it fills the frame.
     proyectos: {
-        from: "polygon(0% 120%, 100% 100%, 100% 120%, 0% 140%)",
-        to: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
+        from: "polygon(82% 0%, 100% 0%, 18% 100%, 0% 100%)",
+        to: "polygon(-100% 0%, 200% 0%, 100% 100%, -200% 100%)",
     },
-    // Widescreen letterbox opening for the finale.
+    // Cut to black, then a widescreen letterbox opens on the finale.
     contacto: {
         from: "inset(49.8% 0% 49.8% 0%)",
         to: "inset(0% 0% 0% 0%)",
+        coverStart: "top 65%",
     },
 };
 
@@ -173,20 +176,21 @@ function initCinematicTransitions() {
                     // Resting mid-cut finishes the edit, like a video.
                     snap: {
                         snapTo: [0, 1],
-                        duration: { min: 0.4, max: 0.85 },
+                        duration: { min: 0.5, max: 1 },
                         ease: "power3.inOut",
                         delay: 0.06,
                     },
                 });
 
                 // The frozen frame sinks into black under the new scene.
+                // Before the finale it goes FULLY black: cut → letterbox.
                 gsap.to(scene, {
-                    opacity: 0.22,
+                    opacity: next.id === "contacto" ? 0 : 0.22,
                     ease: "none",
                     scrollTrigger: {
                         trigger: next,
                         start: "top bottom",
-                        end: "top top",
+                        end: next.id === "contacto" ? "top 55%" : "top top",
                         scrub: 0.6,
                     },
                 });
@@ -205,7 +209,7 @@ function initCinematicTransitions() {
                         ease: "none",
                         scrollTrigger: {
                             trigger: scene,
-                            start: "top bottom",
+                            start: wipe.coverStart ?? "top bottom",
                             end: "top top",
                             scrub: 0.6,
                         },
@@ -549,6 +553,46 @@ function initMarquees() {
     });
 }
 
+/* ── 3D tilt cards (project teasers) ── */
+function initTilt() {
+    if (!window.matchMedia("(pointer: fine)").matches) return;
+
+    document.querySelectorAll<HTMLElement>("[data-tilt]").forEach((card) => {
+        if (card.dataset.tiltBound === "true") return;
+        card.dataset.tiltBound = "true";
+
+        gsap.set(card, { transformPerspective: 900 });
+        const rotX = gsap.quickTo(card, "rotationX", {
+            duration: 0.5,
+            ease: "power3",
+        });
+        const rotY = gsap.quickTo(card, "rotationY", {
+            duration: 0.5,
+            ease: "power3",
+        });
+        const scale = gsap.quickTo(card, "scale", {
+            duration: 0.4,
+            ease: "power3",
+        });
+
+        card.addEventListener("mousemove", (event) => {
+            const rect = card.getBoundingClientRect();
+            const px = (event.clientX - rect.left) / rect.width;
+            const py = (event.clientY - rect.top) / rect.height;
+            rotY((px - 0.5) * 10);
+            rotX((0.5 - py) * 10);
+            scale(1.02);
+            card.style.setProperty("--px", `${px * 100}%`);
+            card.style.setProperty("--py", `${py * 100}%`);
+        });
+        card.addEventListener("mouseleave", () => {
+            rotX(0);
+            rotY(0);
+            scale(1);
+        });
+    });
+}
+
 /* ── Magnetic buttons ── */
 function initMagnetic() {
     if (!window.matchMedia("(pointer: fine)").matches) return;
@@ -593,6 +637,7 @@ function init() {
 
     initAnchorNav();
     initMagnetic();
+    initTilt();
 
     // Lift the CSS FOUC guard with inline styles BEFORE building tweens, so
     // gsap.from() captures visible end states. from() re-hides them instantly.
