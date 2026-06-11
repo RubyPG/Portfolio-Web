@@ -10,6 +10,10 @@ import { TextPlugin } from "gsap/TextPlugin";
 
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin, SplitText, TextPlugin);
 
+// Mobile URL-bar show/hide fires resize events; ignoring them avoids
+// expensive ScrollTrigger refreshes (and visible jank) mid-scroll.
+ScrollTrigger.config({ ignoreMobileResize: true });
+
 const NAV_OFFSET = 64;
 const prefersReduced = () =>
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -173,6 +177,7 @@ function initCinematicTransitions() {
                     end: "top top",
                     pin: scene,
                     pinSpacing: false,
+                    anticipatePin: 1,
                     // Resting mid-cut finishes the edit, like a video.
                     snap: {
                         snapTo: [0, 1],

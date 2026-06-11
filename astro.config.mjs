@@ -11,6 +11,10 @@ export default defineConfig({
   site: siteUrl,
   base: basePath && basePath !== '/' ? basePath : undefined,
   output: 'static',
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: 'viewport',
+  },
   redirects: {
     '/sobre-mi': '/',
     '/contacto': '/#contacto',

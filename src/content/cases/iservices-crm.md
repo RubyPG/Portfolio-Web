@@ -18,7 +18,7 @@ tags:
   - "Supabase"
   - "RLS"
   - "Realtime"
-cover: "/projects/iservices-crm/thumb.png"
+cover: "/projects/iservices-crm/thumb.webp"
 links:
   demo: null
   repo: null

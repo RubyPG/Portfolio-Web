@@ -192,23 +192,46 @@ const LetterGlitch = ({
 
         context.current = canvas.getContext('2d');
         resizeCanvas();
-        animate();
+
+        // Only animate while the canvas is on screen.
+        let visible = false;
+        const start = () => {
+            if (animationRef.current === null) animate();
+        };
+        const stop = () => {
+            if (animationRef.current !== null) {
+                cancelAnimationFrame(animationRef.current);
+                animationRef.current = null;
+            }
+        };
+        const io = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    visible = entry.isIntersecting;
+                    if (visible) start();
+                    else stop();
+                });
+            },
+            { rootMargin: '100px' },
+        );
+        io.observe(canvas);
 
         let resizeTimeout: ReturnType<typeof setTimeout>;
 
         const handleResize = () => {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
-                cancelAnimationFrame(animationRef.current as number);
+                stop();
                 resizeCanvas();
-                animate();
+                if (visible) start();
             }, 100);
         };
 
         window.addEventListener('resize', handleResize);
 
         return () => {
-            cancelAnimationFrame(animationRef.current!);
+            io.disconnect();
+            stop();
             window.removeEventListener('resize', handleResize);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps

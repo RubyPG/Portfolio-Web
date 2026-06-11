@@ -173,7 +173,7 @@ export const projects: Project[] = [
         },
         links: { repo: null, demo: null, docs: null },
         casePath: "/cases/ilead-crm",
-        thumbnail: "/projects/ilead-crm/thumb.png",
+        thumbnail: "/projects/ilead-crm/thumb.webp",
         featured: true,
     },
     {
@@ -221,7 +221,7 @@ export const projects: Project[] = [
         },
         links: { repo: null, demo: null, docs: null },
         casePath: "/cases/iservices-crm",
-        thumbnail: "/projects/iservices-crm/thumb.png",
+        thumbnail: "/projects/iservices-crm/thumb.webp",
         featured: true,
     },
     {
@@ -270,7 +270,7 @@ export const projects: Project[] = [
         },
         links: { repo: null, demo: "https://loopsngrooves.com", docs: null },
         casePath: "/cases/loops-n-grooves",
-        thumbnail: "/projects/loopsngrooves/thumb.png",
+        thumbnail: "/projects/loopsngrooves/thumb.webp",
         featured: false,
     },
 ];

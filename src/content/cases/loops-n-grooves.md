@@ -18,7 +18,7 @@ tags:
   - "Headless"
   - "WooCommerce"
   - "E-commerce"
-cover: "/projects/loopsngrooves/thumb.png"
+cover: "/projects/loopsngrooves/thumb.webp"
 links:
   demo: "https://loopsngrooves.com"
   repo: null

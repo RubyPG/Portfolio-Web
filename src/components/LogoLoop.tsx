@@ -182,14 +182,35 @@ const useAnimationLoop = (
       rafRef.current = requestAnimationFrame(animate);
     };
 
-    rafRef.current = requestAnimationFrame(animate);
-
-    return () => {
+    // Only burn frames while the marquee is actually on screen.
+    const startLoop = () => {
+      if (rafRef.current === null) {
+        lastTimestampRef.current = null;
+        rafRef.current = requestAnimationFrame(animate);
+      }
+    };
+    const stopLoop = () => {
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = null;
       }
       lastTimestampRef.current = null;
+    };
+
+    const io = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) startLoop();
+          else stopLoop();
+        });
+      },
+      { rootMargin: '100px' }
+    );
+    io.observe(track);
+
+    return () => {
+      io.disconnect();
+      stopLoop();
     };
   }, [targetVelocity, seqWidth, seqHeight, isHovered, hoverSpeed, isVertical]);
 };

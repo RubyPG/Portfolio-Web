@@ -2,7 +2,8 @@
    Portfolio RPG — Global Styles
    ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+/* Self-hosted variable font: one woff2 instead of 7 remote weights */
+@import '@fontsource-variable/inter';
 @import 'tailwindcss';
 @import './theme.css';
 
@@ -41,7 +42,7 @@
     --color-neutral-white: #FFFFFF;
 
     /* Font family */
-    --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
         'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 
     /* Animations */
@@ -191,8 +192,9 @@
     box-sizing: border-box;
 }
 
+/* No CSS smooth scrolling: GSAP drives anchor scrolls and scene snaps;
+   the browser's own smoothing on top makes them mushy and laggy. */
 html {
-    scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
@@ -672,6 +674,7 @@ body::-webkit-scrollbar {
     opacity: 0;
     pointer-events: none;
     z-index: 40;
+    will-change: opacity;
 }
 
 /* Film-style scroll progress bar (created by the one-page script) */

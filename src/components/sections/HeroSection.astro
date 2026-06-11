@@ -42,6 +42,7 @@ const pfx = lang === "en" ? "/en" : "";
                 timeScale={0.5}
                 tintColor="#2563eb"
                 tintStrength={0.85}
+                suspendWhenOffscreen={true}
                 client:load
             />
         </div>
@@ -62,7 +63,7 @@ const pfx = lang === "en" ? "/en" : "";
             >
                 <span class="h-9 w-9 overflow-hidden rounded-full border border-secondary/40 bg-bg-tertiary">
                     <img
-                        src={withBasePath("/FotoPerfil.png")}
+                        src={withBasePath("/FotoPerfil.webp")}
                         alt={`Foto de ${site.name}`}
                         class="h-full w-full object-cover"
                         loading="eager"
@@ -129,7 +130,7 @@ const pfx = lang === "en" ? "/en" : "";
             >
                 {
                     t.stats.map((stat) => (
-                        <div class="rounded-2xl border border-white/10 bg-black/30 px-3 py-4 text-center backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                        <div class="rounded-2xl border border-white/10 bg-black/40 px-3 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
                             <div
                                 class="text-2xl font-black text-accent sm:text-3xl"
                                 data-count-to={stat.value}
