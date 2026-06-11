@@ -662,6 +662,18 @@ body::-webkit-scrollbar {
     color: var(--secondary-hover);
 }
 
+/* Solid black veil that darkens an outgoing scene during a cover cut.
+   Always a layer ON TOP — scene opacity is never touched, so stacked
+   pinned scenes can never bleed through each other. */
+.scene-veil {
+    position: absolute;
+    inset: 0;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 40;
+}
+
 /* Film-style scroll progress bar (created by the one-page script) */
 .page-progress {
     position: fixed;

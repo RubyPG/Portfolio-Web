@@ -183,17 +183,33 @@ function initCinematicTransitions() {
                 });
 
                 // The frozen frame sinks into black under the new scene.
-                // Before the finale it goes FULLY black: cut → letterbox.
-                gsap.to(scene, {
-                    opacity: next.id === "contacto" ? 0 : 0.22,
-                    ease: "none",
-                    scrollTrigger: {
-                        trigger: next,
-                        start: "top bottom",
-                        end: next.id === "contacto" ? "top 55%" : "top top",
-                        scrub: 0.6,
+                // A SOLID black veil on top — never element opacity, which
+                // would let older stacked scenes show through.
+                // Before the finale it goes fully black: cut → letterbox.
+                let veil = scene.querySelector<HTMLElement>(".scene-veil");
+                if (!veil) {
+                    veil = document.createElement("div");
+                    veil.className = "scene-veil";
+                    veil.setAttribute("aria-hidden", "true");
+                    scene.appendChild(veil);
+                }
+                gsap.fromTo(
+                    veil,
+                    { opacity: 0 },
+                    {
+                        opacity: next.id === "contacto" ? 1 : 0.82,
+                        ease: "none",
+                        scrollTrigger: {
+                            trigger: next,
+                            start: "top bottom",
+                            end:
+                                next.id === "contacto"
+                                    ? "top 55%"
+                                    : "top top",
+                            scrub: 0.6,
+                        },
                     },
-                });
+                );
             });
 
             // Unique entrance wipe per scene, spanning the exact cover zone
@@ -601,9 +617,17 @@ function initMagnetic() {
         if (el.dataset.magneticBound === "true") return;
         el.dataset.magneticBound = "true";
 
-        const strength = 22;
-        const xTo = gsap.quickTo(el, "x", { duration: 0.4, ease: "power3" });
-        const yTo = gsap.quickTo(el, "y", { duration: 0.4, ease: "power3" });
+        // xPercent/yPercent: separate GSAP channels from the x/y used by the
+        // entrance reveals, so hovering never hijacks a pending reveal.
+        const strength = 10;
+        const xTo = gsap.quickTo(el, "xPercent", {
+            duration: 0.25,
+            ease: "power2.out",
+        });
+        const yTo = gsap.quickTo(el, "yPercent", {
+            duration: 0.25,
+            ease: "power2.out",
+        });
 
         el.addEventListener("mousemove", (event) => {
             const rect = el.getBoundingClientRect();
