@@ -29,7 +29,7 @@ const projectTechLogos = getProjectTechLogos();
         class="flex flex-col justify-center overflow-hidden py-20 sm:py-24 lg:h-screen lg:py-0"
     >
         <div class="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="mb-10 flex flex-wrap items-end justify-between gap-6 lg:mb-14">
+            <div class="mb-10 flex flex-wrap items-end justify-between gap-6 lg:mb-9">
                 <div class="max-w-2xl">
                     <p class="mb-3 text-[0.68rem] font-semibold uppercase tracking-[0.32em] text-accent">
                         {t.eyebrow}
@@ -98,7 +98,7 @@ const projectTechLogos = getProjectTechLogos();
         </div>
 
         <!-- Progress (desktop rail) -->
-        <div class="mx-auto mt-10 hidden w-full max-w-7xl items-center gap-4 px-4 sm:px-6 lg:flex lg:px-8">
+        <div class="mx-auto mt-8 hidden w-full max-w-7xl items-center gap-4 px-4 sm:px-6 lg:flex lg:px-8">
             <span class="text-[0.62rem] font-semibold uppercase tracking-[0.24em] text-text-dim">
                 {t.panelHint}
             </span>
@@ -110,16 +110,17 @@ const projectTechLogos = getProjectTechLogos();
                 ></span>
             </span>
         </div>
-    </div>
 
-    <!-- Tech logo marquee -->
-    <div class="border-t border-ui-border/40">
-        <ProjectTechLogoLoop
-            client:visible
-            items={projectTechLogos}
-            ariaLabel={lang === "en"
-                ? "Technologies used in real projects"
-                : "Tecnologías usadas en proyectos reales"}
-        />
+        <!-- Tech logo marquee: same scene, closing the block -->
+        <div class="mt-10 w-full border-t border-ui-border/30 pt-6 opacity-90 lg:mt-7 lg:pt-5">
+            <ProjectTechLogoLoop
+                client:visible
+                compact={true}
+                items={projectTechLogos}
+                ariaLabel={lang === "en"
+                    ? "Technologies used in real projects"
+                    : "Tecnologías usadas en proyectos reales"}
+            />
+        </div>
     </div>
 </section>

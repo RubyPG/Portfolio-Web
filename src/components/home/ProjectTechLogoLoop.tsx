@@ -5,11 +5,14 @@ import type { ProjectTechLogo } from "../../data/project-tech-logos";
 interface ProjectTechLogoLoopProps {
   items: ProjectTechLogo[];
   ariaLabel?: string;
+  /* compact: bare loop without section chrome, for embedding inside scenes */
+  compact?: boolean;
 }
 
 const ProjectTechLogoLoop: React.FC<ProjectTechLogoLoopProps> = ({
   items,
   ariaLabel = "Project technologies",
+  compact = false,
 }) => {
   const logos = useMemo<LogoItem[]>(
     () =>
@@ -52,26 +55,40 @@ const ProjectTechLogoLoop: React.FC<ProjectTechLogoLoopProps> = ({
     return null;
   }
 
+  const loop = (
+    <LogoLoop
+      logos={logos}
+      speed={55}
+      direction="left"
+      logoHeight={compact ? 28 : 34}
+      gap={18}
+      hoverSpeed={18}
+      scaleOnHover={false}
+      fadeOut
+      fadeOutColor={compact ? "#111111" : "#0a0a0a"}
+      ariaLabel={ariaLabel}
+    />
+  );
+
+  if (compact) {
+    return (
+      <div
+        data-no-reveal
+        className="w-full overflow-hidden"
+        aria-label={ariaLabel}
+      >
+        {loop}
+      </div>
+    );
+  }
+
   return (
     <section
       data-no-reveal
       className="relative isolate overflow-x-clip overflow-y-hidden border-y border-ui-border/45 bg-linear-to-b from-bg-secondary/40 via-bg-primary to-bg-primary py-10 sm:py-12"
       aria-label={ariaLabel}
     >
-      <div className="w-full overflow-hidden px-4 sm:px-6 lg:px-8">
-        <LogoLoop
-          logos={logos}
-          speed={55}
-          direction="left"
-          logoHeight={34}
-          gap={18}
-          hoverSpeed={18}
-          scaleOnHover={false}
-          fadeOut
-          fadeOutColor="#0a0a0a"
-          ariaLabel={ariaLabel}
-        />
-      </div>
+      <div className="w-full overflow-hidden px-4 sm:px-6 lg:px-8">{loop}</div>
     </section>
   );
 };

@@ -664,6 +664,62 @@ body::-webkit-scrollbar {
     color: var(--secondary-hover);
 }
 
+/* ── Scroll companion: dancing spark (created by the one-page script) ── */
+.scroll-buddy {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 36px;
+    height: 36px;
+    margin: -18px 0 0 -18px;
+    z-index: 45;
+    pointer-events: none;
+    will-change: transform;
+}
+
+.scroll-buddy-core {
+    position: absolute;
+    inset: 0;
+    color: var(--accent);
+    filter: drop-shadow(0 0 6px rgba(255, 255, 0, 0.85)) drop-shadow(0 0 18px rgba(255, 255, 0, 0.35));
+}
+
+.scroll-buddy-core svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.scroll-buddy-trail {
+    position: absolute;
+    inset: -10px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.35), rgba(59, 130, 246, 0) 65%);
+    animation: buddy-pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes buddy-pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.7;
+    }
+
+    50% {
+        transform: scale(1.35);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 640px) {
+    .scroll-buddy {
+        width: 26px;
+        height: 26px;
+        margin: -13px 0 0 -13px;
+    }
+}
+
 /* Solid black veil that darkens an outgoing scene during a cover cut.
    Always a layer ON TOP — scene opacity is never touched, so stacked
    pinned scenes can never bleed through each other. */

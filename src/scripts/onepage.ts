@@ -574,6 +574,96 @@ function initMarquees() {
     });
 }
 
+/* ── Scroll companion: a spark that dances across the page as you scroll ── */
+function initScrollCompanion() {
+    if (!document.querySelector("[data-onepage]")) return;
+    if (document.querySelector(".scroll-buddy")) return;
+
+    const buddy = document.createElement("div");
+    buddy.className = "scroll-buddy";
+    buddy.setAttribute("aria-hidden", "true");
+    buddy.innerHTML = `
+        <div class="scroll-buddy-trail"></div>
+        <div class="scroll-buddy-core">
+            <svg viewBox="0 0 24 24" fill="none"><path fill="currentColor" d="M12 1.5l1.91 6.16a2 2 0 0 0 1.32 1.32l6.16 1.91a1.16 1.16 0 0 1 0 2.22l-6.16 1.91a2 2 0 0 0-1.32 1.32L12 22.5a1.16 1.16 0 0 1-2.22 0l-1.91-6.16a2 2 0 0 0-1.32-1.32L.39 13.11a1.16 1.16 0 0 1 0-2.22l6.16-1.91a2 2 0 0 0 1.32-1.32L9.78 1.5a1.16 1.16 0 0 1 2.22 0Z"/></svg>
+        </div>`;
+    document.body.appendChild(buddy);
+
+    const xTo = gsap.quickTo(buddy, "x", { duration: 0.65, ease: "power2.out" });
+    const yTo = gsap.quickTo(buddy, "y", { duration: 0.65, ease: "power2.out" });
+    const rotTo = gsap.quickTo(buddy, "rotation", {
+        duration: 0.45,
+        ease: "power2.out",
+    });
+    const sxTo = gsap.quickTo(buddy, "scaleX", {
+        duration: 0.35,
+        ease: "power2.out",
+    });
+    const syTo = gsap.quickTo(buddy, "scaleY", {
+        duration: 0.35,
+        ease: "power2.out",
+    });
+
+    // Keeps dancing on its own while you rest (separate percent channel).
+    gsap.to(buddy, {
+        yPercent: 16,
+        duration: 1.7,
+        ease: "sine.inOut",
+        yoyo: true,
+        repeat: -1,
+    });
+    const core = buddy.querySelector(".scroll-buddy-core");
+    if (core) {
+        gsap.to(core, { rotation: 360, duration: 16, ease: "none", repeat: -1 });
+    }
+
+    const WAVES = 6;
+    const place = (progress: number) => {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const margin = vw < 1024 ? 0.34 : 0.42;
+        return {
+            x: vw / 2 + Math.sin(progress * Math.PI * WAVES) * vw * margin,
+            y:
+                vh * 0.16 +
+                Math.sin(progress * Math.PI * WAVES * 2 + 1.3) * vh * 0.05,
+        };
+    };
+
+    // Settle back to calm when scrolling stops.
+    const settle = gsap.delayedCall(0.18, () => {
+        rotTo(0);
+        sxTo(1);
+        syTo(1);
+    });
+
+    ScrollTrigger.create({
+        trigger: document.body,
+        start: "top top",
+        end: "max",
+        onUpdate: (self) => {
+            const { x, y } = place(self.progress);
+            const velocity = gsap.utils.clamp(-3000, 3000, self.getVelocity());
+            const speed = Math.min(Math.abs(velocity) / 3200, 1);
+            // Travel direction along the sine path decides the lean.
+            const lean =
+                Math.cos(self.progress * Math.PI * WAVES) *
+                (velocity >= 0 ? 1 : -1);
+            xTo(x);
+            yTo(y);
+            rotTo(lean * 26 * speed);
+            sxTo(1 + speed * 0.5);
+            syTo(1 - speed * 0.28);
+            settle.restart(true);
+        },
+    });
+
+    // Start in place (centre of the wave at progress 0), fade in.
+    const start = place(0);
+    gsap.set(buddy, { x: start.x, y: start.y, autoAlpha: 0 });
+    gsap.to(buddy, { autoAlpha: 1, duration: 1.2, delay: 0.8 });
+}
+
 /* ── 3D tilt cards (project teasers) ── */
 function initTilt() {
     if (!window.matchMedia("(pointer: fine)").matches) return;
@@ -667,6 +757,7 @@ function init() {
     initAnchorNav();
     initMagnetic();
     initTilt();
+    initScrollCompanion();
 
     // Lift the CSS FOUC guard with inline styles BEFORE building tweens, so
     // gsap.from() captures visible end states. from() re-hides them instantly.
