@@ -1,0 +1,97 @@
+---
+/* ── One-page: Experiencia (timeline) ── */
+import TechBadge from "../ui/TechBadge.astro";
+import { onePageCopy, type Lang } from "../../data/onepage";
+
+interface Props {
+    lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = onePageCopy[lang].experience;
+const nowLabel = lang === "en" ? "NOW" : "AHORA";
+---
+
+<section
+    id="experiencia"
+    data-spy-section
+    class="relative border-t border-ui-border/40 bg-bg-primary py-20 sm:py-28"
+>
+    <div class="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="mb-14 max-w-2xl">
+            <p class="mb-3 text-[0.68rem] font-semibold uppercase tracking-[0.32em] text-accent">
+                {t.eyebrow}
+            </p>
+            <h2
+                class="text-3xl font-black tracking-tight text-text-primary sm:text-4xl lg:text-5xl"
+                data-st-title
+            >
+                {t.title}
+            </h2>
+            <p class="mt-4 text-base leading-relaxed text-text-muted sm:text-lg" data-reveal>
+                {t.subtitle}
+            </p>
+        </div>
+
+        <div class="relative" data-timeline>
+            <!-- Line -->
+            <span
+                class="absolute bottom-2 left-[7px] top-2 w-px bg-white/10 sm:left-[9px]"
+                aria-hidden="true"
+            ></span>
+            <span
+                data-timeline-line
+                class="absolute bottom-2 left-[7px] top-2 w-px bg-linear-to-b from-accent via-secondary to-secondary/30 sm:left-[9px]"
+                aria-hidden="true"
+                style="transform: scaleY(0); transform-origin: top center;"
+            ></span>
+
+            <ol class="space-y-10">
+                {
+                    t.items.map((item) => (
+                        <li class="relative pl-10 sm:pl-14" data-timeline-item>
+                            <span
+                                class:list={[
+                                    "absolute left-0 top-1.5 flex h-[15px] w-[15px] items-center justify-center rounded-full border-2 sm:h-[19px] sm:w-[19px]",
+                                    item.current
+                                        ? "border-accent bg-accent/20"
+                                        : "border-secondary/60 bg-bg-primary",
+                                ]}
+                                aria-hidden="true"
+                            >
+                                {item.current && (
+                                    <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+                                )}
+                            </span>
+
+                            <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+                                <span class="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-text-dim">
+                                    {item.period}
+                                </span>
+                                <span class="rounded-full border border-secondary/25 bg-secondary/10 px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.16em] text-secondary">
+                                    {item.context}
+                                </span>
+                                {item.current && (
+                                    <span class="rounded-full border border-accent/30 bg-accent/10 px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.16em] text-accent">
+                                        {nowLabel}
+                                    </span>
+                                )}
+                            </div>
+                            <h3 class="mt-2.5 text-xl font-black tracking-tight text-text-primary sm:text-2xl">
+                                {item.title}
+                            </h3>
+                            <p class="mt-2 max-w-2xl text-sm leading-relaxed text-text-muted sm:text-base">
+                                {item.body}
+                            </p>
+                            <div class="mt-3.5 flex flex-wrap gap-1.5">
+                                {item.tags.map((tag) => (
+                                    <TechBadge label={tag} variant="neutral" size="sm" />
+                                ))}
+                            </div>
+                        </li>
+                    ))
+                }
+            </ol>
+        </div>
+    </div>
+</section>

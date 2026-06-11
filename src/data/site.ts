@@ -16,6 +16,7 @@ export interface SiteData {
     name: string;
     shortName: string;
     role: string;
+    roleEn: string;
     subtitle: string;
     description: string;
     siteUrl: string;
@@ -29,6 +30,8 @@ export interface SiteData {
         defaultTitle: string;
         titleTemplate: string;
         defaultDescription: string;
+        defaultTitleEn: string;
+        defaultDescriptionEn: string;
         ogImage: string;
     };
 }
@@ -36,10 +39,11 @@ export interface SiteData {
 export const site: SiteData = {
     name: "Rubén Pezuela García",
     shortName: "RubénPG",
-    role: "Full Stack Developer & CTO",
-    subtitle: "CRM iLead · n8n · Supabase · Kotlin · Astro",
+    role: "Full Stack Developer · Freelance",
+    roleEn: "Full Stack Developer · Freelance",
+    subtitle: "CRM · ERP · Automatización · AI-Augmented Development",
     description:
-        "Full Stack Developer y CTO de iCreate Group. Construyo CRMs, automatizo procesos con n8n, desarrollo webs de alto rendimiento y apps desktop. Productos reales en producción.",
+        "Full Stack Developer freelance. Construyo CRMs, ERPs y webs de alto rendimiento con Supabase, Astro, React y Kotlin — con automatización (n8n) y desarrollo agéntico con Claude Code en el núcleo del proceso.",
     siteUrl: "https://rubenpg.dev", // TODO: actualizar con dominio real
     locale: "es_ES",
 
@@ -67,10 +71,13 @@ export const site: SiteData = {
     },
 
     seo: {
-        defaultTitle: "Rubén Pezuela García — Full Stack Developer & CTO",
+        defaultTitle: "Rubén Pezuela García — Full Stack Developer Freelance",
         titleTemplate: "%s | RubénPG",
         defaultDescription:
-            "Full Stack Developer y CTO de iCreate Group. Especializado en CRM a medida, automatización con n8n, webs con Astro y apps desktop con Kotlin. Construyo productos que escalan.",
+            "Full Stack Developer freelance especializado en CRM y ERP a medida, automatización con n8n y desarrollo aumentado con IA (Claude Code, agent skills, MCP). Productos reales en producción.",
+        defaultTitleEn: "Rubén Pezuela García — Freelance Full Stack Developer",
+        defaultDescriptionEn:
+            "Freelance Full Stack Developer specialized in custom CRM/ERP systems, n8n automation and AI-augmented development (Claude Code, agent skills, MCP). Real products in production.",
         ogImage: "/og-image.jpg",
     },
 };

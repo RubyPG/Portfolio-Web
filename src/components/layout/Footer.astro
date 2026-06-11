@@ -3,14 +3,35 @@
 import Container from "../ui/Container.astro";
 import GitHubMark from "../icons/GitHubMark.astro";
 import { site } from "../../data/site";
-import { withBasePath } from "../../utils/base-path";
+import { stripBasePath, withBasePath } from "../../utils/base-path";
 
-const navLinks = [
-    { label: "Inicio", href: "/" },
-    { label: "Proyectos", href: "/proyectos" },
-    { label: "Sobre mí", href: "/sobre-mi" },
-    { label: "Contacto", href: "/contacto" },
-];
+const currentPath = stripBasePath(Astro.url.pathname);
+const isEn = currentPath.startsWith("/en");
+const home = isEn ? "/en" : "/";
+const homePrefix = isEn ? "/en" : "";
+
+const navLinks = isEn
+    ? [
+          { label: "Home", href: `${home}#inicio` },
+          { label: "Stack", href: `${home}#stack` },
+          { label: "Experience", href: `${home}#experiencia` },
+          { label: "Projects", href: `${homePrefix}/proyectos` },
+          { label: "Contact", href: `${home}#contacto` },
+      ]
+    : [
+          { label: "Inicio", href: `${home}#inicio` },
+          { label: "Stack", href: `${home}#stack` },
+          { label: "Experiencia", href: `${home}#experiencia` },
+          { label: "Proyectos", href: `${homePrefix}/proyectos` },
+          { label: "Contacto", href: `${home}#contacto` },
+      ];
+
+const tagline = isEn
+    ? "Freelance Full Stack Developer — custom CRM/ERP, automation and AI-augmented development."
+    : "Full Stack Developer freelance — CRM/ERP a medida, automatización y desarrollo aumentado con IA.";
+const navHeading = isEn ? "Navigation" : "Navegación";
+const contactHeading = isEn ? "Contact" : "Contacto";
+const backToTopLabel = isEn ? "Back to top" : "Volver arriba";
 
 const contactLinks = [
     {
@@ -42,7 +63,7 @@ const contactLinks = [
                 class="rounded-[1.75rem] border border-ui-border bg-bg-secondary/65 p-5 shadow-[0_18px_55px_rgba(0,0,0,0.22)]"
             >
                 <a
-                    href={withBasePath("/")}
+                    href={withBasePath(home)}
                     class="flex items-center gap-2.5 text-lg font-bold text-text-primary hover:text-secondary transition-colors no-underline group"
                 >
                     <img
@@ -55,8 +76,7 @@ const contactLinks = [
                     </span>
                 </a>
                 <p class="mt-3 text-sm leading-relaxed text-text-muted">
-                    {site.role} especializado en automatización, desarrollo web y
-                    aplicaciones desktop.
+                    {tagline}
                 </p>
 
                 <div
@@ -85,7 +105,7 @@ const contactLinks = [
                                 <h3
                                     class="site-accordion-heading mt-1 text-base font-bold text-text-primary"
                                 >
-                                    Navegación
+                                    {navHeading}
                                 </h3>
                             </div>
                             <svg
@@ -244,7 +264,7 @@ const contactLinks = [
                                 <h3
                                     class="site-accordion-heading mt-1 text-base font-bold text-text-primary"
                                 >
-                                    Contacto
+                                    {contactHeading}
                                 </h3>
                             </div>
                             <svg
@@ -344,7 +364,7 @@ const contactLinks = [
         <div class="hidden py-12 lg:grid lg:grid-cols-4 lg:gap-8">
             <div>
                 <a
-                    href={withBasePath("/")}
+                    href={withBasePath(home)}
                     class="flex items-center gap-2.5 text-lg font-bold text-text-primary hover:text-secondary transition-colors no-underline group"
                 >
                     <img
@@ -357,8 +377,7 @@ const contactLinks = [
                     </span>
                 </a>
                 <p class="mt-3 text-sm leading-relaxed text-text-muted">
-                    {site.role} especializado en automatización, desarrollo web y
-                    aplicaciones desktop.
+                    {tagline}
                 </p>
             </div>
 
@@ -366,7 +385,7 @@ const contactLinks = [
                 <h3
                     class="mb-4 text-sm font-semibold uppercase tracking-wider text-text-primary"
                 >
-                    Navegación
+                    {navHeading}
                 </h3>
                 <ul class="space-y-2">
                     {
@@ -441,7 +460,7 @@ const contactLinks = [
                 <h3
                     class="mb-4 text-sm font-semibold uppercase tracking-wider text-text-primary"
                 >
-                    Contacto
+                    {contactHeading}
                 </h3>
                 <ul class="space-y-2">
                     {
@@ -518,7 +537,7 @@ const contactLinks = [
             <button
                 id="back-to-top"
                 class="inline-flex cursor-pointer items-center gap-1.5 text-sm text-text-muted transition-colors hover:text-secondary"
-                aria-label="Volver arriba"
+                aria-label={backToTopLabel}
                 type="button"
             >
                 <svg
@@ -533,7 +552,7 @@ const contactLinks = [
                         stroke-width="2"
                         d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
                 </svg>
-                Volver arriba
+                {backToTopLabel}
             </button>
         </div>
     </Container>

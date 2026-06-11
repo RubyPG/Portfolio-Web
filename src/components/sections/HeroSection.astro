@@ -1,0 +1,191 @@
+---
+/* ── One-page: Hero ── */
+import Prism from "../Prism";
+import { site } from "../../data/site";
+import { onePageCopy, type Lang } from "../../data/onepage";
+import { withBasePath } from "../../utils/base-path";
+
+interface Props {
+    lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = onePageCopy[lang].hero;
+const pfx = lang === "en" ? "/en" : "";
+---
+
+<section
+    id="inicio"
+    data-spy-section
+    class="relative -mt-16 flex min-h-svh w-full items-center overflow-hidden"
+>
+    <!-- Prism background -->
+    <div
+        class="absolute inset-0 h-full w-full pointer-events-none"
+        aria-hidden="true"
+        data-hero-bg
+    >
+        <div class="absolute inset-0" style="width:100%;height:100%;position:relative;">
+            <Prism
+                height={3.5}
+                baseWidth={5.5}
+                animationType="rotate"
+                glow={1.2}
+                noise={0.5}
+                transparent={true}
+                scale={3.6}
+                hueShift={0}
+                colorFrequency={0.08}
+                hoverStrength={2}
+                inertia={0.05}
+                bloom={1}
+                timeScale={0.5}
+                tintColor="#2563eb"
+                tintStrength={0.85}
+                client:load
+            />
+        </div>
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(13,27,42,0)_15%,rgba(13,27,42,0.45)_65%,rgba(10,10,10,0.88)_100%)]"></div>
+        <div class="absolute bottom-0 left-0 right-0 h-40 bg-linear-to-t from-bg-primary to-transparent"></div>
+    </div>
+
+    <div
+        class="relative z-10 mx-auto w-full max-w-7xl px-4 pb-24 pt-32 sm:px-6 lg:px-8"
+        data-hero-content
+    >
+        <div class="flex flex-col items-center text-center">
+            <!-- Identity badge -->
+            <div
+                class="mb-7 inline-flex items-center gap-3 rounded-full border border-white/10 bg-[rgba(6,10,18,0.78)] py-1.5 pl-1.5 pr-4 backdrop-blur-xl"
+                data-hero-item
+                data-fouc
+            >
+                <span class="h-9 w-9 overflow-hidden rounded-full border border-secondary/40 bg-bg-tertiary">
+                    <img
+                        src={withBasePath("/FotoPerfil.png")}
+                        alt={`Foto de ${site.name}`}
+                        class="h-full w-full object-cover"
+                        loading="eager"
+                    />
+                </span>
+                <span class="text-sm font-bold text-text-primary">
+                    Rubén<span class="text-accent">PG</span>
+                </span>
+                <span class="h-4 w-px bg-white/15" aria-hidden="true"></span>
+                <span class="inline-flex items-center gap-2">
+                    <span class="h-2 w-2 animate-pulse rounded-full bg-state-success"></span>
+                    <span class="text-[0.66rem] font-semibold uppercase tracking-[0.22em] text-text-secondary">
+                        {t.badge}
+                    </span>
+                </span>
+            </div>
+
+            <p
+                class="mb-5 text-[0.7rem] font-semibold uppercase tracking-[0.38em] text-secondary/80"
+                data-hero-item
+                data-fouc
+            >
+                {t.eyebrow}
+            </p>
+
+            <h1 class="font-black leading-[0.92] tracking-[-0.045em]">
+                <span
+                    class="block overflow-hidden text-[clamp(3.2rem,11vw,8.5rem)] text-text-primary"
+                    data-hero-line
+                    data-fouc
+                >
+                    {t.titleLines[0]}
+                </span>
+                <span
+                    class="block overflow-hidden text-[clamp(3.2rem,11vw,8.5rem)] text-transparent bg-clip-text bg-linear-to-r from-secondary via-secondary-hover to-secondary/70"
+                    data-hero-line
+                    data-fouc
+                >
+                    {t.titleLines[1]}
+                </span>
+            </h1>
+
+            <p
+                class="mt-6 text-sm font-semibold uppercase tracking-[0.3em] text-text-muted"
+                data-hero-item
+                data-fouc
+            >
+                {t.subtitle}
+            </p>
+
+            <p
+                class="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-text-secondary sm:text-lg"
+                data-hero-item
+                data-fouc
+            >
+                {t.intro}
+            </p>
+
+            <!-- Stats -->
+            <div
+                class="mt-10 grid w-full max-w-2xl grid-cols-3 gap-3"
+                data-hero-item
+                data-fouc
+            >
+                {
+                    t.stats.map((stat) => (
+                        <div class="rounded-2xl border border-white/10 bg-black/30 px-3 py-4 text-center backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                            <div
+                                class="text-2xl font-black text-accent sm:text-3xl"
+                                data-count-to={stat.value}
+                                data-count-suffix={stat.suffix}
+                            >
+                                0{stat.suffix}
+                            </div>
+                            <div class="mt-1.5 text-[0.58rem] font-semibold uppercase leading-tight tracking-[0.12em] text-text-muted sm:text-[0.66rem]">
+                                {stat.label}
+                            </div>
+                        </div>
+                    ))
+                }
+            </div>
+
+            <!-- CTAs -->
+            <div
+                class="mt-10 flex w-full flex-col items-center justify-center gap-3 sm:flex-row"
+                data-hero-item
+                data-fouc
+            >
+                <a
+                    href={withBasePath(`${pfx}/proyectos`)}
+                    class="motion-button inline-flex w-full items-center justify-center gap-2.5 rounded-full bg-accent px-8 py-3.5 text-base font-bold text-bg-deep transition-colors hover:bg-accent-hover sm:w-auto"
+                    style="color: var(--bg-deep);"
+                    data-magnetic
+                >
+                    <span class="button-content inline-flex items-center gap-2.5">
+                        {t.ctaProjects}
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                        </svg>
+                    </span>
+                </a>
+                <a
+                    href="#contacto"
+                    class="motion-button inline-flex w-full items-center justify-center gap-2.5 rounded-full border border-secondary/60 px-8 py-3.5 text-base font-bold text-secondary transition-colors hover:bg-secondary hover:text-neutral-white sm:w-auto"
+                    data-magnetic
+                >
+                    <span class="button-content inline-flex items-center gap-2.5">
+                        {t.ctaContact}
+                    </span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scroll cue -->
+    <a
+        href="#stack"
+        class="absolute bottom-8 left-1/2 z-10 hidden -translate-x-1/2 flex-col items-center gap-2 text-text-muted no-underline opacity-70 transition-opacity hover:opacity-100 sm:flex"
+        aria-label={t.scrollCue}
+    >
+        <span class="text-[0.6rem] font-semibold uppercase tracking-[0.3em]">{t.scrollCue}</span>
+        <span class="block h-9 w-5 rounded-full border border-white/25">
+            <span class="mx-auto mt-1.5 block h-2 w-1 animate-bounce rounded-full bg-accent"></span>
+        </span>
+    </a>
+</section>

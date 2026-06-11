@@ -11,6 +11,12 @@ export default defineConfig({
   site: siteUrl,
   base: basePath && basePath !== '/' ? basePath : undefined,
   output: 'static',
+  redirects: {
+    '/sobre-mi': '/',
+    '/contacto': '/#contacto',
+    '/en/sobre-mi': '/en',
+    '/en/contacto': '/en#contacto',
+  },
   integrations: [react()],
   vite: {
     plugins: [tailwindcss()],

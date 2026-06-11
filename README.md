@@ -58,3 +58,14 @@ Para detalles especÃ­ficos sobre la arquitectura de carpetas, cÃ³mo agregar 
 ---
 *Desarrollado con â¤ï¸ y mucho cÃ³digo limpio por **RubÃ©n Pezuela GarcÃ­a**.*
 
+
+## 📦 Publicar el proyecto Archai (coming soon)
+
+El ERP **Archai by Sepharim** ya está cargado en `src/data/projects.ts` con `comingSoon: true`
+(se muestra como tarjeta "Próximamente" en `/proyectos`). Para publicarlo:
+
+1. En `src/data/projects.ts`, busca el proyecto `archai-erp` y pon `comingSoon: false`.
+2. Añade una captura en `public/projects/archai-erp/thumb.png` y apunta `thumbnail` a esa ruta.
+3. (Opcional) Crea su case study en `src/content/cases/archai-erp.md` y rellena `casePath: "/cases/archai-erp"`.
+
+Nada más: la tarjeta pasa automáticamente al grid principal con el resto de proyectos en ES y EN.

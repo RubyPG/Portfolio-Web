@@ -6,19 +6,34 @@ import { stripBasePath, withBasePath } from "../../utils/base-path";
 
 const currentPath = stripBasePath(Astro.url.pathname);
 const isEn = currentPath.startsWith("/en");
+const home = isEn ? "/en" : "/";
+const homePrefix = isEn ? "/en" : "";
 
-const navLinks = isEn
+/* Anchor links live on the one-page home; from other pages they navigate
+   back to the home with the hash. Proyectos is its own page. */
+interface NavLink {
+    label: string;
+    href: string;
+    spy?: string;
+    page?: boolean;
+}
+
+const navLinks: NavLink[] = isEn
     ? [
-          { label: "Home", href: "/en" },
-          { label: "Projects", href: "/en/proyectos" },
-          { label: "About", href: "/en/sobre-mi" },
-          { label: "Contact", href: "/en/contacto" },
+          { label: "Home", href: `${home}#inicio`, spy: "inicio" },
+          { label: "Stack", href: `${home}#stack`, spy: "stack" },
+          { label: "AI", href: `${home}#ia`, spy: "ia" },
+          { label: "Experience", href: `${home}#experiencia`, spy: "experiencia" },
+          { label: "Projects", href: `${homePrefix}/proyectos`, page: true },
+          { label: "Contact", href: `${home}#contacto`, spy: "contacto" },
       ]
     : [
-          { label: "Inicio", href: "/" },
-          { label: "Proyectos", href: "/proyectos" },
-          { label: "Sobre mí", href: "/sobre-mi" },
-          { label: "Contacto", href: "/contacto" },
+          { label: "Inicio", href: `${home}#inicio`, spy: "inicio" },
+          { label: "Stack", href: `${home}#stack`, spy: "stack" },
+          { label: "IA", href: `${home}#ia`, spy: "ia" },
+          { label: "Experiencia", href: `${home}#experiencia`, spy: "experiencia" },
+          { label: "Proyectos", href: `${homePrefix}/proyectos`, page: true },
+          { label: "Contacto", href: `${home}#contacto`, spy: "contacto" },
       ];
 
 const alternativePath = isEn
@@ -26,6 +41,8 @@ const alternativePath = isEn
     : currentPath === "/"
       ? "/en"
       : `/en${currentPath}`;
+
+const isProjectsPage = currentPath.startsWith(`${homePrefix}/proyectos`);
 ---
 
 <nav
@@ -38,7 +55,7 @@ const alternativePath = isEn
             <!-- Logo -->
             <div class="flex-1 flex justify-start">
                 <a
-                    href={withBasePath(isEn ? "/en" : "/")}
+                    href={withBasePath(home)}
                     class="flex items-center gap-2.5 text-lg font-bold text-text-primary hover:text-secondary transition-colors duration-200 no-underline group"
                     aria-label={isEn ? "Go to home" : "Ir al inicio"}
                 >
@@ -60,20 +77,15 @@ const alternativePath = isEn
             >
                 {
                     navLinks.map((link) => {
-                        const isActive =
-                            currentPath === link.href ||
-                            (link.href !== "/" &&
-                                link.href !== "/en" &&
-                                currentPath.startsWith(link.href));
+                        const isActive = link.page && isProjectsPage;
                         return (
                             <a
                                 href={withBasePath(link.href)}
                                 class:list={[
-                                    "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 no-underline",
-                                    isActive
-                                        ? "text-secondary bg-secondary/15 ring-1 ring-secondary/30"
-                                        : "text-text-secondary hover:text-secondary hover:bg-ui-surface",
+                                    "nav-link px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 no-underline",
+                                    isActive && "nav-link-active",
                                 ]}
+                                data-spy-link={link.spy}
                                 aria-current={isActive ? "page" : undefined}
                             >
                                 {link.label}
@@ -139,19 +151,13 @@ const alternativePath = isEn
             <div class="max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain px-4 pb-6 pt-4 flex flex-col gap-2">
                 {
                     navLinks.map((link) => {
-                        const isActive =
-                            currentPath === link.href ||
-                            (link.href !== "/" &&
-                                link.href !== "/en" &&
-                                currentPath.startsWith(link.href));
+                        const isActive = link.page && isProjectsPage;
                         return (
                             <a
                                 href={withBasePath(link.href)}
                                 class:list={[
-                                    "px-4 py-3 rounded-lg text-base font-medium transition-all duration-200 no-underline",
-                                    isActive
-                                        ? "text-secondary bg-secondary/15 ring-1 ring-secondary/30"
-                                        : "text-text-secondary hover:text-secondary hover:bg-ui-surface",
+                                    "nav-link px-4 py-3 rounded-lg text-base font-medium transition-all duration-200 no-underline",
+                                    isActive && "nav-link-active",
                                 ]}
                                 aria-current={isActive ? "page" : undefined}
                             >

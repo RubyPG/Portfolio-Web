@@ -4,7 +4,6 @@ import Navbar from "../components/layout/Navbar.astro";
 import Footer from "../components/layout/Footer.astro";
 import MotionEffectsController from "../components/layout/MotionEffectsController";
 import ScrollChrome from "../components/layout/ScrollChrome";
-import ScrollRevealController from "../components/layout/ScrollRevealController";
 import { site } from "../data/site";
 import { stripBasePath, withBasePath } from "../utils/base-path";
 import "../styles/globals.css";
@@ -16,43 +15,34 @@ interface Props {
     canonical?: string;
 }
 
-const {
-    title,
-    description = site.seo.defaultDescription,
-    ogImage = site.seo.ogImage,
-    canonical,
-} = Astro.props;
-
-const pageTitle = title
-    ? site.seo.titleTemplate.replace("%s", title)
-    : site.seo.defaultTitle;
-
-const canonicalOrigin = Astro.site ?? new URL(site.siteUrl);
-const canonicalUrl =
-    canonical || new URL(Astro.url.pathname, canonicalOrigin).href;
-
 const routePath = stripBasePath(Astro.url.pathname);
 const isEn = routePath.startsWith("/en");
 const htmlLang = isEn ? "en" : "es";
 const ogLocale = isEn ? "en_US" : site.locale;
 
-const normalizedPath =
-    routePath.endsWith("/") && routePath !== "/"
-        ? routePath.slice(0, -1)
-        : routePath;
+const defaultTitle = isEn ? site.seo.defaultTitleEn : site.seo.defaultTitle;
+const defaultDescription = isEn
+    ? site.seo.defaultDescriptionEn
+    : site.seo.defaultDescription;
 
-const revealPages = new Set([
-    "/",
-    "/proyectos",
-    "/sobre-mi",
-    "/contacto",
-    "/en",
-    "/en/proyectos",
-    "/en/sobre-mi",
-    "/en/contacto",
-]);
+const {
+    title,
+    description = defaultDescription,
+    ogImage = site.seo.ogImage,
+    canonical,
+} = Astro.props;
 
-const enableScrollReveal = revealPages.has(normalizedPath);
+/* Full titles (containing the site name) are used as-is; short page titles
+   get the "%s | RubénPG" template. */
+const pageTitle = !title
+    ? defaultTitle
+    : title.includes(site.shortName) || title.includes(site.name)
+      ? title
+      : site.seo.titleTemplate.replace("%s", title);
+
+const canonicalOrigin = Astro.site ?? new URL(site.siteUrl);
+const canonicalUrl =
+    canonical || new URL(Astro.url.pathname, canonicalOrigin).href;
 ---
 
 <!doctype html>
@@ -61,6 +51,11 @@ const enableScrollReveal = revealPages.has(normalizedPath);
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="generator" content={Astro.generator} />
+
+        <!-- Mark JS availability before first paint (used for FOUC-safe reveals) -->
+        <script is:inline>
+            document.documentElement.classList.add("js");
+        </script>
 
         <!-- SEO -->
         <title>{pageTitle}</title>
@@ -97,14 +92,10 @@ const enableScrollReveal = revealPages.has(normalizedPath);
     <body class="bg-bg-primary text-text-primary min-h-screen flex flex-col">
         <Navbar />
 
-        {enableScrollReveal && <ScrollRevealController client:load />}
         <MotionEffectsController client:load />
         <ScrollChrome client:load />
 
-        <main
-            class="grow pt-16"
-            data-scroll-reveal={enableScrollReveal ? "true" : "false"}
-        >
+        <main class="grow pt-16">
             <slot />
         </main>
 

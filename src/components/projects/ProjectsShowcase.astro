@@ -1,0 +1,377 @@
+---
+/* ── /proyectos: full showcase (shared ES/EN) ── */
+import TechBadge from "../ui/TechBadge.astro";
+import LetterGlitch from "../LetterGlitch";
+import { projects, type Project } from "../../data/projects";
+import type { Lang } from "../../data/onepage";
+import { withBasePath } from "../../utils/base-path";
+
+interface Props {
+    lang: Lang;
+}
+
+const { lang } = Astro.props;
+const pfx = lang === "en" ? "/en" : "";
+
+const copy = {
+    es: {
+        eyebrow: "Portfolio",
+        title: "Proyectos",
+        subtitle:
+            "Sistemas reales con usuarios reales: CRMs, ERPs, e-commerce y automatización. Cada uno con stack, decisiones y resultado.",
+        statTotal: "Proyectos",
+        statLive: "En producción",
+        statBuilding: "En desarrollo",
+        viewCase: "Ver caso completo",
+        viewDemo: "Ver demo",
+        highlightsLabel: "Qué lo hace especial",
+        stackLabel: "Stack",
+        comingSoonBadge: "Próximamente",
+        comingSoonNote:
+            "En desarrollo activo. El caso completo se publicará aquí en cuanto el producto esté en producción.",
+        backHome: "Volver al inicio",
+        ctaTitle: "¿El siguiente de la lista es el tuyo?",
+        ctaButton: "Hablemos",
+        marquee: "PROYECTOS",
+    },
+    en: {
+        eyebrow: "Portfolio",
+        title: "Projects",
+        subtitle:
+            "Real systems with real users: CRMs, ERPs, e-commerce and automation. Each with its stack, decisions and outcome.",
+        statTotal: "Projects",
+        statLive: "In production",
+        statBuilding: "In development",
+        viewCase: "View full case",
+        viewDemo: "View demo",
+        highlightsLabel: "What makes it special",
+        stackLabel: "Stack",
+        comingSoonBadge: "Coming soon",
+        comingSoonNote:
+            "Under active development. The full case study will be published here once the product ships.",
+        backHome: "Back to home",
+        ctaTitle: "Is yours next on the list?",
+        ctaButton: "Let's talk",
+        marquee: "PROJECTS",
+    },
+}[lang];
+
+const live = projects.filter((p) => !p.comingSoon);
+const upcoming = projects.filter((p) => p.comingSoon);
+const liveCount = live.filter((p) =>
+    ["En producción", "In production"].includes(p.status[lang]),
+).length;
+
+const initials = (project: Project) =>
+    project.title
+        .split(/\s+/)
+        .map((word) => word[0])
+        .join("")
+        .slice(0, 3)
+        .toUpperCase();
+---
+
+<div>
+    <!-- ═══ Banner ═══ -->
+    <section
+        class="relative -mt-16 flex min-h-[60svh] items-center overflow-hidden border-b border-ui-border bg-bg-secondary/40 pb-14 pt-32 sm:pb-20"
+    >
+        <div class="absolute inset-0 z-0 opacity-15 sm:opacity-20">
+            <LetterGlitch
+                client:only="react"
+                glitchSpeed={50}
+                centerVignette={false}
+                outerVignette={true}
+                smooth={true}
+                glitchColors={["#3b82f6", "#1d4ed8", "#0f172a"]}
+            />
+        </div>
+        <div class="absolute inset-0 z-0 bg-bg-primary/40 pointer-events-none"></div>
+        <div class="absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_top_left,rgba(59,130,246,0.15),transparent_60%)] pointer-events-none"></div>
+
+        <div class="relative z-20 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+            <p class="mb-4 text-[0.68rem] font-semibold uppercase tracking-[0.32em] text-accent" data-reveal>
+                {copy.eyebrow}
+            </p>
+            <h1
+                class="overflow-hidden text-[clamp(3rem,10vw,7.5rem)] font-black leading-[0.95] tracking-[-0.04em] text-text-primary"
+                data-st-title
+            >
+                {copy.title}
+            </h1>
+            <div class="mt-6 flex flex-wrap items-end justify-between gap-8">
+                <p class="max-w-2xl text-base leading-relaxed text-text-secondary sm:text-lg" data-reveal>
+                    {copy.subtitle}
+                </p>
+                <dl class="flex gap-8" data-reveal>
+                    <div>
+                        <dd class="text-3xl font-black text-text-primary">{projects.length}</dd>
+                        <dt class="mt-1 text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-text-dim">
+                            {copy.statTotal}
+                        </dt>
+                    </div>
+                    <div>
+                        <dd class="text-3xl font-black text-secondary">{liveCount}</dd>
+                        <dt class="mt-1 text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-text-dim">
+                            {copy.statLive}
+                        </dt>
+                    </div>
+                    <div>
+                        <dd class="text-3xl font-black text-accent">
+                            {projects.length - liveCount}
+                        </dd>
+                        <dt class="mt-1 text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-text-dim">
+                            {copy.statBuilding}
+                        </dt>
+                    </div>
+                </dl>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══ Showcase rows ═══ -->
+    <section class="relative overflow-hidden py-16 sm:py-24">
+        <div class="mx-auto w-full max-w-7xl space-y-20 px-4 sm:space-y-28 sm:px-6 lg:px-8">
+            {
+                live.map((project, index) => {
+                    const reversed = index % 2 === 1;
+                    return (
+                        <article
+                            class:list={[
+                                "grid items-center gap-10 lg:grid-cols-2 lg:gap-16",
+                            ]}
+                            data-reveal-group
+                        >
+                            <div
+                                class:list={["relative", reversed && "lg:order-2"]}
+                                data-reveal
+                            >
+                                <div
+                                    class="pointer-events-none absolute -inset-6 rounded-[3rem] opacity-50 blur-3xl"
+                                    style="background:radial-gradient(circle at 30% 30%, rgba(59,130,246,0.22), transparent 65%);"
+                                    aria-hidden="true"
+                                />
+                                <div class="motion-surface relative overflow-hidden rounded-[2rem] border border-white/12 bg-bg-secondary shadow-[0_36px_90px_rgba(0,0,0,0.45)]"
+                                    data-motion-active="false"
+                                >
+                                    {project.thumbnail ? (
+                                        <img
+                                            src={withBasePath(project.thumbnail)}
+                                            alt={`${project.title} — ${project.kind[lang]}`}
+                                            class="aspect-[16/10] w-full object-cover transition-transform duration-700 hover:scale-[1.04]"
+                                            loading="lazy"
+                                            decoding="async"
+                                        />
+                                    ) : (
+                                        <div class="relative flex aspect-[16/10] w-full items-center justify-center overflow-hidden bg-[linear-gradient(135deg,#0d1b2a,#0a0a0a)]">
+                                            <div
+                                                class="absolute inset-0 opacity-[0.08]"
+                                                style="background-image:linear-gradient(rgba(255,255,255,0.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.6) 1px,transparent 1px);background-size:44px 44px;"
+                                            />
+                                            <span class="text-outline select-none text-[clamp(4rem,10vw,7rem)] font-black tracking-tight">
+                                                {initials(project)}
+                                            </span>
+                                            <span class="absolute bottom-4 right-5 rounded-full border border-white/15 bg-black/40 px-3 py-1 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-text-muted">
+                                                {project.status[lang]}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div class:list={[reversed && "lg:order-1"]}>
+                                <div class="flex items-center gap-4" data-reveal>
+                                    <span class="text-5xl font-black leading-none text-white/8 select-none">
+                                        0{index + 1}
+                                    </span>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="rounded-full border border-secondary/25 bg-secondary/10 px-3 py-1 text-[0.62rem] font-bold uppercase tracking-[0.16em] text-secondary">
+                                            {project.kind[lang]}
+                                        </span>
+                                        <span class="rounded-full border border-white/12 bg-white/[0.04] px-3 py-1 text-[0.62rem] font-bold uppercase tracking-[0.16em] text-text-muted">
+                                            {project.context[lang]}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <h2 class="mt-5 text-3xl font-black tracking-tight text-text-primary sm:text-4xl" data-reveal>
+                                    {project.title}
+                                </h2>
+                                <p class="mt-1.5 font-mono text-xs uppercase tracking-[0.2em] text-text-dim" data-reveal>
+                                    {project.year} · {project.status[lang]} · {project.role[lang]}
+                                </p>
+
+                                <p class="mt-5 text-sm leading-relaxed text-text-secondary sm:text-base" data-reveal>
+                                    {project.description[lang]}
+                                </p>
+
+                                <div class="mt-6" data-reveal>
+                                    <p class="mb-2.5 text-[0.62rem] font-bold uppercase tracking-[0.24em] text-accent">
+                                        {copy.highlightsLabel}
+                                    </p>
+                                    <ul class="space-y-2">
+                                        {project.highlights[lang].slice(0, 3).map((highlight) => (
+                                            <li class="flex items-start gap-2.5 text-sm text-text-muted">
+                                                <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-secondary" aria-hidden="true" />
+                                                {highlight}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+
+                                <div class="mt-6 flex flex-wrap gap-1.5" data-reveal>
+                                    {project.stack.map((tech) => (
+                                        <TechBadge label={tech} variant="neutral" size="sm" />
+                                    ))}
+                                </div>
+
+                                <div class="mt-7 flex flex-wrap gap-3" data-reveal>
+                                    {project.casePath && (
+                                        <a
+                                            href={withBasePath(project.casePath)}
+                                            class="motion-button inline-flex items-center gap-2 rounded-full bg-accent px-6 py-2.5 text-sm font-bold text-bg-deep transition-colors hover:bg-accent-hover"
+                                            style="color: var(--bg-deep);"
+                                        >
+                                            <span class="button-content inline-flex items-center gap-2">
+                                                {copy.viewCase}
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                                </svg>
+                                            </span>
+                                        </a>
+                                    )}
+                                    {project.links.demo && (
+                                        <a
+                                            href={project.links.demo}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="motion-button inline-flex items-center gap-2 rounded-full border border-secondary/50 px-6 py-2.5 text-sm font-bold text-secondary transition-colors hover:bg-secondary hover:text-neutral-white"
+                                        >
+                                            <span class="button-content inline-flex items-center gap-2">
+                                                {copy.viewDemo}
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                </svg>
+                                            </span>
+                                        </a>
+                                    )}
+                                </div>
+                            </div>
+                        </article>
+                    );
+                })
+            }
+        </div>
+    </section>
+
+    <!-- ═══ Coming soon (Archai) ═══ -->
+    {
+        upcoming.length > 0 && (
+            <section class="relative overflow-hidden border-t border-ui-border/40 bg-bg-deep py-16 sm:py-24">
+                <div
+                    class="pointer-events-none absolute left-0 top-4 w-full select-none whitespace-nowrap"
+                    aria-hidden="true"
+                >
+                    <span
+                        data-marquee="right"
+                        class="text-outline block text-[clamp(4rem,12vw,9rem)] font-black leading-none tracking-tight"
+                    >
+                        {`${copy.comingSoonBadge.toUpperCase()} — ${copy.comingSoonBadge.toUpperCase()} — ${copy.comingSoonBadge.toUpperCase()}`}
+                    </span>
+                </div>
+
+                <div class="relative mx-auto mt-[clamp(3rem,9vw,7rem)] w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+                    {upcoming.map((project) => (
+                        <article
+                            class="relative overflow-hidden rounded-[2.25rem] border border-accent/20 bg-[linear-gradient(160deg,rgba(255,255,0,0.04),rgba(59,130,246,0.05)_55%,transparent)] p-7 sm:p-12"
+                            data-reveal-group
+                        >
+                            <div
+                                class="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-accent/8 blur-3xl"
+                                aria-hidden="true"
+                            />
+                            <div class="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
+                                <div>
+                                    <div class="flex flex-wrap items-center gap-2" data-reveal>
+                                        <span class="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3.5 py-1.5 text-[0.64rem] font-black uppercase tracking-[0.2em] text-accent">
+                                            <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+                                            {copy.comingSoonBadge}
+                                        </span>
+                                        <span class="rounded-full border border-secondary/25 bg-secondary/10 px-3 py-1 text-[0.62rem] font-bold uppercase tracking-[0.16em] text-secondary">
+                                            {project.kind[lang]}
+                                        </span>
+                                        <span class="rounded-full border border-white/12 bg-white/[0.04] px-3 py-1 text-[0.62rem] font-bold uppercase tracking-[0.16em] text-text-muted">
+                                            {project.context[lang]}
+                                        </span>
+                                    </div>
+
+                                    <h2 class="mt-6 text-3xl font-black tracking-tight text-text-primary sm:text-5xl" data-reveal>
+                                        {project.title}
+                                    </h2>
+                                    <p class="mt-2 font-mono text-xs uppercase tracking-[0.2em] text-text-dim" data-reveal>
+                                        {project.year} · {project.status[lang]} · {project.role[lang]}
+                                    </p>
+                                    <p class="mt-5 max-w-xl text-sm leading-relaxed text-text-secondary sm:text-base" data-reveal>
+                                        {project.description[lang]}
+                                    </p>
+                                    <p class="mt-5 max-w-xl border-l-2 border-accent/50 pl-4 text-sm italic text-text-muted" data-reveal>
+                                        {copy.comingSoonNote}
+                                    </p>
+                                    <div class="mt-6 flex flex-wrap gap-1.5" data-reveal>
+                                        {project.stack.map((tech) => (
+                                            <TechBadge label={tech} variant="neutral" size="sm" />
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div data-reveal>
+                                    <p class="mb-3 text-[0.62rem] font-bold uppercase tracking-[0.24em] text-accent">
+                                        {copy.highlightsLabel}
+                                    </p>
+                                    <ul class="space-y-3">
+                                        {project.highlights[lang].map((highlight) => (
+                                            <li class="flex items-start gap-3 rounded-xl border border-white/8 bg-black/25 px-4 py-3 text-sm text-text-secondary">
+                                                <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
+                                                {highlight}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+                        </article>
+                    ))}
+                </div>
+            </section>
+        )
+    }
+
+    <!-- ═══ Bottom CTA ═══ -->
+    <section class="border-t border-ui-border/40 py-16 text-center sm:py-20">
+        <div class="mx-auto max-w-3xl px-4 sm:px-6">
+            <h2 class="text-2xl font-black tracking-tight text-text-primary sm:text-4xl" data-st-title>
+                {copy.ctaTitle}
+            </h2>
+            <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row" data-reveal>
+                <a
+                    href={withBasePath(`${pfx}/#contacto`)}
+                    class="motion-button inline-flex items-center justify-center gap-2.5 rounded-full bg-accent px-8 py-3.5 text-base font-bold text-bg-deep transition-colors hover:bg-accent-hover"
+                    style="color: var(--bg-deep);"
+                    data-magnetic
+                >
+                    <span class="button-content inline-flex items-center gap-2.5">
+                        {copy.ctaButton}
+                    </span>
+                </a>
+                <a
+                    href={withBasePath(pfx || "/")}
+                    class="motion-button inline-flex items-center justify-center gap-2.5 rounded-full border border-white/20 px-8 py-3.5 text-base font-bold text-text-primary transition-colors hover:border-secondary hover:text-secondary"
+                    data-magnetic
+                >
+                    <span class="button-content inline-flex items-center gap-2.5">
+                        {copy.backHome}
+                    </span>
+                </a>
+            </div>
+        </div>
+    </section>
+</div>
