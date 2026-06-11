@@ -1,265 +1,292 @@
 ---
-/* CaseLayout - layout for case study pages */
+/* CaseLayout - cinematic layout for case study pages */
 import BaseLayout from "./BaseLayout.astro";
-import Container from "../components/ui/Container.astro";
-import Badge from "../components/ui/Badge.astro";
-import Button from "../components/ui/Button.astro";
 import TechBadge from "../components/ui/TechBadge.astro";
 import GitHubMark from "../components/icons/GitHubMark.astro";
 import CaseGallery from "../components/projects/CaseGallery";
 import { withBasePath } from "../utils/base-path";
 
-interface Props {
-    frontmatter: {
-        caseSlug: string;
-        title: string;
-        summary: string;
-        type: string;
-        tags: string[];
-        stack: string[];
-        role: string;
-        status: string;
-        year: string;
-        cover?: string;
-        links?: {
-            repo?: string | null;
-            demo?: string | null;
-            docs?: string | null;
-        };
-        gallery?: Array<{
-            image: string;
-            alt: string;
-            title: string;
-            description: string;
-            label?: string;
-        }>;
+interface CaseMeta {
+    caseSlug: string;
+    title: string;
+    summary: string;
+    type: string;
+    tags: string[];
+    stack: string[];
+    role: string;
+    status: string;
+    year: string;
+    cover?: string;
+    links?: {
+        repo?: string | null;
+        demo?: string | null;
+        docs?: string | null;
     };
+    gallery?: Array<{
+        image: string;
+        alt: string;
+        title: string;
+        description: string;
+        label?: string;
+    }>;
 }
 
-const { frontmatter } = Astro.props;
-const coverSrc = frontmatter.cover ? withBasePath(frontmatter.cover) : undefined;
+interface Props {
+    frontmatter: CaseMeta;
+    nextCase?: { title: string; href: string; type: string } | null;
+}
+
+const { frontmatter, nextCase = null } = Astro.props;
+const coverSrc = frontmatter.cover
+    ? withBasePath(frontmatter.cover)
+    : undefined;
 const galleryItems = frontmatter.gallery?.map((item) => ({
     ...item,
     image: withBasePath(item.image),
 }));
+const isOngoing = frontmatter.status.toLowerCase().includes("curso");
 ---
 
 <BaseLayout title={frontmatter.title} description={frontmatter.summary}>
-    <article class="py-12 sm:py-16">
-        <Container size="md">
-            <!-- Back link -->
-            <div class="mb-8">
-                <Button href="/proyectos" variant="ghost" size="sm">
-                    <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                        ></path>
-                    </svg>
-                    Volver a proyectos
-                </Button>
-            </div>
+    <article>
+        <!-- ═══ Cinematic header ═══ -->
+        <header
+            class="relative -mt-16 flex min-h-[78svh] items-end overflow-hidden border-b border-ui-border bg-bg-deep pb-12 pt-32 sm:pb-16"
+        >
+            {
+                coverSrc && (
+                    <div class="absolute inset-0" aria-hidden="true">
+                        <img
+                            src={coverSrc}
+                            alt=""
+                            class="h-full w-full scale-105 object-cover opacity-30 blur-[2px]"
+                            loading="eager"
+                            decoding="async"
+                        />
+                        <div class="absolute inset-0 bg-linear-to-t from-bg-deep via-bg-deep/70 to-bg-deep/30" />
+                        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(59,130,246,0.16),transparent_55%)]" />
+                    </div>
+                )
+            }
+            {
+                !coverSrc && (
+                    <div class="absolute inset-0" aria-hidden="true">
+                        <div
+                            class="absolute inset-0 opacity-[0.05]"
+                            style="background-image:linear-gradient(rgba(255,255,255,0.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.5) 1px,transparent 1px);background-size:56px 56px;"
+                        />
+                        <div class="absolute -right-24 top-1/4 h-96 w-96 rounded-full bg-secondary/10 blur-3xl" />
+                    </div>
+                )
+            }
 
-            <!-- Header -->
-            <header class="mb-12">
-                <div class="flex flex-wrap gap-2 mb-4">
-                    <Badge variant="accent" size="sm">{frontmatter.type}</Badge>
+            <div class="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+                <nav class="mb-8" aria-label="Breadcrumb" data-reveal>
+                    <a
+                        href={withBasePath("/proyectos")}
+                        class="inline-flex items-center gap-2 rounded-full border border-white/12 bg-black/35 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-text-secondary no-underline backdrop-blur transition-colors hover:border-secondary/50 hover:text-secondary"
+                    >
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                        Proyectos
+                    </a>
+                </nav>
+
+                <div class="flex flex-wrap gap-2" data-reveal>
+                    <span class="rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-[0.64rem] font-black uppercase tracking-[0.2em] text-accent">
+                        {frontmatter.type}
+                    </span>
                     {
                         frontmatter.tags.map((tag) => (
-                            <Badge variant="outline" size="sm">
+                            <span class="rounded-full border border-white/12 bg-white/[0.04] px-3 py-1 text-[0.64rem] font-bold uppercase tracking-[0.16em] text-text-muted">
                                 {tag}
-                            </Badge>
+                            </span>
                         ))
                     }
                 </div>
 
                 <h1
-                    class="text-3xl sm:text-4xl lg:text-5xl font-bold text-text-primary mb-4"
+                    class="mt-6 max-w-4xl text-[clamp(2.2rem,6vw,4.5rem)] font-black leading-[1.02] tracking-[-0.03em] text-text-primary"
+                    data-st-title
                 >
                     {frontmatter.title}
                 </h1>
 
-                <p class="text-lg text-text-secondary mb-6 leading-relaxed">
+                <p class="mt-5 max-w-2xl text-base leading-relaxed text-text-secondary sm:text-lg" data-reveal>
                     {frontmatter.summary}
                 </p>
 
-                <!-- Meta info -->
-                <div
-                    class="flex flex-wrap gap-6 text-sm text-text-muted border-t border-b border-ui-border py-4"
-                >
-                    <div class="flex items-center gap-2">
-                        <svg
-                            class="w-4 h-4 text-accent"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                            ></path>
-                        </svg>
-                        <span>{frontmatter.role}</span>
+                <div class="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3" data-reveal>
+                    <div>
+                        <p class="text-[0.6rem] font-bold uppercase tracking-[0.24em] text-text-dim">Rol</p>
+                        <p class="mt-1 text-sm font-semibold text-text-primary">{frontmatter.role}</p>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <svg
-                            class="w-4 h-4 text-accent"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            ></path>
-                        </svg>
-                        <span>{frontmatter.year}</span>
+                    <div>
+                        <p class="text-[0.6rem] font-bold uppercase tracking-[0.24em] text-text-dim">Año</p>
+                        <p class="mt-1 font-mono text-sm font-semibold text-text-primary">{frontmatter.year}</p>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span
-                            class={`w-2 h-2 rounded-full ${frontmatter.status === "En curso" ? "bg-accent animate-pulse" : "bg-state-success"}`}
-                        ></span>
-                        <span>{frontmatter.status}</span>
+                    <div>
+                        <p class="text-[0.6rem] font-bold uppercase tracking-[0.24em] text-text-dim">Estado</p>
+                        <p class="mt-1 inline-flex items-center gap-2 text-sm font-semibold text-text-primary">
+                            <span
+                                class:list={[
+                                    "h-2 w-2 rounded-full",
+                                    isOngoing
+                                        ? "bg-accent animate-pulse"
+                                        : "bg-state-success",
+                                ]}
+                            ></span>
+                            {frontmatter.status}
+                        </p>
                     </div>
                 </div>
+            </div>
+        </header>
 
-                <!-- Stack -->
-                <div class="mt-4 flex flex-wrap gap-1.5">
+        <!-- ═══ Body: sticky meta + content ═══ -->
+        <div class="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+            <div class="grid gap-12 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-16">
+                <div class="order-2 min-w-0 lg:order-1">
                     {
-                        frontmatter.stack.map((tech) => (
-                            <TechBadge label={tech} variant="neutral" size="sm" />
-                        ))
+                        coverSrc && (
+                            <div
+                                class="motion-surface mb-12 overflow-hidden rounded-[1.75rem] border border-white/12 shadow-[0_36px_90px_rgba(0,0,0,0.45)]"
+                                data-motion-active="false"
+                                data-reveal
+                            >
+                                <img
+                                    src={coverSrc}
+                                    alt={`Portada de ${frontmatter.title}`}
+                                    class="aspect-video w-full object-cover"
+                                    loading="lazy"
+                                    decoding="async"
+                                />
+                            </div>
+                        )
+                    }
+
+                    <div class="prose max-w-none">
+                        <slot />
+                    </div>
+
+                    {
+                        galleryItems && galleryItems.length > 0 && (
+                            <CaseGallery
+                                client:visible
+                                items={galleryItems}
+                                projectTitle={frontmatter.title}
+                            />
+                        )
                     }
                 </div>
 
-                <!-- Links -->
-                {
-                    frontmatter.links && (
-                        <div class="mt-6 flex flex-wrap gap-3">
-                            {frontmatter.links.demo && (
-                                <Button
-                                    href={frontmatter.links.demo}
-                                    variant="primary"
-                                    size="sm"
-                                    external
-                                >
-                                    <svg
-                                        class="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                                        />
-                                    </svg>
-                                    Ver demo
-                                </Button>
-                            )}
-                            {frontmatter.links.repo && (
-                                <Button
-                                    href={frontmatter.links.repo}
-                                    variant="secondary"
-                                    size="sm"
-                                    external
-                                >
-                                    <GitHubMark class="w-4 h-4" />
-                                    Codigo fuente
-                                </Button>
-                            )}
-                        </div>
-                    )
-                }
-            </header>
+                <aside class="order-1 lg:order-2">
+                    <div class="lg:sticky lg:top-24 space-y-6">
+                        <div class="rounded-[1.5rem] border border-white/10 bg-white/[0.025] p-6">
+                            <p class="text-[0.62rem] font-bold uppercase tracking-[0.24em] text-accent">
+                                Stack
+                            </p>
+                            <div class="mt-4 flex flex-wrap gap-1.5">
+                                {
+                                    frontmatter.stack.map((tech) => (
+                                        <TechBadge label={tech} variant="neutral" size="sm" />
+                                    ))
+                                }
+                            </div>
 
-            <!-- Cover image -->
-            {
-                frontmatter.cover && (
-                    <div class="mb-12 aspect-video bg-bg-tertiary rounded-lg overflow-hidden">
-                        <img
-                            src={coverSrc}
-                            alt={`Portada de ${frontmatter.title}`}
-                            class="w-full h-full object-cover"
-                            loading="lazy"
-                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                        />
-                        <div
-                            class="hidden h-full w-full items-center justify-center text-text-dim text-sm"
-                            aria-hidden="true"
+                            {
+                                frontmatter.links &&
+                                    (frontmatter.links.demo || frontmatter.links.repo) && (
+                                        <div class="mt-6 space-y-2.5 border-t border-white/8 pt-5">
+                                            {frontmatter.links.demo && (
+                                                <a
+                                                    href={frontmatter.links.demo}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    class="motion-button flex w-full items-center justify-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-bold text-bg-deep no-underline transition-colors hover:bg-accent-hover"
+                                                    style="color: var(--bg-deep);"
+                                                >
+                                                    <span class="button-content inline-flex items-center gap-2">
+                                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                        </svg>
+                                                        Ver demo
+                                                    </span>
+                                                </a>
+                                            )}
+                                            {frontmatter.links.repo && (
+                                                <a
+                                                    href={frontmatter.links.repo}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    class="motion-button flex w-full items-center justify-center gap-2 rounded-full border border-white/20 px-5 py-2.5 text-sm font-bold text-text-primary no-underline transition-colors hover:border-secondary hover:text-secondary"
+                                                >
+                                                    <span class="button-content inline-flex items-center gap-2">
+                                                        <GitHubMark class="h-4 w-4" />
+                                                        Código fuente
+                                                    </span>
+                                                </a>
+                                            )}
+                                        </div>
+                                    )
+                            }
+                        </div>
+
+                        <a
+                            href={withBasePath("/#contacto")}
+                            class="motion-surface block rounded-[1.5rem] border border-secondary/25 bg-[radial-gradient(ellipse_at_top_left,rgba(59,130,246,0.12),transparent_60%)] p-6 no-underline transition-colors hover:border-secondary/50"
+                            data-motion-active="false"
                         >
-                            Imagen pendiente
-                        </div>
+                            <p class="text-[0.62rem] font-bold uppercase tracking-[0.24em] text-secondary">
+                                ¿Algo parecido en mente?
+                            </p>
+                            <p class="mt-2 text-sm leading-relaxed text-text-secondary">
+                                Cuéntamelo y te digo cómo lo construiría.
+                            </p>
+                            <span class="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-accent">
+                                Hablemos
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                </svg>
+                            </span>
+                        </a>
                     </div>
-                )
-            }
-
-            <!-- Markdown content -->
-            <div class="prose max-w-none">
-                <slot />
+                </aside>
             </div>
+        </div>
 
-            {
-                galleryItems && galleryItems.length > 0 && (
-                    <CaseGallery
-                        client:visible
-                        items={galleryItems}
-                        projectTitle={frontmatter.title}
+        <!-- ═══ Next case ═══ -->
+        {
+            nextCase && (
+                <a
+                    href={withBasePath(nextCase.href)}
+                    class="group relative block overflow-hidden border-t border-ui-border bg-bg-deep no-underline"
+                >
+                    <div
+                        class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                        style="background:radial-gradient(ellipse at center, rgba(59,130,246,0.14), transparent 65%);"
+                        aria-hidden="true"
                     />
-                )
-            }
-
-            <!-- Navigation -->
-            <div
-                class="mt-16 pt-8 border-t border-ui-border flex justify-between items-center"
-            >
-                <Button href="/proyectos" variant="ghost" size="md">
-                    <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                        ></path>
-                    </svg>
-                    Todos los proyectos
-                </Button>
-
-                <Button href="/#contacto" variant="primary" size="md">
-                    Contactar
-                    <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M14 5l7 7m0 0l-7 7m7-7H3"
-                        ></path>
-                    </svg>
-                </Button>
-            </div>
-        </Container>
+                    <div class="relative mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-16 text-center sm:px-6 sm:py-20 lg:px-8">
+                        <span class="text-[0.66rem] font-black uppercase tracking-[0.3em] text-text-dim">
+                            Siguiente caso · {nextCase.type}
+                        </span>
+                        <span class="text-[clamp(1.8rem,5vw,3.6rem)] font-black leading-tight tracking-[-0.03em] text-text-primary transition-colors duration-300 group-hover:text-secondary">
+                            {nextCase.title}
+                        </span>
+                        <span class="mx-auto mt-2 inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/15 text-text-muted transition-all duration-300 group-hover:translate-x-2 group-hover:border-accent group-hover:text-accent">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </span>
+                    </div>
+                </a>
+            )
+        }
     </article>
+
+    <script>
+        import "../scripts/onepage.ts";
+    </script>
 </BaseLayout>

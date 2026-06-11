@@ -7,6 +7,7 @@ import AISection from "../components/sections/AISection.astro";
 import ExperienceSection from "../components/sections/ExperienceSection.astro";
 import ProjectsTeaser from "../components/sections/ProjectsTeaser.astro";
 import ContactSection from "../components/sections/ContactSection.astro";
+import ChapterNav from "../components/layout/ChapterNav.astro";
 import { site } from "../data/site";
 ---
 
@@ -14,6 +15,7 @@ import { site } from "../data/site";
     title={site.seo.defaultTitle}
     description={site.seo.defaultDescription}
 >
+    <ChapterNav lang="es" />
     <div data-onepage>
         <HeroSection lang="es" />
         <StackSection lang="es" />

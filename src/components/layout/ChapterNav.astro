@@ -1,0 +1,48 @@
+---
+/* ── ChapterNav: film-style chapter markers (replaces the scrollbar) ── */
+import type { Lang } from "../../data/onepage";
+
+interface Props {
+    lang: Lang;
+}
+
+const { lang } = Astro.props;
+
+const chapters =
+    lang === "en"
+        ? [
+              { id: "inicio", label: "Home" },
+              { id: "stack", label: "Stack" },
+              { id: "ia", label: "AI" },
+              { id: "experiencia", label: "Experience" },
+              { id: "proyectos", label: "Projects" },
+              { id: "contacto", label: "Contact" },
+          ]
+        : [
+              { id: "inicio", label: "Inicio" },
+              { id: "stack", label: "Stack" },
+              { id: "ia", label: "IA" },
+              { id: "experiencia", label: "Experiencia" },
+              { id: "proyectos", label: "Proyectos" },
+              { id: "contacto", label: "Contacto" },
+          ];
+---
+
+<nav
+    class="chapter-nav"
+    aria-label={lang === "en" ? "Chapters" : "Capítulos"}
+>
+    {
+        chapters.map((chapter, index) => (
+            <a
+                href={`#${chapter.id}`}
+                class="chapter-link"
+                data-spy-link={chapter.id}
+            >
+                <span class="chapter-label">{chapter.label}</span>
+                <span class="chapter-index">0{index + 1}</span>
+                <span class="chapter-dot" aria-hidden="true" />
+            </a>
+        ))
+    }
+</nav>

@@ -5,20 +5,36 @@ import CaseLayout from "../../layouts/CaseLayout.astro";
 
 export async function getStaticPaths() {
     const cases = await getCollection("cases");
-    return cases.map((entry: CollectionEntry<"cases">) => ({
-        params: { slug: entry.data.caseSlug },
-        props: { entry },
-    }));
+    const ordered = [...cases].sort((a, b) =>
+        a.data.caseSlug.localeCompare(b.data.caseSlug),
+    );
+
+    return ordered.map((entry: CollectionEntry<"cases">, index: number) => {
+        const next = ordered[(index + 1) % ordered.length];
+        const nextCase =
+            ordered.length > 1
+                ? {
+                      title: next.data.title,
+                      href: `/cases/${next.data.caseSlug}`,
+                      type: next.data.type,
+                  }
+                : null;
+        return {
+            params: { slug: entry.data.caseSlug },
+            props: { entry, nextCase },
+        };
+    });
 }
 
 interface Props {
     entry: CollectionEntry<"cases">;
+    nextCase: { title: string; href: string; type: string } | null;
 }
 
-const { entry } = Astro.props;
+const { entry, nextCase } = Astro.props;
 const { Content } = await entry.render();
 ---
 
-<CaseLayout frontmatter={entry.data}>
+<CaseLayout frontmatter={entry.data} nextCase={nextCase}>
     <Content />
 </CaseLayout>

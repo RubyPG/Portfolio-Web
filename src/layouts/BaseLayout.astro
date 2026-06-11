@@ -3,7 +3,6 @@
 import Navbar from "../components/layout/Navbar.astro";
 import Footer from "../components/layout/Footer.astro";
 import MotionEffectsController from "../components/layout/MotionEffectsController";
-import ScrollChrome from "../components/layout/ScrollChrome";
 import { site } from "../data/site";
 import { stripBasePath, withBasePath } from "../utils/base-path";
 import "../styles/globals.css";
@@ -93,7 +92,6 @@ const canonicalUrl =
         <Navbar />
 
         <MotionEffectsController client:load />
-        <ScrollChrome client:load />
 
         <main class="grow pt-16">
             <slot />

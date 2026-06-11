@@ -22,6 +22,25 @@ function revealAll() {
         .forEach((el) => gsap.set(el, { clearProps: "all", autoAlpha: 1 }));
 }
 
+/* SplitText pieces inherit color:transparent from gradient-clipped parents
+   but not the background, leaving invisible text. Re-apply the gradient on
+   every piece so per-char/word animation keeps the clip effect. */
+function inheritTextGradient(parent: HTMLElement, pieces: Element[]) {
+    const cs = getComputedStyle(parent);
+    const clipsText =
+        cs.getPropertyValue("-webkit-background-clip") === "text" ||
+        cs.getPropertyValue("background-clip") === "text";
+    if (!clipsText || cs.backgroundImage === "none") return;
+
+    pieces.forEach((piece) => {
+        if (!(piece instanceof HTMLElement)) return;
+        piece.style.backgroundImage = cs.backgroundImage;
+        piece.style.setProperty("-webkit-background-clip", "text");
+        piece.style.setProperty("background-clip", "text");
+        piece.style.color = "transparent";
+    });
+}
+
 /* ── Smooth anchor navigation (works on every page) ── */
 function initAnchorNav() {
     document
@@ -53,7 +72,7 @@ function initAnchorNav() {
         });
 }
 
-/* ── Scrollspy: highlight nav links for the section in view ── */
+/* ── Scrollspy: highlight nav + chapter links for the section in view ── */
 function initScrollSpy() {
     const links = Array.from(
         document.querySelectorAll<HTMLAnchorElement>("[data-spy-link]"),
@@ -82,179 +101,181 @@ function initScrollSpy() {
         });
 }
 
-/* SplitText pieces inherit color:transparent from gradient-clipped parents
-   but not the background, leaving invisible text. Re-apply the gradient on
-   every piece so per-char/word animation keeps the clip effect. */
-function inheritTextGradient(parent: HTMLElement, pieces: Element[]) {
-    const cs = getComputedStyle(parent);
-    const clipsText =
-        cs.getPropertyValue("-webkit-background-clip") === "text" ||
-        cs.getPropertyValue("background-clip") === "text";
-    if (!clipsText || cs.backgroundImage === "none") return;
+/* ── Cinematic scene system ──
+   Desktop: every section is a full-viewport "scene". When you scroll on,
+   the current scene freezes in place (pin without spacing) and the next
+   one covers it through its own unique wipe; a scroll snap completes
+   half-finished cuts, so the page reads as a sequence of edits, not a
+   scroll. Mobile keeps the wipes as lightweight entrance reveals. */
 
-    pieces.forEach((piece) => {
-        if (!(piece instanceof HTMLElement)) return;
-        piece.style.backgroundImage = cs.backgroundImage;
-        piece.style.setProperty("-webkit-background-clip", "text");
-        piece.style.setProperty("background-clip", "text");
-        piece.style.color = "transparent";
-    });
+interface SceneWipe {
+    from: string;
+    to: string;
 }
 
-/* ── Cinematic section transitions ──
-   The hero pins underneath while #stack rises over it like a card; every
-   later section enters through its own unique scrubbed wipe, so scrolling
-   reads as a sequence of cuts instead of a normal page. */
+const SCENE_ORDER = [
+    "inicio",
+    "stack",
+    "ia",
+    "experiencia",
+    "proyectos",
+    "contacto",
+];
+
+const SCENE_WIPES: Record<string, SceneWipe> = {
+    // Card rising over the frozen hero, corners rounding away.
+    stack: {
+        from: "inset(8% 7% 14% 7% round 2.5rem)",
+        to: "inset(0% 0% 0% 0% round 0rem)",
+    },
+    // Vertical doors opening onto the terminal room.
+    ia: {
+        from: "inset(0% 50% 0% 50%)",
+        to: "inset(0% 0% 0% 0%)",
+    },
+    // Iris opening from the start of the timeline.
+    experiencia: {
+        from: "circle(7% at 18% 14%)",
+        to: "circle(142% at 18% 14%)",
+    },
+    // Diagonal sweep, like a film wipe.
+    proyectos: {
+        from: "polygon(0% 120%, 100% 100%, 100% 120%, 0% 140%)",
+        to: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
+    },
+    // Widescreen letterbox opening for the finale.
+    contacto: {
+        from: "inset(49.8% 0% 49.8% 0%)",
+        to: "inset(0% 0% 0% 0%)",
+    },
+};
+
 function initCinematicTransitions() {
-    const hero = document.querySelector<HTMLElement>("#inicio");
-    const stack = document.querySelector<HTMLElement>("#stack");
+    const scenes = SCENE_ORDER.map((id) => document.getElementById(id)).filter(
+        (el): el is HTMLElement => el !== null,
+    );
+    const hero = document.getElementById("inicio");
+    const mm = gsap.matchMedia();
 
-    // 1 · Hero stays fixed while the stack section covers it (desktop).
-    if (hero && stack) {
-        const mm = gsap.matchMedia();
+    if (scenes.length > 1) {
         mm.add("(min-width: 1024px)", () => {
-            ScrollTrigger.create({
-                trigger: hero,
-                start: "top top",
-                end: "+=100%",
-                pin: true,
-                pinSpacing: false,
-                // Half-scrolled cuts complete themselves, like a video edit.
-                snap: {
-                    snapTo: [0, 1],
-                    duration: { min: 0.35, max: 0.8 },
-                    ease: "power3.inOut",
-                    delay: 0.05,
-                },
-            });
+            scenes.forEach((scene, index) => {
+                const next = scenes[index + 1];
+                if (!next) return;
 
-            const content = hero.querySelector("[data-hero-content]");
-            const bg = hero.querySelector("[data-hero-bg]");
-            const cover = {
-                scrollTrigger: {
-                    trigger: stack,
+                // Freeze the outgoing scene while the next covers it.
+                ScrollTrigger.create({
+                    trigger: next,
                     start: "top bottom",
                     end: "top top",
-                    scrub: 0.8,
-                },
-                ease: "none" as const,
-            };
-            if (content) {
-                gsap.to(content, {
-                    yPercent: -12,
-                    scale: 0.94,
-                    autoAlpha: 0.1,
-                    ...cover,
+                    pin: scene,
+                    pinSpacing: false,
+                    // Resting mid-cut finishes the edit, like a video.
+                    snap: {
+                        snapTo: [0, 1],
+                        duration: { min: 0.4, max: 0.85 },
+                        ease: "power3.inOut",
+                        delay: 0.06,
+                    },
                 });
-            }
-            if (bg) {
-                gsap.to(bg, { scale: 1.12, autoAlpha: 0.35, ...cover });
+
+                // The frozen frame sinks into black under the new scene.
+                gsap.to(scene, {
+                    opacity: 0.22,
+                    ease: "none",
+                    scrollTrigger: {
+                        trigger: next,
+                        start: "top bottom",
+                        end: "top top",
+                        scrub: 0.6,
+                    },
+                });
+            });
+
+            // Unique entrance wipe per scene, spanning the exact cover zone
+            // so the previous frame stays visible through the mask.
+            scenes.forEach((scene) => {
+                const wipe = SCENE_WIPES[scene.id];
+                if (!wipe) return;
+                gsap.fromTo(
+                    scene,
+                    { clipPath: wipe.from },
+                    {
+                        clipPath: wipe.to,
+                        ease: "none",
+                        scrollTrigger: {
+                            trigger: scene,
+                            start: "top bottom",
+                            end: "top top",
+                            scrub: 0.6,
+                        },
+                    },
+                );
+            });
+
+            // Hero flourish while being covered.
+            if (hero) {
+                const content = hero.querySelector("[data-hero-content]");
+                const bg = hero.querySelector("[data-hero-bg]");
+                const cover = {
+                    ease: "none" as const,
+                    scrollTrigger: {
+                        trigger: "#stack",
+                        start: "top bottom",
+                        end: "top top",
+                        scrub: 0.6,
+                    },
+                };
+                if (content) {
+                    gsap.to(content, { yPercent: -10, scale: 0.95, ...cover });
+                }
+                if (bg) {
+                    gsap.to(bg, { scale: 1.12, ...cover });
+                }
             }
         });
 
         mm.add("(max-width: 1023px)", () => {
-            const content = hero.querySelector("[data-hero-content]");
-            if (content) {
-                gsap.to(content, {
-                    yPercent: -14,
-                    autoAlpha: 0.18,
-                    ease: "none",
-                    scrollTrigger: {
-                        trigger: hero,
-                        start: "top top",
-                        end: "bottom 35%",
-                        scrub: 0.6,
+            scenes.forEach((scene) => {
+                const wipe = SCENE_WIPES[scene.id];
+                if (!wipe) return;
+                gsap.fromTo(
+                    scene,
+                    { clipPath: wipe.from },
+                    {
+                        clipPath: wipe.to,
+                        ease: "none",
+                        scrollTrigger: {
+                            trigger: scene,
+                            start: "top 95%",
+                            end: "top 25%",
+                            scrub: 0.7,
+                        },
                     },
-                });
+                );
+            });
+
+            if (hero) {
+                const content = hero.querySelector("[data-hero-content]");
+                if (content) {
+                    gsap.to(content, {
+                        yPercent: -14,
+                        autoAlpha: 0.18,
+                        ease: "none",
+                        scrollTrigger: {
+                            trigger: hero,
+                            start: "top top",
+                            end: "bottom 35%",
+                            scrub: 0.6,
+                        },
+                    });
+                }
             }
         });
     }
 
-    // 2 · Unique entrance wipe per section.
-    interface Wipe {
-        id: string;
-        from: string;
-        to: string;
-        start: string;
-        end: string;
-    }
-    const wipes: Wipe[] = [
-        {
-            // Card rising over the pinned hero, corners rounding away.
-            id: "stack",
-            from: "inset(8% 7% 14% 7% round 2.5rem)",
-            to: "inset(0% 0% 0% 0% round 0rem)",
-            start: "top bottom",
-            end: "top top",
-        },
-        {
-            // Vertical doors opening onto the terminal room.
-            id: "ia",
-            from: "inset(0% 50% 0% 50%)",
-            to: "inset(0% 0% 0% 0%)",
-            start: "top 92%",
-            end: "top 22%",
-        },
-        {
-            // Iris opening from the start of the timeline.
-            id: "experiencia",
-            from: "circle(6% at 16% 10%)",
-            to: "circle(150% at 16% 10%)",
-            start: "top 92%",
-            end: "top 22%",
-        },
-        {
-            // Diagonal sweep, like a film wipe.
-            id: "proyectos",
-            from: "polygon(0% 120%, 100% 100%, 100% 120%, 0% 140%)",
-            to: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
-            start: "top 95%",
-            end: "top 30%",
-        },
-        {
-            // Widescreen letterbox opening for the finale.
-            id: "contacto",
-            from: "inset(49.8% 0% 49.8% 0%)",
-            to: "inset(0% 0% 0% 0%)",
-            start: "top 95%",
-            end: "top 50%",
-        },
-    ];
-
-    wipes.forEach(({ id, from, to, start, end }) => {
-        const section = document.getElementById(id);
-        if (!section) return;
-        gsap.fromTo(
-            section,
-            { clipPath: from },
-            {
-                clipPath: to,
-                ease: "none",
-                scrollTrigger: { trigger: section, start, end, scrub: 0.85 },
-            },
-        );
-    });
-
-    // 3 · Outgoing sections sink into black before the next cut.
-    document
-        .querySelectorAll<HTMLElement>(
-            "[data-spy-section]:not(#inicio):not(#contacto)",
-        )
-        .forEach((section) => {
-            gsap.to(section, {
-                opacity: 0.5,
-                ease: "none",
-                scrollTrigger: {
-                    trigger: section,
-                    start: "bottom 28%",
-                    end: "bottom top",
-                    scrub: 0.85,
-                },
-            });
-        });
-
-    // 4 · Film-style progress bar under the navbar.
-    if (document.querySelector("[data-onepage]")) {
+    // Film-style progress bar under the navbar (every page).
+    if (!document.querySelector(".page-progress")) {
         const bar = document.createElement("div");
         bar.className = "page-progress";
         bar.setAttribute("aria-hidden", "true");
@@ -272,7 +293,7 @@ function initCinematicTransitions() {
     }
 }
 
-/* ── Hero: split-text intro, counters and scroll-out parallax ── */
+/* ── Hero: split-text intro and counters ── */
 function initHero() {
     const hero = document.querySelector<HTMLElement>("#inicio");
     if (!hero) return;
@@ -321,9 +342,6 @@ function initHero() {
             "-=0.8",
         );
     });
-
-    // Scroll-out parallax lives in initCinematicTransitions (it differs
-    // between the pinned desktop hero and the free-flowing mobile one).
 }
 
 /* ── Section titles: split words on enter ── */
@@ -361,7 +379,9 @@ function initReveals() {
         });
 
     document
-        .querySelectorAll<HTMLElement>("[data-reveal]:not([data-reveal-group] [data-reveal])")
+        .querySelectorAll<HTMLElement>(
+            "[data-reveal]:not([data-reveal-group] [data-reveal])",
+        )
         .forEach((el) => {
             gsap.from(el, {
                 y: 34,
@@ -495,15 +515,17 @@ function initTimeline() {
         );
     }
 
-    wrap.querySelectorAll<HTMLElement>("[data-timeline-item]").forEach((item) => {
-        gsap.from(item, {
-            x: -36,
-            autoAlpha: 0,
-            duration: 0.8,
-            ease: "power3.out",
-            scrollTrigger: { trigger: item, start: "top 85%" },
-        });
-    });
+    wrap.querySelectorAll<HTMLElement>("[data-timeline-item]").forEach(
+        (item) => {
+            gsap.from(item, {
+                x: -36,
+                autoAlpha: 0,
+                duration: 0.8,
+                ease: "power3.out",
+                scrollTrigger: { trigger: item, start: "top 85%" },
+            });
+        },
+    );
 }
 
 /* ── Giant scrub marquees (outline display text) ── */
@@ -578,10 +600,10 @@ function init() {
 
     // Each init is a no-op when its elements aren't on the page.
     initHero();
+    initStackRail();
     initCinematicTransitions();
     initSectionTitles();
     initReveals();
-    initStackRail();
     initTerminal();
     initTimeline();
     initMarquees();
