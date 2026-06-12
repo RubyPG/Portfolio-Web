@@ -129,10 +129,12 @@ const SCENE_ORDER = [
 ];
 
 const SCENE_WIPES: Record<string, SceneWipe> = {
-    // Card rising over the frozen hero, corners rounding away.
+    // Revealed behind the giant companion spark (see initScrollCompanion):
+    // a circle opens while the screen is covered by the grown spark.
     stack: {
-        from: "inset(8% 7% 14% 7% round 2.5rem)",
-        to: "inset(0% 0% 0% 0% round 0rem)",
+        from: "circle(0% at 50% 50%)",
+        to: "circle(150% at 50% 50%)",
+        coverStart: "top 45%",
     },
     // Vertical doors opening onto the terminal room.
     ia: {
@@ -574,7 +576,26 @@ function initMarquees() {
     });
 }
 
-/* ── Scroll companion: a spark that dances across the page as you scroll ── */
+/* ── Scroll companion: a spark that travels the page with intent ──
+   It rests at a meaningful spot per scene (beside the hero title, by the
+   tech counter, at the terminal, along the timeline…), glides between
+   them as scenes change, and — for the hero→stack cut — IT becomes the
+   transition: flies to centre, swells until it swallows the screen while
+   shifting colour, the next scene opens beneath it, and it pops back out
+   of the "34" counter. */
+
+const BUDDY_COLOR = "#FFFF00";
+
+/* Viewport-fraction anchor per scene */
+const BUDDY_ANCHORS: Record<string, { x: number; y: number }> = {
+    inicio: { x: 0.16, y: 0.24 }, // escorting the headline
+    stack: { x: 0.88, y: 0.165 }, // sitting on the tech counter
+    ia: { x: 0.685, y: 0.165 }, // perched on the terminal
+    experiencia: { x: 0.1, y: 0.3 }, // riding the timeline
+    proyectos: { x: 0.86, y: 0.26 }, // hovering by the title
+    contacto: { x: 0.5, y: 0.14 }, // crowning "Hablemos."
+};
+
 function initScrollCompanion() {
     if (!document.querySelector("[data-onepage]")) return;
     if (document.querySelector(".scroll-buddy")) return;
@@ -588,9 +609,10 @@ function initScrollCompanion() {
             <svg viewBox="0 0 24 24" fill="none"><path fill="currentColor" d="M12 1.5l1.91 6.16a2 2 0 0 0 1.32 1.32l6.16 1.91a1.16 1.16 0 0 1 0 2.22l-6.16 1.91a2 2 0 0 0-1.32 1.32L12 22.5a1.16 1.16 0 0 1-2.22 0l-1.91-6.16a2 2 0 0 0-1.32-1.32L.39 13.11a1.16 1.16 0 0 1 0-2.22l6.16-1.91a2 2 0 0 0 1.32-1.32L9.78 1.5a1.16 1.16 0 0 1 2.22 0Z"/></svg>
         </div>`;
     document.body.appendChild(buddy);
+    const core = buddy.querySelector<HTMLElement>(".scroll-buddy-core");
 
-    const xTo = gsap.quickTo(buddy, "x", { duration: 0.65, ease: "power2.out" });
-    const yTo = gsap.quickTo(buddy, "y", { duration: 0.65, ease: "power2.out" });
+    const xTo = gsap.quickTo(buddy, "x", { duration: 0.7, ease: "power2.out" });
+    const yTo = gsap.quickTo(buddy, "y", { duration: 0.7, ease: "power2.out" });
     const rotTo = gsap.quickTo(buddy, "rotation", {
         duration: 0.45,
         ease: "power2.out",
@@ -603,6 +625,7 @@ function initScrollCompanion() {
         duration: 0.35,
         ease: "power2.out",
     });
+    const waveTweens = [xTo, yTo, rotTo, sxTo, syTo];
 
     // Keeps dancing on its own while you rest (separate percent channel).
     gsap.to(buddy, {
@@ -612,22 +635,56 @@ function initScrollCompanion() {
         yoyo: true,
         repeat: -1,
     });
-    const core = buddy.querySelector(".scroll-buddy-core");
     if (core) {
         gsap.to(core, { rotation: 360, duration: 16, ease: "none", repeat: -1 });
     }
 
-    const WAVES = 6;
-    const place = (progress: number) => {
+    /* Scene anchor stops in document space (recomputed on refresh) */
+    interface Stop {
+        top: number;
+        x: number;
+        y: number;
+    }
+    let stops: Stop[] = [];
+    const computeStops = () => {
+        stops = SCENE_ORDER.flatMap((id) => {
+            const el = document.getElementById(id);
+            const anchor = BUDDY_ANCHORS[id];
+            if (!el || !anchor) return [];
+            const rect = el.getBoundingClientRect();
+            return [{ top: rect.top + window.scrollY, x: anchor.x, y: anchor.y }];
+        });
+    };
+    computeStops();
+    ScrollTrigger.addEventListener("refresh", computeStops);
+
+    // Hold the anchor for most of the scene, glide near the boundary.
+    const glideEase = gsap.parseEase("power2.inOut");
+    const glide = (t: number) =>
+        glideEase(gsap.utils.clamp(0, 1, (t - 0.55) / 0.45));
+
+    const place = (scroll: number) => {
         const vw = window.innerWidth;
         const vh = window.innerHeight;
-        const margin = vw < 1024 ? 0.34 : 0.42;
-        return {
-            x: vw / 2 + Math.sin(progress * Math.PI * WAVES) * vw * margin,
-            y:
-                vh * 0.16 +
-                Math.sin(progress * Math.PI * WAVES * 2 + 1.3) * vh * 0.05,
-        };
+        if (stops.length === 0) return { x: vw / 2, y: vh * 0.2 };
+
+        let index = 0;
+        while (index < stops.length - 1 && scroll >= stops[index + 1].top) {
+            index++;
+        }
+        const current = stops[index];
+        const next = stops[Math.min(index + 1, stops.length - 1)];
+        const span = Math.max(next.top - current.top, 1);
+        const t = glide((scroll - current.top) / span);
+
+        // Anchored position + a gentle living wobble.
+        const x =
+            gsap.utils.interpolate(current.x, next.x, t) * vw +
+            Math.sin(scroll * 0.011) * vw * 0.018;
+        const y =
+            gsap.utils.interpolate(current.y, next.y, t) * vh +
+            Math.cos(scroll * 0.009) * vh * 0.02;
+        return { x, y };
     };
 
     // Settle back to calm when scrolling stops.
@@ -637,28 +694,111 @@ function initScrollCompanion() {
         syTo(1);
     });
 
+    let busy = false; // true while the spark IS the hero→stack transition
+
     ScrollTrigger.create({
         trigger: document.body,
         start: "top top",
         end: "max",
         onUpdate: (self) => {
-            const { x, y } = place(self.progress);
+            if (busy) return;
+            const { x, y } = place(self.scroll());
             const velocity = gsap.utils.clamp(-3000, 3000, self.getVelocity());
             const speed = Math.min(Math.abs(velocity) / 3200, 1);
-            // Travel direction along the sine path decides the lean.
-            const lean =
-                Math.cos(self.progress * Math.PI * WAVES) *
-                (velocity >= 0 ? 1 : -1);
+            const lean = (velocity >= 0 ? 1 : -1) * speed;
             xTo(x);
             yTo(y);
-            rotTo(lean * 26 * speed);
-            sxTo(1 + speed * 0.5);
-            syTo(1 - speed * 0.28);
+            rotTo(lean * 24);
+            sxTo(1 + speed * 0.45);
+            syTo(1 - speed * 0.26);
             settle.restart(true);
         },
     });
 
-    // Start in place (centre of the wave at progress 0), fade in.
+    /* The hero→stack cut: the spark swallows the screen (desktop, where
+       the cover system runs; mobile keeps the simple anchor glide). */
+    const mm = gsap.matchMedia();
+    mm.add("(min-width: 1024px)", () => {
+        const stack = document.getElementById("stack");
+        if (!stack || !core) return;
+
+        const stackAnchor = () => ({
+            x: BUDDY_ANCHORS.stack.x * window.innerWidth,
+            y: BUDDY_ANCHORS.stack.y * window.innerHeight,
+        });
+
+        const tl = gsap.timeline({
+            scrollTrigger: {
+                trigger: stack,
+                start: "top bottom",
+                end: "top top",
+                scrub: 0.6,
+                invalidateOnRefresh: true,
+                onToggle: (self) => {
+                    busy = self.isActive;
+                    if (busy) {
+                        settle.pause();
+                        waveTweens.forEach((fn) => fn.tween?.pause());
+                    }
+                },
+            },
+        });
+
+        tl
+            // 1 · fly to centre stage, charging up
+            .to(
+                buddy,
+                {
+                    x: () => window.innerWidth / 2,
+                    y: () => window.innerHeight * 0.46,
+                    scale: 5,
+                    rotation: 200,
+                    duration: 0.4,
+                    ease: "power2.in",
+                },
+                0,
+            )
+            .to(core, { color: "#60A5FA", duration: 0.3 }, 0.08)
+            // 2 · swell until it swallows the screen, darkening to the bg
+            .to(
+                buddy,
+                {
+                    scale: 200,
+                    rotation: 380,
+                    duration: 0.38,
+                    ease: "power3.in",
+                },
+                0.4,
+            )
+            .to(core, { color: "#101114", duration: 0.22 }, 0.5)
+            // 3 · the new scene is open beneath — the giant fades away
+            .to(buddy, { autoAlpha: 0, duration: 0.08, ease: "none" }, 0.78)
+            // 4 · rebirth: pops out of the "34" tech counter, yellow again
+            .set(core, { color: BUDDY_COLOR }, 0.86)
+            .set(
+                buddy,
+                {
+                    scale: 0,
+                    rotation: -240,
+                    x: () => stackAnchor().x,
+                    y: () => stackAnchor().y,
+                },
+                0.86,
+            )
+            .to(
+                buddy,
+                {
+                    autoAlpha: 1,
+                    scale: 1,
+                    rotation: 0,
+                    duration: 0.14,
+                    ease: "back.out(2.2)",
+                },
+                0.86,
+            );
+    });
+
+    // Start escorting the headline, fade in.
     const start = place(0);
     gsap.set(buddy, { x: start.x, y: start.y, autoAlpha: 0 });
     gsap.to(buddy, { autoAlpha: 1, duration: 1.2, delay: 0.8 });
