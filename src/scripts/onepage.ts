@@ -14,6 +14,9 @@ gsap.registerPlugin(ScrollTrigger, ScrollToPlugin, SplitText, TextPlugin);
 // expensive ScrollTrigger refreshes (and visible jank) mid-scroll.
 ScrollTrigger.config({ ignoreMobileResize: true });
 
+// Debug handle (used by the smoke tests; negligible cost)
+(window as unknown as { __ST?: typeof ScrollTrigger }).__ST = ScrollTrigger;
+
 const NAV_OFFSET = 64;
 const prefersReduced = () =>
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -45,8 +48,37 @@ function inheritTextGradient(parent: HTMLElement, pieces: Element[]) {
     });
 }
 
-/* ── Smooth anchor navigation (works on every page) ── */
+/* Create (once) a full-screen overlay element appended to <body> */
+function ensureOverlay(className: string, html = ""): HTMLElement {
+    let el = document.querySelector<HTMLElement>(`.${className}`);
+    if (!el) {
+        el = document.createElement("div");
+        el.className = className;
+        el.setAttribute("aria-hidden", "true");
+        if (html) el.innerHTML = html;
+        document.body.appendChild(el);
+    }
+    return el;
+}
+
+/* ── Anchor navigation ──
+   Short hops scroll smoothly; long jumps (chapter nav) "warp": dip to
+   black, land instantly, fade back in — instead of replaying every scene
+   transition at full speed. */
 function initAnchorNav() {
+    const warpTo = (targetY: number, hash: string) => {
+        const veil = ensureOverlay("warp-veil");
+        gsap.timeline()
+            .to(veil, { autoAlpha: 1, duration: 0.22, ease: "power1.in" })
+            .add(() => {
+                window.scrollTo(0, targetY);
+                history.pushState(null, "", hash);
+            })
+            // hold black a beat so scrubbed scenes settle into place
+            .to({}, { duration: 0.32 })
+            .to(veil, { autoAlpha: 0, duration: 0.5, ease: "power1.out" });
+    };
+
     document
         .querySelectorAll<HTMLAnchorElement>("a[href*='#']")
         .forEach((link) => {
@@ -66,11 +98,40 @@ function initAnchorNav() {
                 if (!target) return;
 
                 event.preventDefault();
+
+                // offsetTop chain ignores transforms — pinned scenes keep a
+                // leftover translate that makes getBoundingClientRect lie.
+                let layoutTop = 0;
+                let node = target as HTMLElement | null;
+                while (node) {
+                    layoutTop += node.offsetTop;
+                    node = node.offsetParent as HTMLElement | null;
+                }
+                // Scenes land exactly at their cover-zone end (snap-stable);
+                // other anchors keep the navbar offset.
+                const isScene = target.hasAttribute("data-spy-section");
+                const targetY = Math.max(
+                    0,
+                    isScene ? layoutTop : layoutTop - NAV_OFFSET,
+                );
+                const distance = Math.abs(targetY - window.scrollY);
+
+                if (prefersReduced()) {
+                    window.scrollTo(0, targetY);
+                    history.pushState(null, "", url.hash);
+                    return;
+                }
+
+                if (distance > window.innerHeight * 1.6) {
+                    warpTo(targetY, url.hash);
+                    return;
+                }
+
                 history.pushState(null, "", url.hash);
                 gsap.to(window, {
-                    duration: prefersReduced() ? 0 : 1.1,
+                    duration: 1.1,
                     ease: "power3.inOut",
-                    scrollTo: { y: target, offsetY: NAV_OFFSET },
+                    scrollTo: { y: targetY, autoKill: false },
                 });
             });
         });
@@ -129,12 +190,10 @@ const SCENE_ORDER = [
 ];
 
 const SCENE_WIPES: Record<string, SceneWipe> = {
-    // Revealed behind the giant companion spark (see initScrollCompanion):
-    // a circle opens while the screen is covered by the grown spark.
+    // Card rising over the frozen hero, corners rounding away.
     stack: {
-        from: "circle(0% at 50% 50%)",
-        to: "circle(150% at 50% 50%)",
-        coverStart: "top 45%",
+        from: "inset(8% 7% 14% 7% round 2.5rem)",
+        to: "inset(0% 0% 0% 0% round 0rem)",
     },
     // Vertical doors opening onto the terminal room.
     ia: {
@@ -151,12 +210,8 @@ const SCENE_WIPES: Record<string, SceneWipe> = {
         from: "polygon(82% 0%, 100% 0%, 18% 100%, 0% 100%)",
         to: "polygon(-100% 0%, 200% 0%, 100% 100%, -200% 100%)",
     },
-    // Cut to black, then a widescreen letterbox opens on the finale.
-    contacto: {
-        from: "inset(49.8% 0% 49.8% 0%)",
-        to: "inset(0% 0% 0% 0%)",
-        coverStart: "top 65%",
-    },
+    // contacto has no clip wipe: the finale is driven by the companion
+    // spark swallowing the screen (see initScrollCompanion).
 };
 
 function initCinematicTransitions() {
@@ -186,6 +241,7 @@ function initCinematicTransitions() {
                         duration: { min: 0.5, max: 1 },
                         ease: "power3.inOut",
                         delay: 0.06,
+                        directional: false,
                     },
                 });
 
@@ -378,11 +434,11 @@ function initSectionTitles() {
         inheritTextGradient(el, split.words);
         gsap.set(el, { autoAlpha: 1 });
         gsap.from(split.words, {
-            yPercent: 110,
+            yPercent: 55,
             autoAlpha: 0,
-            stagger: 0.05,
-            duration: 0.9,
-            ease: "power4.out",
+            stagger: 0.03,
+            duration: 1,
+            ease: "power3.out",
             scrollTrigger: { trigger: el, start: "top 88%" },
         });
     });
@@ -396,11 +452,11 @@ function initReveals() {
             const items = group.querySelectorAll("[data-reveal]");
             if (items.length === 0) return;
             gsap.from(items, {
-                y: 34,
+                y: 18,
                 autoAlpha: 0,
-                stagger: 0.1,
-                duration: 0.85,
-                ease: "power3.out",
+                stagger: 0.06,
+                duration: 1,
+                ease: "power2.out",
                 scrollTrigger: { trigger: group, start: "top 85%" },
             });
         });
@@ -411,10 +467,10 @@ function initReveals() {
         )
         .forEach((el) => {
             gsap.from(el, {
-                y: 34,
+                y: 18,
                 autoAlpha: 0,
-                duration: 0.85,
-                ease: "power3.out",
+                duration: 1,
+                ease: "power2.out",
                 scrollTrigger: { trigger: el, start: "top 88%" },
             });
         });
@@ -480,10 +536,10 @@ function initStackRail() {
 
     mm.add("(max-width: 1023px)", () => {
         gsap.from(track.querySelectorAll("[data-stack-panel]"), {
-            y: 44,
+            y: 22,
             autoAlpha: 0,
-            stagger: 0.12,
-            duration: 0.8,
+            stagger: 0.07,
+            duration: 0.9,
             ease: "power3.out",
             scrollTrigger: { trigger: track, start: "top 85%" },
         });
@@ -545,10 +601,10 @@ function initTimeline() {
     wrap.querySelectorAll<HTMLElement>("[data-timeline-item]").forEach(
         (item) => {
             gsap.from(item, {
-                x: -36,
+                x: -18,
                 autoAlpha: 0,
-                duration: 0.8,
-                ease: "power3.out",
+                duration: 0.9,
+                ease: "power2.out",
                 scrollTrigger: { trigger: item, start: "top 85%" },
             });
         },
@@ -576,25 +632,36 @@ function initMarquees() {
     });
 }
 
-/* ── Scroll companion: a spark that travels the page with intent ──
-   It rests at a meaningful spot per scene (beside the hero title, by the
-   tech counter, at the terminal, along the timeline…), glides between
-   them as scenes change, and — for the hero→stack cut — IT becomes the
-   transition: flies to centre, swells until it swallows the screen while
-   shifting colour, the next scene opens beneath it, and it pops back out
-   of the "34" counter. */
+/* ── Scroll companion: a spark that guides the reader's eye ──
+   Born when scene 2 arrives (never in the hero banner), it perches on
+   titles, counters, the terminal and each timeline entry one by one,
+   gliding between perches as you scroll. For the FINALE it becomes the
+   transition itself: flies to centre, swells until it swallows the
+   screen while shifting colour, "Hablemos." fades in beneath, and the
+   spark reappears last, landing at the very tip of the title. */
 
-const BUDDY_COLOR = "#FFFF00";
-
-/* Viewport-fraction anchor per scene */
-const BUDDY_ANCHORS: Record<string, { x: number; y: number }> = {
-    inicio: { x: 0.16, y: 0.24 }, // escorting the headline
-    stack: { x: 0.88, y: 0.165 }, // sitting on the tech counter
-    ia: { x: 0.685, y: 0.165 }, // perched on the terminal
-    experiencia: { x: 0.1, y: 0.3 }, // riding the timeline
-    proyectos: { x: 0.86, y: 0.26 }, // hovering by the title
-    contacto: { x: 0.5, y: 0.14 }, // crowning "Hablemos."
+/* Palette colour per scene — the spark tints itself smoothly to match
+   where it is (Claude-orange in the AI section). */
+const BUDDY_SECTION_COLORS: Record<string, string> = {
+    stack: "#FFFF00", // accent
+    ia: "#D97757", // Claude orange
+    experiencia: "#60A5FA", // secondary-hover blue
+    proyectos: "#4DFF88", // state-success green
+    contacto: "#FFFF00", // back to accent for the landing
 };
+
+const BUDDY_SVG = `
+<svg viewBox="0 0 48 48" fill="none">
+    <path fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round" d="M25.875 3.944L29.39 17.23a1.94 1.94 0 0 0 1.38 1.379l13.287 3.515c1.924.51 1.924 3.24 0 3.75L30.769 29.39a1.94 1.94 0 0 0-1.379 1.38l-3.515 13.287c-.51 1.924-3.24 1.924-3.75 0L18.61 30.769a1.94 1.94 0 0 0-1.38-1.379L3.944 25.875c-1.924-.51-1.924-3.24 0-3.75l13.288-3.515a1.94 1.94 0 0 0 1.379-1.38l3.515-13.287c.51-1.924 3.24-1.924 3.75 0"/>
+    <circle cx="24" cy="24" r="3" fill="#0A0A0A" opacity="0.45"/>
+</svg>`;
+
+/* Giant version used for the finale wipe: its LAYOUT size is huge, so
+   the browser rasterises it at full resolution — crisp at any scale. */
+const SPARK_WIPE_SVG = `
+<svg viewBox="0 0 48 48" fill="none">
+    <path fill="currentColor" stroke="currentColor" stroke-width="0.5" stroke-linejoin="round" d="M25.875 3.944L29.39 17.23a1.94 1.94 0 0 0 1.38 1.379l13.287 3.515c1.924.51 1.924 3.24 0 3.75L30.769 29.39a1.94 1.94 0 0 0-1.379 1.38l-3.515 13.287c-.51 1.924-3.24 1.924-3.75 0L18.61 30.769a1.94 1.94 0 0 0-1.38-1.379L3.944 25.875c-1.924-.51-1.924-3.24 0-3.75l13.288-3.515a1.94 1.94 0 0 0 1.379-1.38l3.515-13.287c.51-1.924 3.24-1.924 3.75 0"/>
+</svg>`;
 
 function initScrollCompanion() {
     if (!document.querySelector("[data-onepage]")) return;
@@ -605,9 +672,7 @@ function initScrollCompanion() {
     buddy.setAttribute("aria-hidden", "true");
     buddy.innerHTML = `
         <div class="scroll-buddy-trail"></div>
-        <div class="scroll-buddy-core">
-            <svg viewBox="0 0 24 24" fill="none"><path fill="currentColor" d="M12 1.5l1.91 6.16a2 2 0 0 0 1.32 1.32l6.16 1.91a1.16 1.16 0 0 1 0 2.22l-6.16 1.91a2 2 0 0 0-1.32 1.32L12 22.5a1.16 1.16 0 0 1-2.22 0l-1.91-6.16a2 2 0 0 0-1.32-1.32L.39 13.11a1.16 1.16 0 0 1 0-2.22l6.16-1.91a2 2 0 0 0 1.32-1.32L9.78 1.5a1.16 1.16 0 0 1 2.22 0Z"/></svg>
-        </div>`;
+        <div class="scroll-buddy-core">${BUDDY_SVG}</div>`;
     document.body.appendChild(buddy);
     const core = buddy.querySelector<HTMLElement>(".scroll-buddy-core");
 
@@ -629,39 +694,74 @@ function initScrollCompanion() {
 
     // Keeps dancing on its own while you rest (separate percent channel).
     gsap.to(buddy, {
-        yPercent: 16,
+        yPercent: 14,
         duration: 1.7,
         ease: "sine.inOut",
         yoyo: true,
         repeat: -1,
     });
     if (core) {
-        gsap.to(core, { rotation: 360, duration: 16, ease: "none", repeat: -1 });
+        gsap.to(core, { rotation: 360, duration: 18, ease: "none", repeat: -1 });
     }
 
-    /* Scene anchor stops in document space (recomputed on refresh) */
+    /* Perches: every [data-buddy-stop] element, in document order. The
+       spark rides each one (it moves WITH the content) and hops to the
+       next as it approaches, guiding the reader's eye. */
     interface Stop {
-        top: number;
-        x: number;
-        y: number;
+        scrollAt: number; // scroll position where this perch becomes active
+        docX: number;
+        docY: number; // document-space coordinates of the perch
     }
     let stops: Stop[] = [];
+
+    const perchPoint = (el: Element, at: string) => {
+        const rect = el.getBoundingClientRect();
+        const scrollY = window.scrollY;
+        const vw = window.innerWidth;
+        const PAD = 34;
+        if (at === "left") {
+            return {
+                docX: Math.max(24, rect.left - PAD),
+                docY: rect.top + scrollY + rect.height / 2,
+            };
+        }
+        if (at === "top") {
+            return {
+                docX: gsap.utils.clamp(24, vw - 24, rect.left + rect.width / 2),
+                docY: rect.top + scrollY - 30,
+            };
+        }
+        // "right" (default)
+        return {
+            docX: Math.min(vw - 24, rect.right + PAD),
+            docY: rect.top + scrollY + rect.height / 2,
+        };
+    };
+
     const computeStops = () => {
-        stops = SCENE_ORDER.flatMap((id) => {
-            const el = document.getElementById(id);
-            const anchor = BUDDY_ANCHORS[id];
-            if (!el || !anchor) return [];
-            const rect = el.getBoundingClientRect();
-            return [{ top: rect.top + window.scrollY, x: anchor.x, y: anchor.y }];
-        });
+        const vh = window.innerHeight;
+        stops = Array.from(
+            document.querySelectorAll<HTMLElement>("[data-buddy-stop]"),
+        )
+            .filter((el) => el.getClientRects().length > 0) // skip display:none
+            .map((el) => {
+                const at = el.dataset.buddyStop || "right";
+                const point = perchPoint(el, at);
+                return {
+                    scrollAt: point.docY - vh * 0.48,
+                    docX: point.docX,
+                    docY: point.docY,
+                };
+            })
+            .sort((a, b) => a.scrollAt - b.scrollAt);
     };
     computeStops();
     ScrollTrigger.addEventListener("refresh", computeStops);
 
-    // Hold the anchor for most of the scene, glide near the boundary.
+    // Rest on the perch most of the way, hop near the boundary.
     const glideEase = gsap.parseEase("power2.inOut");
     const glide = (t: number) =>
-        glideEase(gsap.utils.clamp(0, 1, (t - 0.55) / 0.45));
+        glideEase(gsap.utils.clamp(0, 1, (t - 0.28) / 0.72));
 
     const place = (scroll: number) => {
         const vw = window.innerWidth;
@@ -669,22 +769,28 @@ function initScrollCompanion() {
         if (stops.length === 0) return { x: vw / 2, y: vh * 0.2 };
 
         let index = 0;
-        while (index < stops.length - 1 && scroll >= stops[index + 1].top) {
+        while (
+            index < stops.length - 1 &&
+            scroll >= stops[index + 1].scrollAt
+        ) {
             index++;
         }
         const current = stops[index];
         const next = stops[Math.min(index + 1, stops.length - 1)];
-        const span = Math.max(next.top - current.top, 1);
-        const t = glide((scroll - current.top) / span);
+        const span = Math.max(next.scrollAt - current.scrollAt, 1);
+        const t = glide((scroll - current.scrollAt) / span);
 
-        // Anchored position + a gentle living wobble.
+        // Perches live in document space: the spark rides the content.
         const x =
-            gsap.utils.interpolate(current.x, next.x, t) * vw +
-            Math.sin(scroll * 0.011) * vw * 0.018;
-        const y =
-            gsap.utils.interpolate(current.y, next.y, t) * vh +
-            Math.cos(scroll * 0.009) * vh * 0.02;
-        return { x, y };
+            gsap.utils.interpolate(current.docX, next.docX, t) +
+            Math.sin(scroll * 0.01) * 8;
+        const yDoc = gsap.utils.interpolate(current.docY, next.docY, t);
+        const y = gsap.utils.clamp(
+            NAV_OFFSET + 26,
+            vh - 90,
+            yDoc - scroll + Math.cos(scroll * 0.008) * 6,
+        );
+        return { x: gsap.utils.clamp(22, vw - 22, x), y };
     };
 
     // Settle back to calm when scrolling stops.
@@ -694,42 +800,118 @@ function initScrollCompanion() {
         syTo(1);
     });
 
-    let busy = false; // true while the spark IS the hero→stack transition
+    let busy = false; // true while the spark IS the finale transition
+    let alive = false; // born at scene 2, never in the hero banner
 
     ScrollTrigger.create({
         trigger: document.body,
         start: "top top",
         end: "max",
         onUpdate: (self) => {
-            if (busy) return;
+            if (busy || !alive) return;
             const { x, y } = place(self.scroll());
             const velocity = gsap.utils.clamp(-3000, 3000, self.getVelocity());
             const speed = Math.min(Math.abs(velocity) / 3200, 1);
             const lean = (velocity >= 0 ? 1 : -1) * speed;
             xTo(x);
             yTo(y);
-            rotTo(lean * 24);
-            sxTo(1 + speed * 0.45);
-            syTo(1 - speed * 0.26);
+            rotTo(lean * 13);
+            // subtle squash only: it should dance, not stretch like gum
+            sxTo(1 + speed * 0.16);
+            syTo(1 - speed * 0.1);
             settle.restart(true);
         },
     });
 
-    /* The hero→stack cut: the spark swallows the screen (desktop, where
-       the cover system runs; mobile keeps the simple anchor glide). */
+    /* Birth: pops in when scene 2 arrives; hides again back in the hero. */
+    gsap.set(buddy, { autoAlpha: 0, scale: 0 });
+    ScrollTrigger.create({
+        trigger: "#stack",
+        start: "top 80%",
+        onEnter: () => {
+            if (alive) return;
+            alive = true;
+            const at = place(window.scrollY);
+            gsap.set(buddy, { x: at.x, y: at.y });
+            gsap.fromTo(
+                buddy,
+                { autoAlpha: 0, scale: 0, rotation: -220 },
+                {
+                    autoAlpha: 1,
+                    scale: 1,
+                    rotation: 0,
+                    duration: 0.6,
+                    ease: "back.out(2)",
+                    overwrite: "auto",
+                },
+            );
+        },
+        onLeaveBack: () => {
+            alive = false;
+            gsap.to(buddy, {
+                autoAlpha: 0,
+                scale: 0,
+                duration: 0.3,
+                ease: "power2.in",
+                overwrite: "auto",
+            });
+        },
+    });
+
+    /* Tint: the spark smoothly takes each scene's palette colour
+       (Claude-orange while in the AI section). */
+    gsap.set(buddy, { color: BUDDY_SECTION_COLORS.stack });
+    SCENE_ORDER.forEach((id) => {
+        const section = document.getElementById(id);
+        const color = BUDDY_SECTION_COLORS[id];
+        if (!section || !color) return;
+        ScrollTrigger.create({
+            trigger: section,
+            start: "top 45%",
+            end: "bottom 45%",
+            onToggle: (self) => {
+                if (!self.isActive) return;
+                gsap.to(buddy, {
+                    color,
+                    duration: 0.9,
+                    ease: "power2.out",
+                    overwrite: "auto",
+                });
+            },
+        });
+    });
+
+    /* FINALE (desktop): the spark swallows the screen. Flying to centre
+       it charges yellow to blue, the huge crisp wipe star takes over and
+       swells past the frame while darkening, "Hablemos." fades in
+       beneath, and the spark lands at the very tip - last of all. */
     const mm = gsap.matchMedia();
     mm.add("(min-width: 1024px)", () => {
-        const stack = document.getElementById("stack");
-        if (!stack || !core) return;
+        const contacto = document.getElementById("contacto");
+        const finale = document.querySelector<HTMLElement>(
+            "[data-buddy-finale]",
+        );
+        if (!contacto || !finale || !core) return;
 
-        const stackAnchor = () => ({
-            x: BUDDY_ANCHORS.stack.x * window.innerWidth,
-            y: BUDDY_ANCHORS.stack.y * window.innerHeight,
-        });
+        const wipe = ensureOverlay("spark-wipe", SPARK_WIPE_SVG);
+
+        const tip = () => {
+            const rect = finale.getBoundingClientRect();
+            const contactoTop =
+                contacto.getBoundingClientRect().top + window.scrollY;
+            const docY = rect.top + window.scrollY;
+            return {
+                x: rect.left + rect.width / 2,
+                y: docY - contactoTop - 34,
+            };
+        };
+
+        // The scene starts hidden and fades in mid-transition.
+        gsap.set(contacto, { autoAlpha: 0 });
 
         const tl = gsap.timeline({
             scrollTrigger: {
-                trigger: stack,
+                trigger: contacto,
                 start: "top bottom",
                 end: "top top",
                 scrub: 0.6,
@@ -741,67 +923,89 @@ function initScrollCompanion() {
                         waveTweens.forEach((fn) => fn.tween?.pause());
                     }
                 },
+                // Visibility lives HERE (instant, threshold-based), never in
+                // scrubbed tweens — their lagging catch-up render would
+                // re-show the spark after fast jumps out of the zone.
+                onUpdate: (self) => {
+                    const p = self.progress;
+                    gsap.set(wipe, {
+                        autoAlpha: p > 0.3 && p < 0.82 ? 1 : 0,
+                    });
+                    const visible = p >= 0.84 || (p < 0.36 && alive);
+                    gsap.set(buddy, { autoAlpha: visible ? 1 : 0 });
+                },
             },
         });
 
         tl
-            // 1 · fly to centre stage, charging up
+            // 1 - fly to centre stage (keeps its own colour, no extra morph)
             .to(
                 buddy,
                 {
                     x: () => window.innerWidth / 2,
-                    y: () => window.innerHeight * 0.46,
-                    scale: 5,
-                    rotation: 200,
-                    duration: 0.4,
+                    y: () => window.innerHeight * 0.45,
+                    scale: 3,
+                    rotation: 160,
+                    duration: 0.3,
                     ease: "power2.in",
                 },
                 0,
             )
-            .to(core, { color: "#60A5FA", duration: 0.3 }, 0.08)
-            // 2 · swell until it swallows the screen, darkening to the bg
-            .to(
-                buddy,
+            // 2 - hand over to the huge crisp star and swallow the frame
+            .fromTo(
+                wipe,
                 {
-                    scale: 200,
-                    rotation: 380,
-                    duration: 0.38,
-                    ease: "power3.in",
+                    scale: 0.028,
+                    rotation: 20,
+                    color: BUDDY_SECTION_COLORS.proyectos,
                 },
-                0.4,
+                {
+                    scale: 1,
+                    rotation: 150,
+                    duration: 0.45,
+                    ease: "power3.in",
+                    immediateRender: false,
+                },
+                0.3,
             )
-            .to(core, { color: "#101114", duration: 0.22 }, 0.5)
-            // 3 · the new scene is open beneath — the giant fades away
-            .to(buddy, { autoAlpha: 0, duration: 0.08, ease: "none" }, 0.78)
-            // 4 · rebirth: pops out of the "34" tech counter, yellow again
-            .set(core, { color: BUDDY_COLOR }, 0.86)
+            .to(wipe, { color: "#0b0c10", duration: 0.26 }, 0.42)
+            // 3 - the finale fades in beneath the black star
+            .to(contacto, { autoAlpha: 1, duration: 0.18, ease: "none" }, 0.62)
+            // 4 - the spark appears LAST, landing on the very tip
+            .set(buddy, { color: BUDDY_SECTION_COLORS.contacto }, 0.84)
             .set(
                 buddy,
                 {
                     scale: 0,
-                    rotation: -240,
-                    x: () => stackAnchor().x,
-                    y: () => stackAnchor().y,
+                    rotation: -200,
+                    x: () => tip().x,
+                    y: () => tip().y,
                 },
-                0.86,
+                0.84,
             )
             .to(
                 buddy,
                 {
-                    autoAlpha: 1,
                     scale: 1,
                     rotation: 0,
-                    duration: 0.14,
+                    duration: 0.16,
                     ease: "back.out(2.2)",
                 },
-                0.86,
+                0.84,
             );
     });
 
-    // Start escorting the headline, fade in.
-    const start = place(0);
-    gsap.set(buddy, { x: start.x, y: start.y, autoAlpha: 0 });
-    gsap.to(buddy, { autoAlpha: 1, duration: 1.2, delay: 0.8 });
+    // Mobile finale: simple fade-in for the contact scene.
+    mm.add("(max-width: 1023px)", () => {
+        const contacto = document.getElementById("contacto");
+        if (!contacto) return;
+        gsap.from(contacto, {
+            autoAlpha: 0,
+            duration: 0.9,
+            ease: "power2.out",
+            scrollTrigger: { trigger: contacto, start: "top 80%" },
+        });
+    });
 }
 
 /* ── 3D tilt cards (project teasers) ── */
@@ -897,16 +1101,18 @@ function init() {
     initAnchorNav();
     initMagnetic();
     initTilt();
-    initScrollCompanion();
 
     // Lift the CSS FOUC guard with inline styles BEFORE building tweens, so
     // gsap.from() captures visible end states. from() re-hides them instantly.
     gsap.set("[data-fouc]", { autoAlpha: 1 });
 
     // Each init is a no-op when its elements aren't on the page.
+    // Order matters: pins (rail, covers) must exist before the companion's
+    // triggers so refresh measures positions with the spacers in place.
     initHero();
     initStackRail();
     initCinematicTransitions();
+    initScrollCompanion();
     initSectionTitles();
     initReveals();
     initTerminal();
@@ -914,10 +1120,20 @@ function init() {
     initMarquees();
     initScrollSpy();
 
-    // Recompute pin distances once everything (fonts, WebGL canvas) settles.
-    window.addEventListener("load", () => ScrollTrigger.refresh(), {
-        once: true,
-    });
+    // All triggers exist now — sort refresh order by page position and
+    // recompute every start/end with the pin spacers in place.
+    ScrollTrigger.sort();
+    ScrollTrigger.refresh();
+
+    // And again once everything (fonts, WebGL canvas) settles — guarding
+    // against "load" having already fired before this module ran.
+    if (document.readyState === "complete") {
+        requestAnimationFrame(() => ScrollTrigger.refresh());
+    } else {
+        window.addEventListener("load", () => ScrollTrigger.refresh(), {
+            once: true,
+        });
+    }
 }
 
 if (document.readyState === "loading") {

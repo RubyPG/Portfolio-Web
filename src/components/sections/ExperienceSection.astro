@@ -25,10 +25,11 @@ const nowLabel = lang === "en" ? "NOW" : "AHORA";
             <h2
                 class="text-3xl font-black tracking-tight text-text-primary sm:text-4xl lg:text-5xl"
                 data-st-title
+                data-buddy-stop="right"
             >
                 {t.title}
             </h2>
-            <p class="mt-4 text-base leading-relaxed text-text-muted sm:text-lg" data-reveal>
+            <p class="mt-4 text-base leading-relaxed text-text-muted sm:text-lg" data-reveal data-buddy-stop="right">
                 {t.subtitle}
             </p>
         </div>
@@ -49,7 +50,7 @@ const nowLabel = lang === "en" ? "NOW" : "AHORA";
             <ol class="space-y-10">
                 {
                     t.items.map((item) => (
-                        <li class="relative pl-10 sm:pl-14" data-timeline-item>
+                        <li class="relative pl-10 sm:pl-14" data-timeline-item data-buddy-stop="left">
                             <span
                                 class:list={[
                                     "absolute left-0 top-1.5 flex h-[15px] w-[15px] items-center justify-center rounded-full border-2 sm:h-[19px] sm:w-[19px]",

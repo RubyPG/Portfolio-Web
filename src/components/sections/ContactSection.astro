@@ -36,36 +36,33 @@ const backToTop = lang === "en" ? "Back to top" : "Volver arriba";
     </div>
 
     <div class="relative mx-auto w-full max-w-5xl px-4 py-24 text-center sm:px-6 sm:py-32 lg:my-auto lg:py-24 lg:px-8">
-        <p class="mb-4 text-[0.68rem] font-semibold uppercase tracking-[0.32em] text-accent" data-reveal>
+        <p class="mb-4 text-[0.68rem] font-semibold uppercase tracking-[0.32em] text-accent">
             {t.eyebrow}
         </p>
 
-        <h2 class="font-black leading-[0.98] tracking-[-0.04em]">
-            <span
-                class="block overflow-hidden text-[clamp(2.6rem,8vw,5.5rem)] text-text-primary"
-                data-st-title
-            >
+        <h2
+            class="font-black leading-[0.98] tracking-[-0.04em]"
+            data-buddy-finale
+            data-buddy-stop="top"
+        >
+            <span class="block text-[clamp(2.6rem,8vw,5.5rem)] text-text-primary">
                 {t.titleLines[0]}
             </span>
-            <span
-                class="block overflow-hidden text-[clamp(1.8rem,5vw,3.4rem)] text-text-muted"
-                data-st-title
-            >
+            <span class="block text-[clamp(1.8rem,5vw,3.4rem)] text-text-muted">
                 {t.titleLines[1]}
             </span>
         </h2>
 
-        <p class="mx-auto mt-6 max-w-xl text-base leading-relaxed text-text-secondary sm:text-lg" data-reveal>
+        <p class="mx-auto mt-6 max-w-xl text-base leading-relaxed text-text-secondary sm:text-lg">
             {t.subtitle}
         </p>
 
-        <div class="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row" data-reveal-group>
+        <div class="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <a
                 href={mailHref}
-                class="inline-flex w-full items-center justify-center gap-2.5 rounded-full bg-accent px-8 py-4 text-base font-bold text-bg-deep transition-colors hover:bg-accent-hover sm:w-auto"
+                class="inline-flex w-full items-center justify-center gap-2.5 rounded-xl bg-accent px-8 py-4 text-base font-bold text-bg-deep transition-colors hover:bg-accent-hover sm:w-auto"
                 style="color: var(--bg-deep);"
                 data-magnetic
-                data-reveal
             >
                 <span class="button-content inline-flex items-center gap-2.5">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,9 +75,8 @@ const backToTop = lang === "en" ? "Back to top" : "Volver arriba";
                 href={waHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-flex w-full items-center justify-center gap-2.5 rounded-full border border-state-success/50 px-8 py-4 text-base font-bold text-state-success transition-colors hover:bg-state-success/10 sm:w-auto"
+                class="inline-flex w-full items-center justify-center gap-2.5 rounded-xl border border-state-success/50 px-8 py-4 text-base font-bold text-state-success transition-colors hover:bg-state-success/10 sm:w-auto"
                 data-magnetic
-                data-reveal
             >
                 <span class="button-content inline-flex items-center gap-2.5">
                     <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -91,9 +87,8 @@ const backToTop = lang === "en" ? "Back to top" : "Volver arriba";
             </a>
             <a
                 href={withBasePath(cvHref)}
-                class="inline-flex w-full items-center justify-center gap-2.5 rounded-full border border-white/20 px-8 py-4 text-base font-bold text-text-primary transition-colors hover:border-secondary hover:text-secondary sm:w-auto"
+                class="inline-flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/20 px-8 py-4 text-base font-bold text-text-primary transition-colors hover:border-secondary hover:text-secondary sm:w-auto"
                 data-magnetic
-                data-reveal
             >
                 <span class="button-content inline-flex items-center gap-2.5">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,7 +99,7 @@ const backToTop = lang === "en" ? "Back to top" : "Volver arriba";
             </a>
         </div>
 
-        <p class="mt-8 font-mono text-xs text-text-dim sm:text-sm" data-reveal>
+        <p class="mt-8 font-mono text-xs text-text-dim sm:text-sm">
             {t.responseNote}
         </p>
 

@@ -675,13 +675,14 @@ body::-webkit-scrollbar {
     z-index: 45;
     pointer-events: none;
     will-change: transform;
+    /* scene tint — animated by the one-page script */
+    color: var(--accent);
 }
 
 .scroll-buddy-core {
     position: absolute;
     inset: 0;
-    color: var(--accent);
-    filter: drop-shadow(0 0 6px rgba(255, 255, 0, 0.85)) drop-shadow(0 0 18px rgba(255, 255, 0, 0.35));
+    filter: drop-shadow(0 0 5px currentColor) drop-shadow(0 0 16px color-mix(in srgb, currentColor 40%, transparent));
 }
 
 .scroll-buddy-core svg {
@@ -694,7 +695,7 @@ body::-webkit-scrollbar {
     position: absolute;
     inset: -10px;
     border-radius: 999px;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.35), rgba(59, 130, 246, 0) 65%);
+    background: radial-gradient(circle, color-mix(in srgb, currentColor 32%, transparent), transparent 65%);
     animation: buddy-pulse 2.2s ease-in-out infinite;
 }
 
@@ -718,6 +719,40 @@ body::-webkit-scrollbar {
         height: 26px;
         margin: -13px 0 0 -13px;
     }
+}
+
+/* Giant spark used as the finale wipe: huge LAYOUT size so the browser
+   rasterises it at full resolution — crisp at every scale of the cut. */
+.spark-wipe {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    width: 260vmax;
+    height: 260vmax;
+    margin: -130vmax 0 0 -130vmax;
+    z-index: 48;
+    pointer-events: none;
+    color: #60A5FA;
+    opacity: 0;
+    visibility: hidden;
+    will-change: transform, opacity;
+}
+
+.spark-wipe svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Dip-to-black used when warping between distant sections (chapter nav) */
+.warp-veil {
+    position: fixed;
+    inset: 0;
+    background: #050505;
+    z-index: 90;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
 }
 
 /* Solid black veil that darkens an outgoing scene during a cover cut.

@@ -43,16 +43,17 @@ const marqueeWord = lang === "en" ? "PROJECTS" : "PROYECTOS";
                 <h2
                     class="text-3xl font-black tracking-tight text-text-primary sm:text-4xl lg:text-5xl"
                     data-st-title
+                    data-buddy-stop="right"
                 >
                     {t.title}
                 </h2>
-                <p class="mt-4 text-base leading-relaxed text-text-muted sm:text-lg" data-reveal>
+                <p class="mt-4 text-base leading-relaxed text-text-muted sm:text-lg" data-reveal data-buddy-stop="right">
                     {t.subtitle}
                 </p>
             </div>
         </div>
 
-        <div class="grid gap-6 md:grid-cols-3" data-reveal-group>
+        <div class="grid gap-6 md:grid-cols-3" data-reveal-group data-buddy-stop="top">
             {
                 featured.map((project, index) => {
                     const detailHref = project.casePath
@@ -125,10 +126,10 @@ const marqueeWord = lang === "en" ? "PROJECTS" : "PROYECTOS";
             }
         </div>
 
-        <div class="mt-12 text-center" data-reveal>
+        <div class="mt-12 text-center" data-reveal data-buddy-stop="top">
             <a
                 href={withBasePath(`${pfx}/proyectos`)}
-                class="inline-flex items-center justify-center gap-2.5 rounded-full border border-accent/50 px-8 py-3.5 text-base font-bold text-accent transition-colors hover:bg-accent hover:text-bg-deep"
+                class="inline-flex items-center justify-center gap-2.5 rounded-xl border border-accent/50 px-8 py-3.5 text-base font-bold text-accent transition-colors hover:bg-accent hover:text-bg-deep"
                 data-magnetic
             >
                 <span class="button-content inline-flex items-center gap-2.5">

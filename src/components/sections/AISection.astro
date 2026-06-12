@@ -45,14 +45,15 @@ const cardIcons = [
                 <h2
                     class="text-3xl font-black tracking-tight text-text-primary sm:text-4xl lg:text-5xl"
                     data-st-title
+                    data-buddy-stop="right"
                 >
                     {t.title}
                 </h2>
-                <p class="mt-5 max-w-xl text-base leading-relaxed text-text-secondary sm:text-lg" data-reveal>
+                <p class="mt-5 max-w-xl text-base leading-relaxed text-text-secondary sm:text-lg" data-reveal data-buddy-stop="right">
                     {t.subtitle}
                 </p>
 
-                <div class="mt-9 grid gap-4 sm:grid-cols-2" data-reveal-group>
+                <div class="mt-9 grid gap-4 sm:grid-cols-2" data-reveal-group data-buddy-stop="left">
                     {
                         t.cards.map((card, index) => (
                             <div
@@ -75,7 +76,7 @@ const cardIcons = [
                     }
                 </div>
 
-                <p class="mt-8 border-l-2 border-[#D97757]/60 pl-4 text-sm font-medium italic text-text-secondary" data-reveal>
+                <p class="mt-8 border-l-2 border-[#D97757]/60 pl-4 text-sm font-medium italic text-text-secondary" data-reveal data-buddy-stop="left">
                     {t.footnote}
                 </p>
             </div>
@@ -83,6 +84,7 @@ const cardIcons = [
             <!-- Terminal -->
             <div data-reveal>
                 <div
+                    data-buddy-stop="top"
                     data-terminal
                     class="overflow-hidden rounded-2xl border border-white/12 bg-[#0b0d10] shadow-[0_32px_90px_rgba(0,0,0,0.5),0_0_60px_rgba(217,119,87,0.07)]"
                 >
