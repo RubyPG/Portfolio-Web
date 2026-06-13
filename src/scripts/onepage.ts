@@ -847,6 +847,9 @@ function initScrollCompanion() {
     const pos = { x: window.innerWidth / 2, y: window.innerHeight * 0.3 };
     let target: (() => { x: number; y: number }) | null = null;
     let manualXY = false; // the finale fly/zoom writes x/y itself
+    let busy = false; // the finale owns the companion
+    let alive = false; // born at scene 2, never in the hero banner
+    let currentKey = ""; // which perch is currently selected
 
     let hopping = false;
     let hopT = 0;
@@ -941,14 +944,22 @@ function initScrollCompanion() {
                     ),
                 );
                 if (d.kind === "rail") {
+                    clearProyInspect();
                     // born orange on card 0 (matching the AI icon), shifting
                     // to blue from card 1 on — "naranja → poco a poco azul"
                     const tint = d.idx === 0 ? "#D97757" : "#60A5FA";
                     startHop(railPerch(panels[d.idx]), tint);
                 } else if (d.kind === "proy") {
+                    // become the lupa and light the card being inspected,
+                    // right then — not only during the finale zoom.
+                    morphShape("proyectos");
+                    proyCards.forEach((c, i) =>
+                        c?.classList.toggle("card-inspected", i === d.idx),
+                    );
                     const title = proyTitles[d.idx];
                     if (title) startHop(rightOfTitle(title), "#4DFF88");
                 } else {
+                    clearProyInspect();
                     const st = stops[d.idx];
                     if (st) startHop(() => livePoint(st));
                 }
@@ -986,10 +997,6 @@ function initScrollCompanion() {
     };
     gsap.ticker.add(tick);
 
-    let busy = false; // the finale owns the companion
-    let alive = false; // born at scene 2, never in the hero banner
-    let currentKey = ""; // which perch is currently selected
-
     const indexFor = (scroll: number) => {
         let i = 0;
         while (i < stops.length - 1 && scroll >= stops[i + 1].scrollAt) i++;
@@ -1013,10 +1020,13 @@ function initScrollCompanion() {
         };
     };
 
-    /* The 3 project-teaser card titles — the lupa scans them right-of-title. */
+    /* The 3 project-teaser cards/titles — the lupa scans them right-of-title. */
     const proyTitles = Array.from(
         document.querySelectorAll<HTMLElement>("#proyectos .pc-title"),
     );
+    const proyCards = proyTitles.map((t) => t.closest(".project-card"));
+    const clearProyInspect = () =>
+        proyCards.forEach((c) => c?.classList.remove("card-inspected"));
     const rightOfTitle = (el: HTMLElement) => () => {
         const r = el.getBoundingClientRect();
         return {
@@ -1068,7 +1078,10 @@ function initScrollCompanion() {
                     0.999,
                     (vh * 0.6 - row.top) / (vh * 0.4),
                 );
-                const idx = Math.floor(prog * proyTitles.length);
+                const idx = Math.min(
+                    proyTitles.length - 1,
+                    Math.floor(prog * proyTitles.length),
+                );
                 return { key: "proy:" + idx, idx, kind: "proy" };
             }
         }
@@ -1078,6 +1091,8 @@ function initScrollCompanion() {
 
     companionRail.reset = () => {
         currentKey = ""; // force a fresh perch evaluation next frame
+        panels.forEach((pnl) => pnl.classList.remove("stack-panel-active"));
+        clearProyInspect();
     };
 
     (window as unknown as { __buddyXY?: () => object }).__buddyXY = () => ({
@@ -1245,6 +1260,13 @@ function initScrollCompanion() {
            chains and skews getBoundingClientRect — measuring mid-zone
            gives garbage. */
         let tipCache = { x: 0, y: 0 };
+        // The wave perch the companion resumes on after the finale (the
+        // contacto title stop). land() places the buddy exactly here so
+        // the forward hand-off to the ticker is a zero-distance no-op.
+        const landPoint = () => {
+            const fs = stops.find((st) => st.el === finale);
+            return fs ? livePoint(fs) : tipCache;
+        };
 
         const computeFinaleTargets = () => {
             const rect = finale.getBoundingClientRect();
@@ -1358,9 +1380,10 @@ function initScrollCompanion() {
             // gut the scrubbed timeline's scan/fly tweens (and the idle
             // bob) forever — reversing left the glass stuck mid-screen.
             gsap.killTweensOf(buddy, "scale,autoAlpha");
+            const lp = landPoint();
             gsap.set(buddy, {
-                x: tipCache.x,
-                y: tipCache.y,
+                x: lp.x,
+                y: lp.y,
                 width: 36,
                 height: 36,
                 marginLeft: -18,
@@ -1577,6 +1600,7 @@ function initScrollCompanion() {
                 safeComputeFinaleTargets,
             );
             busy = false;
+            manualXY = false; // never strand the ticker gate on resize
             landed = false;
             currentKey = "";
             scanIdx = -1;
@@ -1584,6 +1608,7 @@ function initScrollCompanion() {
             buddy.classList.remove("buddy-zooming");
             bob.play();
             gsap.set(buddy, {
+                scale: 1,
                 scaleX: 1,
                 scaleY: 1,
                 autoAlpha: alive ? 1 : 0,
