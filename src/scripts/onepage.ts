@@ -235,14 +235,19 @@ function initCinematicTransitions() {
                     pin: scene,
                     pinSpacing: false,
                     anticipatePin: 1,
-                    // Resting mid-cut finishes the edit, like a video.
-                    snap: {
-                        snapTo: [0, 1],
-                        duration: { min: 0.5, max: 1 },
-                        ease: "power3.inOut",
-                        delay: 0.06,
-                        directional: false,
-                    },
+                    // Resting mid-cut finishes the edit, like a video — but
+                    // NOT on the finale: the lens scan + zoom is meant to be
+                    // savoured at the reader's own scroll pace.
+                    snap:
+                        next.id === "contacto"
+                            ? undefined
+                            : {
+                                  snapTo: [0, 1],
+                                  duration: { min: 0.5, max: 1 },
+                                  ease: "power3.inOut",
+                                  delay: 0.06,
+                                  directional: false,
+                              },
                 });
 
                 // The frozen frame sinks into black under the new scene.
@@ -256,6 +261,9 @@ function initCinematicTransitions() {
                     veil.setAttribute("aria-hidden", "true");
                     scene.appendChild(veil);
                 }
+                // The finale veil waits for the lupa's card inspection to
+                // finish (bright cards while it scans), then darkness
+                // falls as the glass takes centre stage for the zoom.
                 gsap.fromTo(
                     veil,
                     { opacity: 0 },
@@ -264,10 +272,13 @@ function initCinematicTransitions() {
                         ease: "none",
                         scrollTrigger: {
                             trigger: next,
-                            start: "top bottom",
+                            start:
+                                next.id === "contacto"
+                                    ? "top 50%"
+                                    : "top bottom",
                             end:
                                 next.id === "contacto"
-                                    ? "top 55%"
+                                    ? "top 28%"
                                     : "top top",
                             scrub: 0.6,
                         },
@@ -476,6 +487,13 @@ function initReveals() {
         });
 }
 
+/* Bridge: the stack rail (created in initStackRail) drives the companion's
+   card-hopping while it is pinned; handlers attach in initScrollCompanion. */
+const companionRail: {
+    trigger?: ScrollTrigger; // the rail's pin ScrollTrigger (desktop only)
+    reset?: () => void;
+} = {};
+
 /* ── Stack: pinned horizontal rail on desktop ── */
 function initStackRail() {
     const section = document.querySelector<HTMLElement>("#stack");
@@ -511,6 +529,9 @@ function initStackRail() {
                 },
             },
         });
+        // The companion reads this trigger's progress/isActive every frame
+        // to decide its rail perch — no imperative, order-dependent calls.
+        companionRail.trigger = tween.scrollTrigger;
 
         // Slight per-panel parallax for depth
         track
@@ -532,6 +553,14 @@ function initStackRail() {
                     },
                 );
             });
+    });
+
+    mm.add("(min-width: 1024px)", () => {
+        // teardown: crossing below 1024px mid-rail must release the buddy
+        return () => {
+            companionRail.trigger = undefined;
+            companionRail.reset?.();
+        };
     });
 
     mm.add("(max-width: 1023px)", () => {
@@ -643,8 +672,8 @@ function initMarquees() {
 /* Palette colour per scene — the spark tints itself smoothly to match
    where it is (Claude-orange in the AI section). */
 const BUDDY_SECTION_COLORS: Record<string, string> = {
-    stack: "#FFFF00", // accent
-    ia: "#D97757", // Claude orange
+    stack: "#D97757", // Claude orange — matches the AI icon it is born from
+    ia: "#ff7043", // Claude orange (matches the burst SVG)
     experiencia: "#60A5FA", // secondary-hover blue
     proyectos: "#4DFF88", // state-success green
     contacto: "#FFFF00", // back to accent for the landing
@@ -656,12 +685,32 @@ const BUDDY_SVG = `
     <circle cx="24" cy="24" r="3" fill="#0A0A0A" opacity="0.45"/>
 </svg>`;
 
-/* Giant version used for the finale wipe: its LAYOUT size is huge, so
-   the browser rasterises it at full resolution — crisp at any scale. */
-const SPARK_WIPE_SVG = `
-<svg viewBox="0 0 48 48" fill="none">
-    <path fill="currentColor" stroke="currentColor" stroke-width="0.5" stroke-linejoin="round" d="M25.875 3.944L29.39 17.23a1.94 1.94 0 0 0 1.38 1.379l13.287 3.515c1.924.51 1.924 3.24 0 3.75L30.769 29.39a1.94 1.94 0 0 0-1.379 1.38l-3.515 13.287c-.51 1.924-3.24 1.924-3.75 0L18.61 30.769a1.94 1.94 0 0 0-1.38-1.379L3.944 25.875c-1.924-.51-1.924-3.24 0-3.75l13.288-3.515a1.94 1.94 0 0 0 1.379-1.38l3.515-13.287c.51-1.924 3.24-1.924 3.75 0"/>
-</svg>`;
+/* Claude burst — worn while in the AI scene */
+const BUDDY_IA_SVG = `
+<svg viewBox="0 0 16 16" fill="none"><g fill="currentColor"><path d="m14.375 6.48l.49.28v.209l-.14.489l-5.937 1.397l-.558-1.387zm0 0"/><path d="m12.155 2.373l.683.143l.182.224l.173.535l-.072.342l-3.983 5.447L7.81 7.737l3.673-4.82z"/><path d="m8.719 1.522l.419-.28l.349.14l.349.49l-.957 5.748l-.65-.441l-.279-.769l.49-4.33z"/><path d="m4.239 1.614l.43-.55L4.95 1l.558.081l.275.216l2.004 4.442l.724 2.11l-.848.471l-3.231-5.864z"/><path d="m2.154 4.665l-.14-.56l.42-.488l.488.07h.14l2.933 2.165l.908.698l1.257.978l-.698 1.187l-.629-.489l-.419-.419l-4.05-2.863z"/><path d="M1.316 8.296L1 7.946v-.31l.316-.108l3.562.21l3.491.279l-.113.695l-6.66-.346z"/><path d="M3.411 11.931h-.698l-.278-.32v-.382l1.186-.838l4.82-3.068l.487.833z"/><path d="m4.738 13.883l-.28.07l-.418-.21l.07-.35l4.12-5.446l.558.768l-3.072 4.05z"/><path d="m8.23 14.581l-.21.28l-.419.14l-.349-.28l-.21-.42L8.09 8.646l.629.07z"/><path d="M11.791 13.045v.558l-.07.21l-.279.14l-.489-.066l-3.356-4.996l1.331-1.014l1.117 2.025l.105.733z"/><path d="m13.398 12.207l.07.349l-.21.279l-.21-.07l-1.187-.838l-1.815-1.606l-1.397-.978l.419-1.326l.698.419l.42.768z"/><path d="m12.49 8.645l1.746.14l.419.28l.279.418v.302l-.768.327l-3.911-.978l-1.606-.07l.419-1.466l1.117.838z"/></g></svg>`;
+
+/* Magnifying glass — worn while browsing the projects scene */
+const BUDDY_LUPA_SVG = `
+<svg viewBox="0 0 512 512" fill="none" style="overflow:visible"><path transform="translate(64,64)" fill="currentColor" d="m479.6 399.716l-81.084-81.084l-62.368-25.767A175 175 0 0 0 368 192c0-97.047-78.953-176-176-176S16 94.953 16 192s78.953 176 176 176a175.03 175.03 0 0 0 101.619-32.377l25.7 62.2l81.081 81.088a56 56 0 1 0 79.2-79.195M48 192c0-79.4 64.6-144 144-144s144 64.6 144 144s-64.6 144-144 144S48 271.4 48 192m408.971 264.284a24.03 24.03 0 0 1-33.942 0l-76.572-76.572l-23.894-57.835l57.837 23.894l76.573 76.572a24.03 24.03 0 0 1-.002 33.941"/></svg>`;
+
+/* Headset — landed on the contact finale */
+const BUDDY_CONTACT_SVG = `
+<svg viewBox="0 0 14 14" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 6h1a.5.5 0 0 1 .5.5V9a.5.5 0 0 1-.5.5h-1a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Zm11 3.5h-1A.5.5 0 0 1 11 9V6.5a.5.5 0 0 1 .5-.5h1a1 1 0 0 1 1 1v1.5a1 1 0 0 1-1 1Zm-3 2.75a2 2 0 0 0 2-2h0V9.5"/><path d="M8.25 11a1.25 1.25 0 0 1 0 2.5h-1.5a1.25 1.25 0 0 1 0-2.5ZM2.5 6V5a4.5 4.5 0 0 1 9 0v1m-6-2v1.5m3-1.5v1.5m-3 2c0 1.33 3 1.33 3 0"/></g></svg>`;
+
+/* Shape per scene (anything missing falls back to the spark) */
+const BUDDY_SHAPES: Record<string, string> = {
+    ia: BUDDY_IA_SVG,
+    proyectos: BUDDY_LUPA_SVG,
+    contacto: BUDDY_CONTACT_SVG,
+};
+
+/* Shapes that look good spinning idly */
+const BUDDY_SPINS: Record<string, boolean> = {
+    spark: true,
+    ia: true,
+    proyectos: false,
+    contacto: false,
+};
 
 function initScrollCompanion() {
     if (!document.querySelector("[data-onepage]")) return;
@@ -672,182 +721,407 @@ function initScrollCompanion() {
     buddy.setAttribute("aria-hidden", "true");
     buddy.innerHTML = `
         <div class="scroll-buddy-trail"></div>
+        <div class="scroll-buddy-ring"></div>
         <div class="scroll-buddy-core">${BUDDY_SVG}</div>`;
     document.body.appendChild(buddy);
     const core = buddy.querySelector<HTMLElement>(".scroll-buddy-core");
 
-    const xTo = gsap.quickTo(buddy, "x", { duration: 0.7, ease: "power2.out" });
-    const yTo = gsap.quickTo(buddy, "y", { duration: 0.7, ease: "power2.out" });
-    const rotTo = gsap.quickTo(buddy, "rotation", {
-        duration: 0.45,
-        ease: "power2.out",
-    });
-    const sxTo = gsap.quickTo(buddy, "scaleX", {
-        duration: 0.35,
-        ease: "power2.out",
-    });
-    const syTo = gsap.quickTo(buddy, "scaleY", {
-        duration: 0.35,
-        ease: "power2.out",
-    });
-    const waveTweens = [xTo, yTo, rotTo, sxTo, syTo];
-
-    // Keeps dancing on its own while you rest (separate percent channel).
-    gsap.to(buddy, {
+    // Keeps a gentle life of its own while perched (percent channel).
+    const bob = gsap.to(buddy, {
         yPercent: 14,
         duration: 1.7,
         ease: "sine.inOut",
         yoyo: true,
         repeat: -1,
     });
-    if (core) {
-        gsap.to(core, { rotation: 360, duration: 18, ease: "none", repeat: -1 });
-    }
+    const spin = core
+        ? gsap.to(core, { rotation: 360, duration: 18, ease: "none", repeat: -1 })
+        : null;
 
-    /* Perches: every [data-buddy-stop] element, in document order. The
-       spark rides each one (it moves WITH the content) and hops to the
-       next as it approaches, guiding the reader's eye. */
+    /* Shape morph: shrink, swap the SVG, pop back — smooth, no jump cuts. */
+    let currentShape = "spark";
+    const applyShape = (next: string) => {
+        if (!core) return;
+        core.innerHTML = BUDDY_SHAPES[next] ?? BUDDY_SVG;
+        if (BUDDY_SPINS[next]) {
+            spin?.play();
+        } else {
+            spin?.pause();
+            gsap.set(core, { rotation: 0 });
+        }
+    };
+    const morphShape = (id: string, instant = false) => {
+        const next = BUDDY_SHAPES[id] ? id : "spark";
+        if (next === currentShape || !core) return;
+        currentShape = next;
+        if (instant) {
+            // Mid-zoom swaps must not run the shrink/pop mini-anim: at
+            // giant scales a half-morphed shape reads as a glitch.
+            gsap.killTweensOf(core, "scale");
+            gsap.set(core, { scale: 1 });
+            applyShape(next);
+            return;
+        }
+        gsap.timeline({ overwrite: "auto" })
+            .to(core, { scale: 0, duration: 0.22, ease: "power2.in" })
+            .add(() => applyShape(next))
+            .to(core, { scale: 1, duration: 0.34, ease: "back.out(1.9)" });
+    };
+
+    /* ── Perches: every [data-buddy-stop], in scroll order ──
+       scrollAt thresholds are cached on "refresh" while no pin is active
+       (spacers included, matching live scroll); live positions use
+       getBoundingClientRect so the companion stays glued to pinned and
+       sliding content. */
     interface Stop {
-        scrollAt: number; // scroll position where this perch becomes active
-        docX: number;
-        docY: number; // document-space coordinates of the perch
+        el: HTMLElement;
+        at: string;
+        lift: number;
+        scrollAt: number;
     }
     let stops: Stop[] = [];
-
-    const perchPoint = (el: Element, at: string) => {
-        const rect = el.getBoundingClientRect();
-        const scrollY = window.scrollY;
-        const vw = window.innerWidth;
-        const PAD = 34;
-        if (at === "left") {
-            return {
-                docX: Math.max(24, rect.left - PAD),
-                docY: rect.top + scrollY + rect.height / 2,
-            };
-        }
-        if (at === "top") {
-            return {
-                docX: gsap.utils.clamp(24, vw - 24, rect.left + rect.width / 2),
-                docY: rect.top + scrollY - 30,
-            };
-        }
-        // "right" (default)
-        return {
-            docX: Math.min(vw - 24, rect.right + PAD),
-            docY: rect.top + scrollY + rect.height / 2,
-        };
-    };
 
     const computeStops = () => {
         const vh = window.innerHeight;
         stops = Array.from(
             document.querySelectorAll<HTMLElement>("[data-buddy-stop]"),
         )
-            .filter((el) => el.getClientRects().length > 0) // skip display:none
+            .filter((el) => el.getClientRects().length > 0)
             .map((el) => {
                 const at = el.dataset.buddyStop || "right";
-                const point = perchPoint(el, at);
-                return {
-                    scrollAt: point.docY - vh * 0.48,
-                    docX: point.docX,
-                    docY: point.docY,
-                };
+                const lift = parseFloat(el.dataset.buddyOffset ?? "30");
+                const rect = el.getBoundingClientRect();
+                const anchorDocY =
+                    at === "top"
+                        ? rect.top + window.scrollY - lift
+                        : rect.top + window.scrollY + rect.height / 2;
+                return { el, at, lift, scrollAt: anchorDocY - vh * 0.48 };
             })
             .sort((a, b) => a.scrollAt - b.scrollAt);
     };
+    const noPinActive = () =>
+        !ScrollTrigger.getAll().some((t) => t.pin && t.isActive);
+    const safeComputeStops = () => {
+        if (noPinActive()) computeStops();
+    };
     computeStops();
-    ScrollTrigger.addEventListener("refresh", computeStops);
+    // "refresh" (NOT refreshInit: gsap dispatches that BEFORE reverting
+    // pins) — after refresh the spacers are in place, matching the live
+    // scroll coordinates the thresholds are compared against.
+    ScrollTrigger.addEventListener("refresh", safeComputeStops);
 
-    // Rest on the perch most of the way, hop near the boundary.
-    const glideEase = gsap.parseEase("power2.inOut");
-    const glide = (t: number) =>
-        glideEase(gsap.utils.clamp(0, 1, (t - 0.28) / 0.72));
-
-    const place = (scroll: number) => {
+    /* Live viewport point for a perch — gBCR on purpose: we want the
+       VISUAL position, pins and rail transforms included. */
+    const livePoint = (s: { el: HTMLElement; at: string; lift: number }) => {
         const vw = window.innerWidth;
         const vh = window.innerHeight;
-        if (stops.length === 0) return { x: vw / 2, y: vh * 0.2 };
-
-        let index = 0;
-        while (
-            index < stops.length - 1 &&
-            scroll >= stops[index + 1].scrollAt
-        ) {
-            index++;
+        const rect = s.el.getBoundingClientRect();
+        let x: number;
+        let y: number;
+        if (s.at === "left") {
+            x = Math.max(24, rect.left - 34);
+            y = rect.top + rect.height / 2;
+        } else if (s.at === "top") {
+            x = gsap.utils.clamp(24, vw - 24, rect.left + rect.width / 2);
+            y = rect.top - s.lift;
+        } else if (s.at === "center") {
+            x = gsap.utils.clamp(24, vw - 24, rect.left + rect.width / 2);
+            y = rect.top + rect.height / 2;
+        } else {
+            x = Math.min(vw - 24, rect.right + 34);
+            y = rect.top + rect.height / 2;
         }
-        const current = stops[index];
-        const next = stops[Math.min(index + 1, stops.length - 1)];
-        const span = Math.max(next.scrollAt - current.scrollAt, 1);
-        const t = glide((scroll - current.scrollAt) / span);
-
-        // Perches live in document space: the spark rides the content.
-        const x =
-            gsap.utils.interpolate(current.docX, next.docX, t) +
-            Math.sin(scroll * 0.01) * 8;
-        const yDoc = gsap.utils.interpolate(current.docY, next.docY, t);
-        const y = gsap.utils.clamp(
-            NAV_OFFSET + 26,
-            vh - 90,
-            yDoc - scroll + Math.cos(scroll * 0.008) * 6,
-        );
-        return { x: gsap.utils.clamp(22, vw - 22, x), y };
+        return { x, y: gsap.utils.clamp(NAV_OFFSET + 22, vh - 70, y) };
     };
 
-    // Settle back to calm when scrolling stops.
-    const settle = gsap.delayedCall(0.18, () => {
-        rotTo(0);
-        sxTo(1);
-        syTo(1);
-    });
+    /* ── Movement engine ──
+       ONE owned position `pos`, advanced every frame by a single
+       gsap.ticker loop. There is no quickTo and no gsap.getProperty read
+       of x/y anywhere, so a hop always starts EXACTLY where the buddy is
+       (the old quickTo pause/resume leaked a stale value → snap-back, the
+       "1-2-1-3" jitter). The companion never glides between perches: it
+       JUMPS (arc + squash & stretch + elastic landing), but resting and
+       triggering are frame-rate-independent and perfectly smooth. */
+    const ringEl = buddy.querySelector<HTMLElement>(".scroll-buddy-ring");
 
-    let busy = false; // true while the spark IS the finale transition
+    const pos = { x: window.innerWidth / 2, y: window.innerHeight * 0.3 };
+    let target: (() => { x: number; y: number }) | null = null;
+    let manualXY = false; // the finale fly/zoom writes x/y itself
+
+    let hopping = false;
+    let hopT = 0;
+    let hopDur = 0.5;
+    let hopArc = 0;
+    let hopDir = 1;
+    const hopFrom = { x: 0, y: 0 };
+    const hopEase = gsap.parseEase("power1.inOut");
+
+    const landPulse = () => {
+        if (!ringEl) return;
+        gsap.fromTo(
+            ringEl,
+            { scale: 0.55, autoAlpha: 0.85 },
+            {
+                scale: 2.3,
+                autoAlpha: 0,
+                duration: 0.55,
+                ease: "power2.out",
+                overwrite: true,
+            },
+        );
+    };
+
+    const settleScale = () =>
+        gsap.fromTo(
+            buddy,
+            { scaleX: 1.14, scaleY: 0.86 },
+            {
+                scaleX: 1,
+                scaleY: 1,
+                rotation: 0,
+                duration: 0.42,
+                ease: "elastic.out(1.05, 0.55)",
+                overwrite: "auto",
+            },
+        );
+
+    /* Aim at a (live) perch. Same spot → just re-attach the rest target;
+       otherwise launch a single clean jump FROM the true current pos. */
+    const startHop = (
+        getTarget: () => { x: number; y: number },
+        tint?: string,
+    ) => {
+        target = getTarget;
+        if (tint) {
+            gsap.to(buddy, {
+                color: tint,
+                duration: 0.45,
+                ease: "power2.out",
+                overwrite: "auto",
+            });
+        }
+        const probe = getTarget();
+        const dist = Math.hypot(probe.x - pos.x, probe.y - pos.y);
+        if (dist < 14) {
+            if (!hopping) settleScale();
+            return;
+        }
+        hopFrom.x = pos.x;
+        hopFrom.y = pos.y;
+        hopArc = gsap.utils.clamp(34, 150, dist * 0.32);
+        hopDir = probe.x >= pos.x ? 1 : -1;
+        hopDur = gsap.utils.clamp(0.34, 0.78, 0.26 + dist / 1300);
+        hopT = 0;
+        hopping = true;
+    };
+
+    const cancelHop = () => {
+        hopping = false;
+    };
+
+    // GSAP ticker passes (time[s], deltaTime[ms]) — use deltaTime directly.
+    const tick = (_time: number, deltaTime: number) => {
+        const dt = Math.min(0.05, (deltaTime || 16.7) / 1000); // clamp tab gaps
+        if (!alive || manualXY) return;
+
+        // Perch selection is a PURE FUNCTION of scroll, evaluated every
+        // frame — never set imperatively from a callback. However you reach
+        // a scroll position (slow, fling, anchor warp, reverse), the buddy
+        // self-corrects to the exact right perch. The finale (busy) owns
+        // selection itself via scanTick.
+        if (!busy) {
+            const d = desiredPerch();
+            if (d.key !== currentKey) {
+                currentKey = d.key;
+                if (d.rail) {
+                    const panel = panels[d.idx];
+                    panels.forEach((pnl, i) =>
+                        pnl.classList.toggle("stack-panel-active", i === d.idx),
+                    );
+                    // a real jump onto the newly-centred card's number
+                    startHop(railPerch(panel), panel.dataset.accent);
+                } else {
+                    panels.forEach((pnl) =>
+                        pnl.classList.remove("stack-panel-active"),
+                    );
+                    const st = stops[d.idx];
+                    if (st) startHop(() => livePoint(st));
+                }
+            }
+        }
+
+        if (hopping) {
+            hopT = Math.min(1, hopT + dt / hopDur);
+            const e = hopEase(hopT);
+            const tgt = target ? target() : pos;
+            const air = Math.sin(hopT * Math.PI);
+            pos.x = gsap.utils.interpolate(hopFrom.x, tgt.x, e);
+            pos.y =
+                gsap.utils.interpolate(hopFrom.y, tgt.y, e) - air * hopArc;
+            gsap.set(buddy, {
+                x: pos.x,
+                y: pos.y,
+                scaleX: 1 - air * 0.12,
+                scaleY: 1 + air * 0.16,
+                rotation: hopDir * air * 16,
+            });
+            if (hopT >= 1) {
+                hopping = false;
+                settleScale();
+                landPulse();
+            }
+        } else if (target) {
+            // INSTANT 1:1 glue to the perch — no smoothing, so it tracks
+            // the scroll exactly with zero phantom drift between hops.
+            const tgt = target();
+            pos.x = tgt.x;
+            pos.y = tgt.y;
+            gsap.set(buddy, { x: pos.x, y: pos.y });
+        }
+    };
+    gsap.ticker.add(tick);
+
+    let busy = false; // the finale owns the companion
     let alive = false; // born at scene 2, never in the hero banner
+    let currentKey = ""; // which perch is currently selected
 
-    ScrollTrigger.create({
-        trigger: document.body,
-        start: "top top",
-        end: "max",
-        onUpdate: (self) => {
-            if (busy || !alive) return;
-            const { x, y } = place(self.scroll());
-            const velocity = gsap.utils.clamp(-3000, 3000, self.getVelocity());
-            const speed = Math.min(Math.abs(velocity) / 3200, 1);
-            const lean = (velocity >= 0 ? 1 : -1) * speed;
-            xTo(x);
-            yTo(y);
-            rotTo(lean * 13);
-            // subtle squash only: it should dance, not stretch like gum
-            sxTo(1 + speed * 0.16);
-            syTo(1 - speed * 0.1);
-            settle.restart(true);
-        },
+    const indexFor = (scroll: number) => {
+        let i = 0;
+        while (i < stops.length - 1 && scroll >= stops[i + 1].scrollAt) i++;
+        return i;
+    };
+
+    const panels = Array.from(
+        document.querySelectorAll<HTMLElement>("[data-stack-panel]"),
+    );
+    const railPerch = (panel: HTMLElement) => () => {
+        const perch =
+            panel.querySelector<HTMLElement>("[data-rail-perch]") ?? panel;
+        const rect = perch.getBoundingClientRect();
+        return {
+            x: gsap.utils.clamp(
+                40,
+                window.innerWidth - 40,
+                rect.left + rect.width / 2,
+            ),
+            y: Math.max(NAV_OFFSET + 22, rect.top + rect.height / 2),
+        };
+    };
+
+    /* The single source of perch truth: derived purely from scroll. While
+       the stack rail is pinned, the active card index drives it; otherwise
+       the scroll-threshold wave index does. */
+    const stackEl = document.getElementById("stack");
+    const desiredPerch = (): { key: string; idx: number; rail: boolean } => {
+        const cy = window.innerHeight / 2;
+        // In the stack scene (section spans the vertical centre, true both
+        // pre-pin and while pinned) the companion lives on the cards: pick
+        // whichever card is nearest screen-centre and JUMP between them.
+        if (stackEl && panels.length > 0) {
+            const sr = stackEl.getBoundingClientRect();
+            if (sr.top < cy && sr.bottom > cy) {
+                const cx = window.innerWidth / 2;
+                let idx = 0;
+                let best = Infinity;
+                panels.forEach((pnl, i) => {
+                    const r = pnl.getBoundingClientRect();
+                    const d = Math.abs(r.left + r.width / 2 - cx);
+                    if (d < best) {
+                        best = d;
+                        idx = i;
+                    }
+                });
+                return { key: "rail:" + idx, idx, rail: true };
+            }
+        }
+        const idx = indexFor(window.scrollY);
+        return { key: "wave:" + idx, idx, rail: false };
+    };
+
+    companionRail.reset = () => {
+        currentKey = ""; // force a fresh perch evaluation next frame
+    };
+
+    (window as unknown as { __buddyXY?: () => object }).__buddyXY = () => ({
+        x: Math.round(pos.x),
+        y: Math.round(pos.y),
+        key: currentKey,
+        hopping,
     });
 
-    /* Birth: pops in when scene 2 arrives; hides again back in the hero. */
+    /* Debug handle for the runtime test-suite */
+    (window as unknown as { __buddy?: () => object }).__buddy = () => ({
+        alive,
+        busy,
+        currentKey,
+        hopping,
+        manualXY,
+        shape: currentShape,
+    });
+
+    /* Birth: the companion EMERGES from the AI-Engineering card's spark
+       icon — the very same glyph — as if the card released it. It rides
+       the icon until the rail seats it on the card numbers. */
+    const origin = document.querySelector<HTMLElement>("[data-buddy-origin]");
     gsap.set(buddy, { autoAlpha: 0, scale: 0 });
     ScrollTrigger.create({
+        // Born only once the stack scene has settled (well past the cover
+        // wipe), so it never flashes over a half-transitioned hero.
         trigger: "#stack",
-        start: "top 80%",
+        start: "top 35%",
         onEnter: () => {
             if (alive) return;
+            const originIdx = origin
+                ? stops.findIndex((stop) => stop.el === origin)
+                : -1;
+            const idx = originIdx >= 0 ? originIdx : indexFor(window.scrollY);
+            const s = stops[idx];
+            if (!s) return;
+            // Seed pos AT the icon and pre-select its perch, THEN go alive —
+            // it emerges already in place, never "lands" from afar, and the
+            // ticker won't re-hop (currentKey already matches).
+            const at = livePoint(s);
+            pos.x = at.x;
+            pos.y = at.y;
+            target = () => livePoint(s);
+            currentKey = "wave:" + idx;
+            hopping = false;
             alive = true;
-            const at = place(window.scrollY);
-            gsap.set(buddy, { x: at.x, y: at.y });
+            gsap.set(buddy, { x: pos.x, y: pos.y });
+            if (origin) {
+                // the icon "releases" the spark with a quick pulse
+                gsap.fromTo(
+                    origin,
+                    { scale: 1 },
+                    {
+                        scale: 1.3,
+                        duration: 0.18,
+                        yoyo: true,
+                        repeat: 1,
+                        ease: "power2.out",
+                    },
+                );
+            }
             gsap.fromTo(
                 buddy,
-                { autoAlpha: 0, scale: 0, rotation: -220 },
+                { autoAlpha: 0, scale: 0, rotation: -90 },
                 {
                     autoAlpha: 1,
                     scale: 1,
                     rotation: 0,
-                    duration: 0.6,
-                    ease: "back.out(2)",
+                    duration: 0.55,
+                    delay: 0.12,
+                    ease: "back.out(1.9)",
                     overwrite: "auto",
+                    onComplete: landPulse,
                 },
             );
         },
         onLeaveBack: () => {
             alive = false;
+            cancelHop();
+            target = null;
+            currentKey = "";
             gsap.to(buddy, {
                 autoAlpha: 0,
                 scale: 0,
@@ -858,141 +1132,422 @@ function initScrollCompanion() {
         },
     });
 
-    /* Tint: the spark smoothly takes each scene's palette colour
-       (Claude-orange while in the AI section). */
+    /* Tint. TWO separate colour tracks:
+       - the chapter-nav / progress bar (--scene-color) shows each section's
+         IDENTITY colour — orange ONLY in the AI section, never elsewhere.
+       - the companion takes the per-section accent (and, in the stack, the
+         per-card accent driven by the rail). */
+    const SCENE_NAV_COLORS: Record<string, string> = {
+        inicio: "#FFFF00",
+        stack: "#FFFF00",
+        ia: "#ff7043", // Claude orange — the ONLY orange section
+        experiencia: "#60A5FA",
+        proyectos: "#4DFF88",
+        contacto: "#FFFF00",
+    };
     gsap.set(buddy, { color: BUDDY_SECTION_COLORS.stack });
+    gsap.set(document.documentElement, { "--scene-color": "#FFFF00" });
     SCENE_ORDER.forEach((id) => {
         const section = document.getElementById(id);
-        const color = BUDDY_SECTION_COLORS[id];
-        if (!section || !color) return;
+        if (!section) return;
+        const navColor = SCENE_NAV_COLORS[id];
+        const buddyColor = BUDDY_SECTION_COLORS[id];
         ScrollTrigger.create({
             trigger: section,
             start: "top 45%",
             end: "bottom 45%",
             onToggle: (self) => {
                 if (!self.isActive) return;
-                gsap.to(buddy, {
-                    color,
-                    duration: 0.9,
-                    ease: "power2.out",
-                    overwrite: "auto",
-                });
+                if (navColor) {
+                    gsap.to(document.documentElement, {
+                        "--scene-color": navColor,
+                        duration: 0.9,
+                        ease: "power2.out",
+                    });
+                }
+                if (buddyColor && !busy) {
+                    gsap.to(buddy, {
+                        color: buddyColor,
+                        duration: 0.9,
+                        ease: "power2.out",
+                        overwrite: "auto",
+                    });
+                }
+                if (!busy) morphShape(id);
             },
         });
     });
 
-    /* FINALE (desktop): the spark swallows the screen. Flying to centre
-       it charges yellow to blue, the huge crisp wipe star takes over and
-       swells past the frame while darkening, "Hablemos." fades in
-       beneath, and the spark lands at the very tip - last of all. */
+    /* FINALE (desktop): zoom THROUGH the magnifying glass.
+       The very lupa you have been following scans each project card
+       title, flies to centre stage and grows; the contact scene is
+       revealed by a clip-path circle synced to the lens radius — you
+       are literally looking through the glass. No overlays, nothing
+       appears out of nowhere; the ring simply outgrows the screen. */
     const mm = gsap.matchMedia();
     mm.add("(min-width: 1024px)", () => {
         const contacto = document.getElementById("contacto");
+        const proyectos = document.getElementById("proyectos");
         const finale = document.querySelector<HTMLElement>(
             "[data-buddy-finale]",
         );
-        if (!contacto || !finale || !core) return;
+        if (!contacto || !proyectos || !finale || !core) return;
 
-        const wipe = ensureOverlay("spark-wipe", SPARK_WIPE_SVG);
+        const layoutTop = (el: HTMLElement) => {
+            let y = 0;
+            let node: HTMLElement | null = el;
+            while (node) {
+                y += node.offsetTop;
+                node = node.offsetParent as HTMLElement | null;
+            }
+            return y;
+        };
+        /* The landing tip is CACHED only while nothing is pinned: a
+           pinned section is position:fixed, which truncates offsetTop
+           chains and skews getBoundingClientRect — measuring mid-zone
+           gives garbage. */
+        let tipCache = { x: 0, y: 0 };
 
-        const tip = () => {
+        const computeFinaleTargets = () => {
             const rect = finale.getBoundingClientRect();
-            const contactoTop =
-                contacto.getBoundingClientRect().top + window.scrollY;
-            const docY = rect.top + window.scrollY;
-            return {
+            tipCache = {
                 x: rect.left + rect.width / 2,
-                y: docY - contactoTop - 34,
+                y: layoutTop(finale) - layoutTop(contacto) - 120,
+            };
+        };
+        const safeComputeFinaleTargets = () => {
+            if (noPinActive()) computeFinaleTargets();
+        };
+        computeFinaleTargets();
+        ScrollTrigger.addEventListener("refresh", safeComputeFinaleTargets);
+
+
+        // Lens inner radius of the lupa SVG at buddy scale 1
+        // (circle r=144 in a 512 viewBox rendered in a 36px box).
+        const LENS_R = (144 / 512) * 36;
+
+        const contactoBlocks = Array.from(
+            contacto.querySelectorAll<HTMLElement>(":scope > div"),
+        );
+        gsap.set(contacto, { clipPath: "circle(0px at 50% 50%)" });
+
+        const flyEase = gsap.parseEase("power1.inOut");
+        const zoomEase = gsap.parseEase("power2.in");
+
+        /* One continuous parametric drive — scale, lens-synced clip and
+           visibility all derive from raw progress every tick. No
+           scrubbed alpha/scale tweens, no stale-state flashes. */
+        const maxScale = () =>
+            (Math.hypot(window.innerWidth, window.innerHeight) / 2 + 24) /
+            LENS_R;
+        const buddyScale = (p: number) => {
+            if (p < FLY_START) return 1;
+            if (p < FLY_END)
+                return 1 + flyEase((p - FLY_START) / (FLY_END - FLY_START)) * 5;
+            return (
+                6 +
+                zoomEase(gsap.utils.clamp(0, 1, (p - FLY_END) / 0.28)) *
+                    (maxScale() - 6)
+            );
+        };
+
+        /* ── The lupa INSPECTS the projects: progress thresholds fire
+           real hops (same engine as the rail) onto each card, and the
+           card under the glass lights up — conic border + spotlight — as
+           if the magnifier revealed it. ── */
+        const cards = Array.from(
+            proyectos.querySelectorAll<HTMLElement>(".project-card"),
+        );
+        const SCAN_AT = [0.02, 0.2, 0.38];
+        const FLY_START = 0.52;
+        const FLY_END = 0.66;
+        let scanIdx = -1;
+        let lastClip = "";
+        let lastBlockAlpha = -1;
+
+        const cardPerch = (card: HTMLElement) => () => {
+            const rect = card.getBoundingClientRect();
+            return {
+                x: gsap.utils.clamp(
+                    24,
+                    window.innerWidth - 24,
+                    rect.left + rect.width / 2,
+                ),
+                y: Math.max(NAV_OFFSET + 22, rect.top - 24),
             };
         };
 
-        // The scene starts hidden and fades in mid-transition.
-        gsap.set(contacto, { autoAlpha: 0 });
+        const inspect = (idx: number) => {
+            cards.forEach((card, i) => {
+                card.classList.toggle("card-inspected", i === idx);
+                if (i === idx) {
+                    card.style.setProperty("--px", "50%");
+                    card.style.setProperty("--py", "18%");
+                }
+            });
+        };
 
-        const tl = gsap.timeline({
-            scrollTrigger: {
-                trigger: contacto,
-                start: "top bottom",
-                end: "top top",
-                scrub: 0.6,
-                invalidateOnRefresh: true,
-                onToggle: (self) => {
-                    busy = self.isActive;
-                    if (busy) {
-                        settle.pause();
-                        waveTweens.forEach((fn) => fn.tween?.pause());
-                    }
-                },
-                // Visibility lives HERE (instant, threshold-based), never in
-                // scrubbed tweens — their lagging catch-up render would
-                // re-show the spark after fast jumps out of the zone.
-                onUpdate: (self) => {
-                    const p = self.progress;
-                    gsap.set(wipe, {
-                        autoAlpha: p > 0.3 && p < 0.82 ? 1 : 0,
+        const scanTick = (p: number) => {
+            let idx = -1;
+            for (let i = 0; i < SCAN_AT.length; i += 1) {
+                if (p >= SCAN_AT[i]) idx = i;
+            }
+            idx = Math.min(idx, cards.length - 1);
+            if (idx === scanIdx) return;
+            scanIdx = idx;
+            inspect(idx);
+            if (idx >= 0 && cards[idx]) startHop(cardPerch(cards[idx]));
+        };
+
+        const flyFrom = () =>
+            cards.length > 0
+                ? cardPerch(cards[cards.length - 1])()
+                : { x: window.innerWidth / 2, y: window.innerHeight * 0.4 };
+
+        /* Landing: once the scene is fully revealed, the companion fades
+           in ALREADY PLACED on the tip - it never travels there. */
+        let landed = false;
+        const land = () => {
+            if (landed) return;
+            landed = true;
+            // Scoped kill ONLY: killTweensOf(buddy) without filters used to
+            // gut the scrubbed timeline's scan/fly tweens (and the idle
+            // bob) forever — reversing left the glass stuck mid-screen.
+            gsap.killTweensOf(buddy, "scale,autoAlpha");
+            gsap.set(buddy, {
+                x: tipCache.x,
+                y: tipCache.y,
+                width: 36,
+                height: 36,
+                marginLeft: -18,
+                marginTop: -18,
+                scale: 0.6,
+                rotation: 0,
+                autoAlpha: 0,
+                color: BUDDY_SECTION_COLORS.contacto,
+            });
+            buddy.classList.remove("buddy-zooming");
+            morphShape("contacto", true);
+            bob.play();
+            gsap.to(buddy, {
+                autoAlpha: 1,
+                scale: 1,
+                duration: 0.7,
+                delay: 0.35,
+                ease: "power2.out",
+                overwrite: "auto",
+            });
+        };
+
+        const applyFinale = (p: number) => {
+            // Past the reveal the landing sequence owns the companion —
+            // but the scene endgame (clip release to true corner coverage
+            // + final fade to 1) still follows the scroll.
+            if (p >= 0.94) {
+                manualXY = true; // land() owns x/y; keep the ticker off
+                const releaseT = gsap.utils.clamp(0, 1, (p - 0.94) / 0.012);
+                if (p >= 0.97) {
+                    gsap.set(contacto, { clipPath: "none" });
+                } else {
+                    const cy = (p - 0.5) * window.innerHeight;
+                    const fromR = LENS_R * buddyScale(0.94) - 6;
+                    const coverR =
+                        Math.hypot(window.innerWidth, window.innerHeight) /
+                            2 +
+                        12;
+                    const radius = gsap.utils.interpolate(
+                        fromR,
+                        coverR,
+                        releaseT,
+                    );
+                    gsap.set(contacto, {
+                        clipPath: `circle(${radius.toFixed(1)}px at 50% ${cy.toFixed(1)}px)`,
                     });
-                    const visible = p >= 0.84 || (p < 0.36 && alive);
-                    gsap.set(buddy, { autoAlpha: visible ? 1 : 0 });
-                },
+                }
+                gsap.set(contactoBlocks, {
+                    autoAlpha: gsap.utils.interpolate(
+                        0.78,
+                        1,
+                        gsap.utils.clamp(0, 1, (p - 0.94) / 0.012),
+                    ),
+                });
+                land();
+                return;
+            }
+            if (landed) {
+                landed = false;
+                gsap.killTweensOf(buddy, "scale,autoAlpha");
+                morphShape("proyectos", true); // back to the glass, unseen
+            }
+
+            const scale = buddyScale(p);
+            const visible = p < 0.92 && (p >= 0.02 || alive);
+
+            // Phase ownership of x/y — deterministic in BOTH directions:
+            // scan hops < parametric flight < centre assert (zoom).
+            if (p < FLY_START) {
+                // scan: the ticker drives the hops (startHop via scanTick)
+                manualXY = false;
+                scanTick(p);
+            } else {
+                // fly + zoom: applyFinale writes x/y itself
+                manualXY = true;
+                cancelHop();
+                if (scanIdx !== -1) {
+                    scanIdx = -1;
+                    inspect(-1);
+                }
+                if (p < FLY_END) {
+                    const t = flyEase((p - FLY_START) / (FLY_END - FLY_START));
+                    const from = flyFrom();
+                    gsap.set(buddy, {
+                        x: gsap.utils.interpolate(
+                            from.x,
+                            window.innerWidth / 2,
+                            t,
+                        ),
+                        y: gsap.utils.interpolate(
+                            from.y,
+                            window.innerHeight / 2,
+                            t,
+                        ),
+                        rotation: 0,
+                    });
+                }
+            }
+
+            // The idle bob is a % of the element height: at lens size it
+            // shoves the glass ~80px off-centre. Freeze it while zooming.
+            if (scale > 1.2) {
+                bob.pause();
+                gsap.set(buddy, { yPercent: 0 });
+            } else if (bob.paused()) {
+                bob.play();
+            }
+            // Resize the element (vector re-raster = crisp), but cap the
+            // raster at 1440px and bridge the rest with transform scale:
+            // re-rasterising a 3240px layer per tick was the #1 jank
+            // source, and past ~1440px only a huge smooth arc is visible.
+            const px = 36 * scale;
+            const rasterPx = Math.min(px, 1440);
+            const sizing: gsap.TweenVars = {
+                width: rasterPx,
+                height: rasterPx,
+                marginLeft: -rasterPx / 2,
+                marginTop: -rasterPx / 2,
+                autoAlpha: visible ? 1 : 0,
+            };
+            if (scale > 1.001) {
+                // zoom phases own the transform; during the scan the hop
+                // engine keeps its squash & stretch untouched
+                sizing.scaleX = px / rasterPx;
+                sizing.scaleY = px / rasterPx;
+            }
+            gsap.set(buddy, sizing);
+
+            // The glass stays a magnifier for the whole zoom; the headset
+            // only appears on landing. Giant glow would wash the screen.
+            if (p > 0.05 && p < 0.92) morphShape("proyectos", scale > 3);
+            buddy.classList.toggle("buddy-zooming", scale > 3);
+
+            // During the zoom the parametric drive also owns the position:
+            // scrolling back up from the landing used to leave the giant
+            // glass stuck at the tip (no tween reasserts x/y up there).
+            if (p >= FLY_END) {
+                gsap.set(buddy, {
+                    x: window.innerWidth / 2,
+                    y: window.innerHeight / 2,
+                });
+            }
+
+            // Contact revealed exactly through the lens — but only once
+            // the glass has taken centre stage (a quick iris-in, then it
+            // tracks the lens radius). The clip is element-relative while
+            // the section still rises, so the centre is computed back from
+            // the viewport lens position. Redundant writes are skipped.
+            const cy = (p - 0.5) * window.innerHeight;
+            const iris = gsap.utils.clamp(0, 1, (p - 0.68) / 0.06);
+            const radius = Math.max(0, LENS_R * scale - 6) * iris;
+            const clip = `circle(${radius.toFixed(1)}px at 50% ${cy.toFixed(1)}px)`;
+            if (clip !== lastClip) {
+                lastClip = clip;
+                gsap.set(contacto, { clipPath: clip });
+            }
+
+            // Visible fade-in: silhouette through the glass, then the
+            // whole scene fades up before the companion lands.
+            const blockAlpha =
+                p < 0.86
+                    ? 0.35
+                    : 0.35 + 0.65 * gsap.utils.clamp(0, 1, (p - 0.86) / 0.12);
+            if (Math.abs(blockAlpha - lastBlockAlpha) > 0.004) {
+                lastBlockAlpha = blockAlpha;
+                gsap.set(contactoBlocks, { autoAlpha: blockAlpha });
+            }
+        };
+
+        ScrollTrigger.create({
+            trigger: contacto,
+            start: "top bottom",
+            end: "top top",
+            invalidateOnRefresh: true,
+            onToggle: (self) => {
+                busy = self.isActive;
+                if (busy) {
+                    cancelHop();
+                    // onUpdate fires BEFORE onToggle in the same tick: let
+                    // the scan re-claim immediately if it just started.
+                    scanIdx = -1;
+                    inspect(-1);
+                    scanTick(self.progress);
+                } else {
+                    scanIdx = -1;
+                    inspect(-1);
+                    manualXY = false;
+                    // resync owned pos to wherever the finale left the
+                    // buddy, so the ticker resumes without a jump.
+                    pos.x = Number(gsap.getProperty(buddy, "x"));
+                    pos.y = Number(gsap.getProperty(buddy, "y"));
+                    // Either direction: clear the selection and the
+                    // ticker self-corrects to the correct scroll-derived
+                    // perch next frame (the contacto title stop coincides
+                    // with the landing tip, so no extra hop forward).
+                    currentKey = "";
+                    if (self.direction < 0) target = null;
+                }
+            },
+            onUpdate: (self) => applyFinale(self.progress),
+            onLeave: () => {
+                gsap.set(contacto, { clipPath: "none" });
+                gsap.set(contactoBlocks, { autoAlpha: 1 });
+                inspect(-1);
+                land();
             },
         });
 
-        tl
-            // 1 - fly to centre stage (keeps its own colour, no extra morph)
-            .to(
-                buddy,
-                {
-                    x: () => window.innerWidth / 2,
-                    y: () => window.innerHeight * 0.45,
-                    scale: 3,
-                    rotation: 160,
-                    duration: 0.3,
-                    ease: "power2.in",
-                },
-                0,
-            )
-            // 2 - hand over to the huge crisp star and swallow the frame
-            .fromTo(
-                wipe,
-                {
-                    scale: 0.028,
-                    rotation: 20,
-                    color: BUDDY_SECTION_COLORS.proyectos,
-                },
-                {
-                    scale: 1,
-                    rotation: 150,
-                    duration: 0.45,
-                    ease: "power3.in",
-                    immediateRender: false,
-                },
-                0.3,
-            )
-            .to(wipe, { color: "#0b0c10", duration: 0.26 }, 0.42)
-            // 3 - the finale fades in beneath the black star
-            .to(contacto, { autoAlpha: 1, duration: 0.18, ease: "none" }, 0.62)
-            // 4 - the spark appears LAST, landing on the very tip
-            .set(buddy, { color: BUDDY_SECTION_COLORS.contacto }, 0.84)
-            .set(
-                buddy,
-                {
-                    scale: 0,
-                    rotation: -200,
-                    x: () => tip().x,
-                    y: () => tip().y,
-                },
-                0.84,
-            )
-            .to(
-                buddy,
-                {
-                    scale: 1,
-                    rotation: 0,
-                    duration: 0.16,
-                    ease: "back.out(2.2)",
-                },
-                0.84,
+        // Teardown when leaving desktop: never strand busy/landed flags,
+        // a giant lens, a clipped scene or the extra refresh listener.
+        return () => {
+            ScrollTrigger.removeEventListener(
+                "refresh",
+                safeComputeFinaleTargets,
             );
+            busy = false;
+            landed = false;
+            currentKey = "";
+            scanIdx = -1;
+            inspect(-1);
+            buddy.classList.remove("buddy-zooming");
+            bob.play();
+            gsap.set(buddy, {
+                scaleX: 1,
+                scaleY: 1,
+                autoAlpha: alive ? 1 : 0,
+                clearProps: "width,height,marginLeft,marginTop",
+            });
+            gsap.set(contacto, { clearProps: "clipPath,opacity,visibility" });
+            gsap.set(contactoBlocks, { clearProps: "opacity,visibility" });
+        };
     });
 
     // Mobile finale: simple fade-in for the contact scene.

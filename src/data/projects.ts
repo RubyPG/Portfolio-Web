@@ -174,7 +174,7 @@ export const projects: Project[] = [
         links: { repo: null, demo: null, docs: null },
         casePath: "/cases/ilead-crm",
         thumbnail: "/projects/ilead-crm/thumb.webp",
-        featured: true,
+        featured: false,
     },
     {
         slug: "iservices-crm",
@@ -222,7 +222,7 @@ export const projects: Project[] = [
         links: { repo: null, demo: null, docs: null },
         casePath: "/cases/iservices-crm",
         thumbnail: "/projects/iservices-crm/thumb.webp",
-        featured: true,
+        featured: false,
     },
     {
         slug: "loops-grooves",
@@ -271,13 +271,13 @@ export const projects: Project[] = [
         links: { repo: null, demo: "https://loopsngrooves.com", docs: null },
         casePath: "/cases/loops-n-grooves",
         thumbnail: "/projects/loopsngrooves/thumb.webp",
-        featured: false,
+        featured: true,
     },
 ];
 
-/* Featured projects for the home teaser (skips coming-soon) */
+/* Featured projects for the home teaser (array order = card order) */
 export function getFeaturedProjects(limit = 3): Project[] {
-    return projects.filter((p) => p.featured && !p.comingSoon).slice(0, limit);
+    return projects.filter((p) => p.featured).slice(0, limit);
 }
 
 /* Get a single project by slug */

@@ -330,13 +330,13 @@ body::-webkit-scrollbar {
 }
 
 .chapter-link.nav-link-active .chapter-dot {
-    background: var(--accent);
+    background: var(--scene-color, var(--accent));
     transform: scale(1.35);
-    box-shadow: 0 0 14px rgba(255, 255, 0, 0.55);
+    box-shadow: 0 0 14px color-mix(in srgb, var(--scene-color, var(--accent)) 55%, transparent);
 }
 
 .chapter-link.nav-link-active .chapter-index {
-    color: var(--accent);
+    color: var(--scene-color, var(--accent));
 }
 
 .site-accordion-item {
@@ -640,6 +640,52 @@ body::-webkit-scrollbar {
     opacity: 1;
 }
 
+/* Stack rail: the card the companion currently points at lights up. */
+[data-stack-panel] {
+    transition: border-color 300ms ease, box-shadow 360ms ease, transform 360ms ease;
+}
+
+[data-stack-panel].stack-panel-active {
+    border-color: rgba(255, 255, 255, 0.28);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.06),
+        0 24px 60px rgba(0, 0, 0, 0.45);
+    transform: translateY(-6px);
+}
+
+[data-stack-panel].stack-panel-active > div > div:first-child > span:first-child {
+    transform: scale(1.06);
+}
+
+/* The magnifier companion "inspects" a card: same reveal as hover,
+   driven by the scroll choreography (class toggled from JS). */
+.project-card.card-inspected {
+    border-color: rgba(255, 255, 255, 0.02);
+    box-shadow:
+        0 30px 70px rgba(0, 0, 0, 0.5),
+        0 0 50px rgba(59, 130, 246, 0.12);
+}
+
+.project-card.card-inspected::before {
+    opacity: 1;
+    animation: pc-spin 3.2s linear infinite;
+}
+
+.project-card.card-inspected::after {
+    opacity: 1;
+}
+
+.project-card.card-inspected .pc-title {
+    color: var(--secondary-hover);
+}
+
+.project-card.card-inspected .pc-arrow {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg-deep);
+    transform: rotate(-45deg);
+}
+
 .project-card>* {
     position: relative;
     z-index: 3;
@@ -699,6 +745,27 @@ body::-webkit-scrollbar {
     animation: buddy-pulse 2.2s ease-in-out infinite;
 }
 
+/* Landing pulse: an expanding ring stamped on every touchdown */
+.scroll-buddy-ring {
+    position: absolute;
+    inset: -7px;
+    border: 2px solid currentColor;
+    border-radius: 999px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* While the lens zoom is in flight: no glow, no pulsing trail — a giant
+   scaled blur would wash the whole frame */
+.buddy-zooming .scroll-buddy-core {
+    filter: none;
+}
+
+.buddy-zooming .scroll-buddy-trail {
+    opacity: 0;
+    animation: none;
+}
+
 @keyframes buddy-pulse {
 
     0%,
@@ -719,29 +786,6 @@ body::-webkit-scrollbar {
         height: 26px;
         margin: -13px 0 0 -13px;
     }
-}
-
-/* Giant spark used as the finale wipe: huge LAYOUT size so the browser
-   rasterises it at full resolution — crisp at every scale of the cut. */
-.spark-wipe {
-    position: fixed;
-    left: 50%;
-    top: 50%;
-    width: 260vmax;
-    height: 260vmax;
-    margin: -130vmax 0 0 -130vmax;
-    z-index: 48;
-    pointer-events: none;
-    color: #60A5FA;
-    opacity: 0;
-    visibility: hidden;
-    will-change: transform, opacity;
-}
-
-.spark-wipe svg {
-    display: block;
-    width: 100%;
-    height: 100%;
 }
 
 /* Dip-to-black used when warping between distant sections (chapter nav) */
@@ -769,6 +813,12 @@ body::-webkit-scrollbar {
 }
 
 /* Film-style scroll progress bar (created by the one-page script) */
+@property --scene-color {
+    syntax: '<color>';
+    initial-value: #FFFF00;
+    inherits: true;
+}
+
 .page-progress {
     position: fixed;
     top: 4rem;
@@ -779,8 +829,8 @@ body::-webkit-scrollbar {
     pointer-events: none;
     transform: scaleX(0);
     transform-origin: left center;
-    background: linear-gradient(90deg, var(--secondary), var(--accent));
-    box-shadow: 0 0 12px rgba(255, 255, 0, 0.35);
+    background: linear-gradient(90deg, var(--secondary), var(--scene-color, var(--accent)));
+    box-shadow: 0 0 12px color-mix(in srgb, var(--scene-color, var(--accent)) 35%, transparent);
 }
 
 /* Hide FOUC-managed elements only when JS is available (class added inline) */
