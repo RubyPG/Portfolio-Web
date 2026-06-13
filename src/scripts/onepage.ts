@@ -819,8 +819,8 @@ function initScrollCompanion() {
         let x: number;
         let y: number;
         if (s.at === "left") {
-            x = Math.max(24, rect.left - 34);
-            y = rect.top + rect.height / 2;
+            x = gsap.utils.clamp(24, vw - 24, rect.left + 7);
+            y = rect.top + 18; // at the entry's top marker, not mid-line
         } else if (s.at === "top") {
             x = gsap.utils.clamp(24, vw - 24, rect.left + rect.width / 2);
             y = rect.top - s.lift;
@@ -933,17 +933,22 @@ function initScrollCompanion() {
             const d = desiredPerch();
             if (d.key !== currentKey) {
                 currentKey = d.key;
-                if (d.rail) {
-                    const panel = panels[d.idx];
-                    panels.forEach((pnl, i) =>
-                        pnl.classList.toggle("stack-panel-active", i === d.idx),
-                    );
-                    // a real jump onto the newly-centred card's number
-                    startHop(railPerch(panel), panel.dataset.accent);
+                const inStack = d.kind === "rail";
+                panels.forEach((pnl, i) =>
+                    pnl.classList.toggle(
+                        "stack-panel-active",
+                        inStack && i === d.idx,
+                    ),
+                );
+                if (d.kind === "rail") {
+                    // born orange on card 0 (matching the AI icon), shifting
+                    // to blue from card 1 on — "naranja → poco a poco azul"
+                    const tint = d.idx === 0 ? "#D97757" : "#60A5FA";
+                    startHop(railPerch(panels[d.idx]), tint);
+                } else if (d.kind === "proy") {
+                    const title = proyTitles[d.idx];
+                    if (title) startHop(rightOfTitle(title), "#4DFF88");
                 } else {
-                    panels.forEach((pnl) =>
-                        pnl.classList.remove("stack-panel-active"),
-                    );
                     const st = stops[d.idx];
                     if (st) startHop(() => livePoint(st));
                 }
@@ -1008,34 +1013,67 @@ function initScrollCompanion() {
         };
     };
 
+    /* The 3 project-teaser card titles — the lupa scans them right-of-title. */
+    const proyTitles = Array.from(
+        document.querySelectorAll<HTMLElement>("#proyectos .pc-title"),
+    );
+    const rightOfTitle = (el: HTMLElement) => () => {
+        const r = el.getBoundingClientRect();
+        return {
+            x: gsap.utils.clamp(40, window.innerWidth - 40, r.right + 30),
+            y: gsap.utils.clamp(
+                NAV_OFFSET + 22,
+                window.innerHeight - 70,
+                r.top + r.height / 2,
+            ),
+        };
+    };
+
     /* The single source of perch truth: derived purely from scroll. While
        the stack rail is pinned, the active card index drives it; otherwise
        the scroll-threshold wave index does. */
-    const stackEl = document.getElementById("stack");
-    const desiredPerch = (): { key: string; idx: number; rail: boolean } => {
-        const cy = window.innerHeight / 2;
-        // In the stack scene (section spans the vertical centre, true both
-        // pre-pin and while pinned) the companion lives on the cards: pick
-        // whichever card is nearest screen-centre and JUMP between them.
-        if (stackEl && panels.length > 0) {
-            const sr = stackEl.getBoundingClientRect();
-            if (sr.top < cy && sr.bottom > cy) {
-                const cx = window.innerWidth / 2;
-                let idx = 0;
-                let best = Infinity;
-                panels.forEach((pnl, i) => {
-                    const r = pnl.getBoundingClientRect();
-                    const d = Math.abs(r.left + r.width / 2 - cx);
-                    if (d < best) {
-                        best = d;
-                        idx = i;
-                    }
-                });
-                return { key: "rail:" + idx, idx, rail: true };
+    interface Desired {
+        key: string;
+        idx: number;
+        kind: "rail" | "proy" | "wave";
+    }
+    const desiredPerch = (): Desired => {
+        const vh = window.innerHeight;
+        // STACK rail — ONLY while the rail's own pin is active. (Gating on
+        // the #stack rect was wrong: the scene-cover system keeps #stack
+        // pinned under the next sections, so it still spanned the viewport
+        // in IA → the companion stayed stuck in rail mode, tinted pink.)
+        const rail = companionRail.trigger;
+        if (rail && rail.isActive && panels.length > 0) {
+            const cx = window.innerWidth / 2;
+            let idx = 0;
+            let best = Infinity;
+            panels.forEach((pnl, i) => {
+                const r = pnl.getBoundingClientRect();
+                const d = Math.abs(r.left + r.width / 2 - cx);
+                if (d < best) {
+                    best = d;
+                    idx = i;
+                }
+            });
+            return { key: "rail:" + idx, idx, kind: "rail" };
+        }
+        // PROYECTOS — while the card row is on screen the lupa scans the 3
+        // cards (right of each title), advancing with the vertical scroll.
+        if (proyTitles.length > 0) {
+            const row = proyTitles[0].getBoundingClientRect();
+            if (row.top < vh * 0.92 && row.bottom > vh * 0.08) {
+                const prog = gsap.utils.clamp(
+                    0,
+                    0.999,
+                    (vh * 0.6 - row.top) / (vh * 0.4),
+                );
+                const idx = Math.floor(prog * proyTitles.length);
+                return { key: "proy:" + idx, idx, kind: "proy" };
             }
         }
         const idx = indexFor(window.scrollY);
-        return { key: "wave:" + idx, idx, rail: false };
+        return { key: "wave:" + idx, idx, kind: "wave" };
     };
 
     companionRail.reset = () => {
@@ -1265,15 +1303,21 @@ function initScrollCompanion() {
         let lastClip = "";
         let lastBlockAlpha = -1;
 
+        // The lupa sits to the RIGHT of each card's title as it scans.
         const cardPerch = (card: HTMLElement) => () => {
-            const rect = card.getBoundingClientRect();
+            const title = card.querySelector<HTMLElement>(".pc-title") ?? card;
+            const rect = title.getBoundingClientRect();
             return {
                 x: gsap.utils.clamp(
                     24,
                     window.innerWidth - 24,
-                    rect.left + rect.width / 2,
+                    rect.right + 30,
                 ),
-                y: Math.max(NAV_OFFSET + 22, rect.top - 24),
+                y: gsap.utils.clamp(
+                    NAV_OFFSET + 22,
+                    window.innerHeight - 70,
+                    rect.top + rect.height / 2,
+                ),
             };
         };
 

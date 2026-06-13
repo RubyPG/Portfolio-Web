@@ -49,11 +49,11 @@ const cardIcons = [
                 >
                     {t.title}
                 </h2>
-                <p class="mt-5 max-w-xl text-base leading-relaxed text-text-secondary sm:text-lg" data-reveal data-buddy-stop="right">
+                <p class="mt-5 max-w-xl text-base leading-relaxed text-text-secondary sm:text-lg" data-reveal>
                     {t.subtitle}
                 </p>
 
-                <div class="mt-9 grid gap-4 sm:grid-cols-2" data-reveal-group data-buddy-stop="left">
+                <div class="mt-9 grid gap-4 sm:grid-cols-2" data-reveal-group>
                     {
                         t.cards.map((card, index) => (
                             <div
@@ -76,7 +76,7 @@ const cardIcons = [
                     }
                 </div>
 
-                <p class="mt-8 border-l-2 border-[#D97757]/60 pl-4 text-sm font-medium italic text-text-secondary" data-reveal data-buddy-stop="left">
+                <p class="mt-8 border-l-2 border-[#D97757]/60 pl-4 text-sm font-medium italic text-text-secondary" data-reveal>
                     {t.footnote}
                 </p>
             </div>
