@@ -780,6 +780,72 @@ body::-webkit-scrollbar {
     }
 }
 
+/* ── Custom cursor (desktop, fine pointer) ── */
+.has-custom-cursor,
+.has-custom-cursor * {
+    cursor: none !important;
+}
+
+.cc-ring,
+.cc-dot {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+    pointer-events: none;
+    border-radius: 999px;
+    opacity: 0;
+    will-change: transform;
+}
+
+.custom-cursor.cc-visible .cc-ring,
+.custom-cursor.cc-visible .cc-dot {
+    opacity: 1;
+}
+
+.cc-ring {
+    width: 32px;
+    height: 32px;
+    margin: -16px 0 0 -16px;
+    border: 1.6px solid rgba(255, 255, 255, 0.6);
+    transition:
+        opacity 250ms ease,
+        width 240ms var(--motion-ease-premium, ease),
+        height 240ms var(--motion-ease-premium, ease),
+        margin 240ms var(--motion-ease-premium, ease),
+        background-color 240ms ease,
+        border-color 240ms ease;
+}
+
+.cc-dot {
+    width: 6px;
+    height: 6px;
+    margin: -3px 0 0 -3px;
+    background: var(--accent, #ffd23f);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--accent, #ffd23f) 60%, transparent);
+    transition: opacity 200ms ease;
+}
+
+/* over anything interactive: the ring swells and tints, the dot tucks away */
+.custom-cursor.cc-hover .cc-ring {
+    width: 40px;
+    height: 40px;
+    margin: -20px 0 0 -20px;
+    border-color: var(--accent, #ffd23f);
+    background: color-mix(in srgb, var(--accent, #ffd23f) 12%, transparent);
+}
+
+.custom-cursor.cc-hover .cc-dot {
+    opacity: 0;
+}
+
+/* click press */
+.custom-cursor.cc-down .cc-ring {
+    width: 22px;
+    height: 22px;
+    margin: -11px 0 0 -11px;
+}
+
 @media (max-width: 640px) {
     .scroll-buddy {
         width: 26px;

@@ -4,6 +4,7 @@ import TechBadge from "../ui/TechBadge.astro";
 import ProjectTechLogoLoop from "../home/ProjectTechLogoLoop";
 import { skillCategories } from "../../data/skills";
 import { getProjectTechLogos } from "../../data/project-tech-logos";
+import { getTechIcon } from "../../data/tech-icons";
 import { onePageCopy, type Lang } from "../../data/onepage";
 
 interface Props {
@@ -16,7 +17,11 @@ const techCount = skillCategories.reduce(
     (total, category) => total + category.skills.length,
     0,
 );
-const projectTechLogos = getProjectTechLogos();
+const gsapIcon = getTechIcon("GSAP");
+const projectTechLogos = [
+    ...(gsapIcon ? [{ title: "GSAP", icon: gsapIcon }] : []),
+    ...getProjectTechLogos(),
+];
 ---
 
 <section

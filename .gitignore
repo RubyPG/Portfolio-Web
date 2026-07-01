@@ -28,3 +28,7 @@ build.log
 
 # local scratch files
 PG
+
+# generated artifacts (knowledge graph, playwright captures)
+graphify-out/
+output/

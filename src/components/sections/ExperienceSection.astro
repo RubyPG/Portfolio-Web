@@ -1,5 +1,5 @@
 ---
-/* ── One-page: Experiencia (timeline) ── */
+/* ── One-page: Experiencia (timeline, redesigned) ── */
 import TechBadge from "../ui/TechBadge.astro";
 import { onePageCopy, type Lang } from "../../data/onepage";
 
@@ -10,6 +10,10 @@ interface Props {
 const { lang } = Astro.props;
 const t = onePageCopy[lang].experience;
 const nowLabel = lang === "en" ? "NOW" : "AHORA";
+
+// The vertical rail and every node share ONE centre line (px). The dots are
+// centred on it with -translate-x-1/2 so they sit DEAD ON the line at any
+// size — the buddy hops node-to-node (year-to-year) straight down it.
 ---
 
 <section
@@ -17,77 +21,97 @@ const nowLabel = lang === "en" ? "NOW" : "AHORA";
     data-spy-section
     class="relative border-t border-ui-border/40 bg-bg-primary py-20 sm:py-28 lg:flex lg:min-h-svh lg:items-center lg:py-24"
 >
-    <div class="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:self-center lg:px-8">
-        <div class="mb-14 max-w-2xl">
-            <p class="mb-3 text-[0.68rem] font-semibold uppercase tracking-[0.32em] text-accent">
+    <div class="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:self-center lg:px-8">
+        <div class="mb-12 max-w-2xl sm:mb-16">
+            <p class="mb-3 text-[0.68rem] font-semibold uppercase tracking-[0.32em] text-secondary">
                 {t.eyebrow}
             </p>
             <h2
                 class="text-3xl font-black tracking-tight text-text-primary sm:text-4xl lg:text-5xl"
                 data-st-title
-                data-buddy-stop="right"
             >
                 {t.title}
             </h2>
-            <p class="mt-4 text-base leading-relaxed text-text-muted sm:text-lg" data-reveal data-buddy-stop="right">
+            <p class="mt-4 text-base leading-relaxed text-text-muted sm:text-lg" data-reveal>
                 {t.subtitle}
             </p>
         </div>
 
         <div class="relative" data-timeline>
-            <!-- Line -->
+            <!-- Rail: track + animated fill. Centring lives on the wrappers
+                 (pure CSS -translate-x-1/2, which GSAP never touches); GSAP
+                 only scales the inner fill on Y, so the coloured line stays
+                 pixel-aligned with the dots (GSAP's own x-matrix was landing
+                 1px off the CSS one). -->
             <span
-                class="absolute bottom-2 left-[7px] top-2 w-px bg-white/10 sm:left-[9px]"
+                class="absolute top-[21px] bottom-3 left-4 w-0.5 -translate-x-1/2 sm:top-[22px] rounded-full bg-white/8 sm:left-5"
                 aria-hidden="true"
             ></span>
             <span
-                data-timeline-line
-                class="absolute bottom-2 left-[7px] top-2 w-px bg-linear-to-b from-accent via-secondary to-secondary/30 sm:left-[9px]"
+                class="absolute top-[21px] bottom-3 left-4 w-0.5 -translate-x-1/2 sm:top-[22px] sm:left-5"
                 aria-hidden="true"
-                style="transform: scaleY(0); transform-origin: top center;"
-            ></span>
+            >
+                <span
+                    data-timeline-line
+                    class="block h-full w-full origin-top rounded-full bg-linear-to-b from-secondary via-secondary to-secondary/20"
+                ></span>
+            </span>
 
-            <ol class="space-y-10">
+            <ol class="space-y-5 sm:space-y-6">
                 {
                     t.items.map((item) => (
-                        <li class="relative pl-10 sm:pl-14" data-timeline-item data-buddy-stop="left">
+                        <li class="group relative pl-12 sm:pl-16">
+                            {/* Node — dead-centre on the rail (left = rail x),
+                                the buddy's year-to-year perch. It is OUTSIDE
+                                the revealed card so it never slides off the
+                                line during the entrance animation. */}
                             <span
+                                data-buddy-stop="center"
                                 class:list={[
-                                    "absolute left-0 top-1.5 flex h-[15px] w-[15px] items-center justify-center rounded-full border-2 sm:h-[19px] sm:w-[19px]",
+                                    "absolute left-4 top-3 z-10 flex h-[18px] w-[18px] -translate-x-1/2 items-center justify-center rounded-full border-2 transition-colors duration-300 sm:left-5 sm:h-5 sm:w-5",
                                     item.current
-                                        ? "border-accent bg-accent/20"
-                                        : "border-secondary/60 bg-bg-primary",
+                                        ? "border-secondary bg-bg-primary shadow-[0_0_16px_rgba(96,165,250,0.5)]"
+                                        : "border-secondary/50 bg-bg-primary group-hover:border-secondary",
                                 ]}
                                 aria-hidden="true"
                             >
-                                {item.current && (
-                                    <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+                                {item.current ? (
+                                    <span class="h-2 w-2 animate-pulse rounded-full bg-secondary" />
+                                ) : (
+                                    <span class="h-1.5 w-1.5 rounded-full bg-secondary/40 transition-colors duration-300 group-hover:bg-secondary" />
                                 )}
                             </span>
 
-                            <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-                                <span class="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-text-dim">
-                                    {item.period}
-                                </span>
-                                <span class="rounded-full border border-secondary/25 bg-secondary/10 px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.16em] text-secondary">
-                                    {item.context}
-                                </span>
-                                {item.current && (
-                                    <span class="rounded-full border border-accent/30 bg-accent/10 px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.16em] text-accent">
-                                        {nowLabel}
+                            {/* Card (this is what reveals — the node stays put) */}
+                            <div
+                                data-timeline-item
+                                class="rounded-2xl border border-white/8 bg-white/[0.02] p-5 transition-colors duration-300 hover:border-secondary/30 hover:bg-white/[0.035] sm:p-6"
+                            >
+                                <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+                                    <span class="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
+                                        {item.period}
                                     </span>
-                                )}
-                            </div>
-                            <h3 class="mt-2.5 text-xl font-black tracking-tight text-text-primary sm:text-2xl">
-                                {item.title}
-                            </h3>
-                            <p class="mt-2 max-w-2xl text-sm leading-relaxed text-text-muted sm:text-base">
-                                {item.body}
-                            </p>
-                            <div class="mt-3.5 flex flex-wrap gap-1.5">
-                                {item.tags.map((tag) => (
-                                    <TechBadge label={tag} variant="neutral" size="sm" />
-                                ))}
+                                    <span class="h-1 w-1 rounded-full bg-text-dim/50" aria-hidden="true" />
+                                    <span class="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-text-dim">
+                                        {item.context}
+                                    </span>
+                                    {item.current && (
+                                        <span class="rounded-full border border-secondary/35 bg-secondary/10 px-2.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.16em] text-secondary">
+                                            {nowLabel}
+                                        </span>
+                                    )}
+                                </div>
+                                <h3 class="mt-2.5 text-xl font-black tracking-tight text-text-primary sm:text-2xl">
+                                    {item.title}
+                                </h3>
+                                <p class="mt-2 max-w-2xl text-sm leading-relaxed text-text-muted sm:text-base">
+                                    {item.body}
+                                </p>
+                                <div class="mt-4 flex flex-wrap gap-1.5">
+                                    {item.tags.map((tag) => (
+                                        <TechBadge label={tag} variant="neutral" size="sm" />
+                                    ))}
+                                </div>
                             </div>
                         </li>
                     ))

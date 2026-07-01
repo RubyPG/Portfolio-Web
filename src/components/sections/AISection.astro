@@ -24,7 +24,11 @@ const cardIcons = [
 <section
     id="ia"
     data-spy-section
-    class="relative overflow-hidden border-t border-ui-border/40 bg-bg-deep py-20 sm:py-28 lg:flex lg:min-h-svh lg:items-center lg:py-24"
+    class="relative border-t border-ui-border/40 bg-bg-deep"
+>
+<div
+    data-ia-pin
+    class="relative overflow-hidden bg-bg-deep py-20 sm:py-28 lg:flex lg:min-h-svh lg:items-center lg:py-24"
 >
     <!-- Grid lines + orange glow background -->
     <div class="pointer-events-none absolute inset-0" aria-hidden="true">
@@ -45,15 +49,14 @@ const cardIcons = [
                 <h2
                     class="text-3xl font-black tracking-tight text-text-primary sm:text-4xl lg:text-5xl"
                     data-st-title
-                    data-buddy-stop="right"
                 >
                     {t.title}
                 </h2>
-                <p class="mt-5 max-w-xl text-base leading-relaxed text-text-secondary sm:text-lg" data-reveal data-buddy-stop="right">
+                <p class="mt-5 max-w-xl text-base leading-relaxed text-text-secondary sm:text-lg" data-reveal>
                     {t.subtitle}
                 </p>
 
-                <div class="mt-9 grid gap-4 sm:grid-cols-2" data-reveal-group data-buddy-stop="left">
+                <div class="mt-9 grid gap-x-14 gap-y-10 sm:grid-cols-2" data-reveal-group data-buddy-stop="center" data-buddy-advance="480">
                     {
                         t.cards.map((card, index) => (
                             <div
@@ -76,7 +79,7 @@ const cardIcons = [
                     }
                 </div>
 
-                <p class="mt-8 border-l-2 border-[#D97757]/60 pl-4 text-sm font-medium italic text-text-secondary" data-reveal data-buddy-stop="left">
+                <p class="mt-8 border-l-2 border-[#D97757]/60 pl-4 text-sm font-medium italic text-text-secondary" data-reveal>
                     {t.footnote}
                 </p>
             </div>
@@ -84,7 +87,6 @@ const cardIcons = [
             <!-- Terminal -->
             <div data-reveal>
                 <div
-                    data-buddy-stop="top"
                     data-terminal
                     class="overflow-hidden rounded-2xl border border-white/12 bg-[#0b0d10] shadow-[0_32px_90px_rgba(0,0,0,0.5),0_0_60px_rgba(217,119,87,0.07)]"
                 >
@@ -126,4 +128,5 @@ const cardIcons = [
             </div>
         </div>
     </div>
+</div>
 </section>

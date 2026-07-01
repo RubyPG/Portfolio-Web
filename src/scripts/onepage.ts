@@ -21,6 +21,13 @@ const NAV_OFFSET = 64;
 const prefersReduced = () =>
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+/* True while a chapter-nav / anchor jump owns the scroll. The smooth-scroll
+   yields entirely (so wheel can't fight the jump) and the companion holds
+   hidden, then re-appears with its section's entrance the moment the jump
+   lands — instead of the two scroll drivers fighting ("se rompe todo"). */
+let navScrolling = false;
+const companionNav: { hide?: () => void } = {};
+
 /* Make everything visible immediately (no-JS fallback is handled by the
    inline script only adding the hiding class when JS runs). */
 function revealAll() {
@@ -67,8 +74,14 @@ function ensureOverlay(className: string, html = ""): HTMLElement {
    transition at full speed. */
 function initAnchorNav() {
     const warpTo = (targetY: number, hash: string) => {
+        navScrolling = true;
+        companionNav.hide?.();
         const veil = ensureOverlay("warp-veil");
-        gsap.timeline()
+        gsap.timeline({
+            onComplete: () => {
+                navScrolling = false;
+            },
+        })
             .to(veil, { autoAlpha: 1, duration: 0.22, ease: "power1.in" })
             .add(() => {
                 window.scrollTo(0, targetY);
@@ -108,11 +121,24 @@ function initAnchorNav() {
                     node = node.offsetParent as HTMLElement | null;
                 }
                 // Scenes land exactly at their cover-zone end (snap-stable);
-                // other anchors keep the navbar offset.
+                // other anchors keep the navbar offset. The offsetTop chain
+                // LIES for a scene that is pinned RIGHT NOW (position:fixed →
+                // offsetParent null → layoutTop ≈ 0; clicking "#proyectos"
+                // from contacto warped to the page top and killed the lupa).
+                // The previous scene's cover-trigger end IS the rest scroll
+                // of the clicked scene, pin-state-independent — prefer it.
                 const isScene = target.hasAttribute("data-spy-section");
+                const prevScene =
+                    SCENE_ORDER[SCENE_ORDER.indexOf(target.id) - 1];
+                const cover =
+                    prevScene && window.matchMedia("(min-width: 1024px)").matches
+                        ? sceneCovers[prevScene]
+                        : undefined;
                 const targetY = Math.max(
                     0,
-                    isScene ? layoutTop : layoutTop - NAV_OFFSET,
+                    isScene
+                        ? (cover?.end ?? layoutTop)
+                        : layoutTop - NAV_OFFSET,
                 );
                 const distance = Math.abs(targetY - window.scrollY);
 
@@ -128,10 +154,15 @@ function initAnchorNav() {
                 }
 
                 history.pushState(null, "", url.hash);
+                navScrolling = true;
+                companionNav.hide?.();
                 gsap.to(window, {
                     duration: 1.1,
                     ease: "power3.inOut",
                     scrollTo: { y: targetY, autoKill: false },
+                    onComplete: () => {
+                        navScrolling = false;
+                    },
                 });
             });
         });
@@ -144,7 +175,21 @@ function initScrollSpy() {
     );
     if (links.length === 0) return;
 
+    const sections = Array.from(
+        document.querySelectorAll<HTMLElement>("[data-spy-section]"),
+    );
+    if (sections.length === 0) return;
+
+    // Idempotent like the rest of the file: a future astro:page-load re-run
+    // must not stack a second permanent ticker pick-loop (the rewrite traded
+    // GSAP-managed triggers for a bare ticker that nothing would tear down).
+    if (document.documentElement.dataset.spyBound === "true") return;
+    document.documentElement.dataset.spyBound = "true";
+
+    let activeId: string | null = null;
     const setActive = (id: string | null) => {
+        if (id === activeId) return;
+        activeId = id;
         links.forEach((link) => {
             const match = link.dataset.spyLink === id;
             link.classList.toggle("nav-link-active", match);
@@ -152,18 +197,51 @@ function initScrollSpy() {
         });
     };
 
-    document
-        .querySelectorAll<HTMLElement>("[data-spy-section]")
-        .forEach((section) => {
-            ScrollTrigger.create({
-                trigger: section,
-                start: "top 45%",
-                end: "bottom 45%",
-                onToggle: (self) => {
-                    if (self.isActive) setActive(section.id);
-                },
-            });
-        });
+    // ONE active chapter, identical up or down. The active scene is the one
+    // whose visual box has MOST RECENTLY crossed the viewport midline (the
+    // largest top <= mid; on a tie the later scene — the one revealing on
+    // top — wins, because we scan in document order with >=). gBCR is read
+    // live so pinned / clip-wiped cinematic scenes report their true on-
+    // screen box, which the old per-section "top 45% / bottom 45%" triggers
+    // could not — they double-activated across the pinned overlaps (05 + 06
+    // lit together) and stranded the wrong dot at the page foot.
+    const pick = () => {
+        const mid = window.innerHeight / 2;
+        let best = sections[0];
+        let bestTop = -Infinity;
+        for (const section of sections) {
+            const rect = section.getBoundingClientRect();
+            if (rect.height === 0) continue;
+            if (rect.top <= mid && rect.top >= bestTop) {
+                bestTop = rect.top;
+                best = section;
+            }
+        }
+        setActive(best.id);
+    };
+
+    let lastY = -1;
+    let lastH = -1;
+    // After an instant jump (chapter-nav warp) the landing frame can still
+    // see a stale pinned scene (position:fixed, top 0) that wins the midline
+    // tie; the pin releases a frame later but the scroll no longer changes,
+    // so the dot stayed stuck (contacto → ia left "proyectos" lit). Re-pick
+    // for a couple of frames after the scroll settles.
+    let settleFrames = 0;
+    gsap.ticker.add(() => {
+        const y = window.scrollY;
+        const h = window.innerHeight;
+        if (y === lastY && h === lastH) {
+            if (settleFrames === 0) return;
+            settleFrames -= 1;
+        } else {
+            lastY = y;
+            lastH = h;
+            settleFrames = 2;
+        }
+        pick();
+    });
+    pick();
 }
 
 /* ── Cinematic scene system ──
@@ -189,6 +267,12 @@ const SCENE_ORDER = [
     "contacto",
 ];
 
+// The companion reads these to leave a scene THE MOMENT the next one starts
+// to peek over it (keyed by the OUTGOING scene id), instead of waiting for a
+// perch threshold deep into the cover — so it never gets caught half-on-screen
+// by the incoming section sliding up underneath it.
+const sceneCovers: Record<string, ScrollTrigger> = {};
+
 const SCENE_WIPES: Record<string, SceneWipe> = {
     // Card rising over the frozen hero, corners rounding away.
     stack: {
@@ -205,10 +289,13 @@ const SCENE_WIPES: Record<string, SceneWipe> = {
         from: "polygon(0% 0%, 16% 0%, 1% 100%, 0% 100%)",
         to: "polygon(0% 0%, 116% 0%, 101% 100%, 0% 100%)",
     },
-    // Diagonal light-beam widening until it fills the frame.
+    // Diagonal light-beam widening until it fills the frame. Held back to
+    // "top 60%" so experiencia keeps scrolling — letting the companion reach
+    // its LAST dot — before proyectos is allowed to rise and cover.
     proyectos: {
         from: "polygon(82% 0%, 100% 0%, 18% 100%, 0% 100%)",
         to: "polygon(-100% 0%, 200% 0%, 100% 100%, -200% 100%)",
+        coverStart: "top 60%",
     },
     // contacto has no clip wipe: the finale is driven by the companion
     // spark swallowing the screen (see initScrollCompanion).
@@ -227,10 +314,13 @@ function initCinematicTransitions() {
                 const next = scenes[index + 1];
                 if (!next) return;
 
-                // Freeze the outgoing scene while the next covers it.
-                ScrollTrigger.create({
+                // Freeze the outgoing scene while the next covers it. The pin
+                // honours the next scene's coverStart so a delayed wipe (e.g.
+                // proyectos, held to "top 60%") also delays the freeze and the
+                // companion's exit — the spark finishes its perches first.
+                sceneCovers[scene.id] = ScrollTrigger.create({
                     trigger: next,
-                    start: "top bottom",
+                    start: SCENE_WIPES[next.id]?.coverStart ?? "top bottom",
                     end: "top top",
                     pin: scene,
                     pinSpacing: false,
@@ -238,15 +328,19 @@ function initCinematicTransitions() {
                     // Resting mid-cut finishes the edit, like a video — but
                     // NOT on the finale: the lens scan + zoom is meant to be
                     // savoured at the reader's own scroll pace.
+                    // directional:true — only ever completes the cut in the
+                    // way you're already scrolling, never yanks you BACKWARD
+                    // to the nearer edge (that back-pull, fighting the smooth
+                    // scroll, was the up-down "ta-ta-ta" judder).
                     snap:
                         next.id === "contacto"
                             ? undefined
                             : {
                                   snapTo: [0, 1],
-                                  duration: { min: 0.5, max: 1 },
-                                  ease: "power3.inOut",
-                                  delay: 0.06,
-                                  directional: false,
+                                  duration: { min: 0.3, max: 0.7 },
+                                  ease: "power2.inOut",
+                                  delay: 0.08,
+                                  directional: true,
                               },
                 });
 
@@ -385,6 +479,15 @@ function initCinematicTransitions() {
             },
         });
     }
+
+    // debug: live cover-trigger progress per outgoing scene
+    (window as unknown as { __covers?: () => object }).__covers = () =>
+        Object.fromEntries(
+            Object.entries(sceneCovers).map(([k, v]) => [
+                k,
+                +v.progress.toFixed(3),
+            ]),
+        );
 }
 
 /* ── Hero: split-text intro and counters ── */
@@ -491,6 +594,7 @@ function initReveals() {
    card-hopping while it is pinned; handlers attach in initScrollCompanion. */
 const companionRail: {
     trigger?: ScrollTrigger; // the rail's pin ScrollTrigger (desktop only)
+    slide?: () => number; // 0→1 fraction of the card-slide (excludes the hold)
     reset?: () => void;
 } = {};
 
@@ -506,14 +610,16 @@ function initStackRail() {
     mm.add("(min-width: 1024px)", () => {
         const distance = () => track.scrollWidth - pin.clientWidth;
         if (distance() <= 0) return;
+        // Extra scroll AFTER the cards finish sliding: the companion holds
+        // on card 05 here while nothing below moves (IA is pushed down by
+        // this spacer), then the next section is allowed to appear.
+        const hold = () => window.innerHeight * 0.3;
 
-        const tween = gsap.to(track, {
-            x: () => -distance(),
-            ease: "none",
+        const tl = gsap.timeline({
             scrollTrigger: {
                 trigger: section,
                 start: "top top",
-                end: () => `+=${distance()}`,
+                end: () => `+=${distance() + hold()}`,
                 pin,
                 // The section keeps a clip-path from its entrance wipe, which
                 // would hijack position:fixed — reparent the pin to <body>.
@@ -529,9 +635,18 @@ function initStackRail() {
                 },
             },
         });
-        // The companion reads this trigger's progress/isActive every frame
-        // to decide its rail perch — no imperative, order-dependent calls.
-        companionRail.trigger = tween.scrollTrigger;
+        // 1:1 slide over `distance` px, then a `hold` px pause on card 05.
+        tl.to(track, { x: () => -distance(), ease: "none", duration: 1 }, 0);
+        tl.to({}, { duration: () => hold() / Math.max(distance(), 1) });
+
+        // The companion reads this trigger + the slide fraction every frame.
+        companionRail.trigger = tl.scrollTrigger;
+        companionRail.slide = () => {
+            const d = distance();
+            return d > 0
+                ? gsap.utils.clamp(0, 1, -Number(gsap.getProperty(track, "x")) / d)
+                : 0;
+        };
 
         // Slight per-panel parallax for depth
         track
@@ -544,7 +659,7 @@ function initStackRail() {
                         x: 0,
                         ease: "none",
                         scrollTrigger: {
-                            containerAnimation: tween,
+                            containerAnimation: tl,
                             trigger: inner,
                             start: "left right",
                             end: "left center",
@@ -571,6 +686,31 @@ function initStackRail() {
             duration: 0.9,
             ease: "power3.out",
             scrollTrigger: { trigger: track, start: "top 85%" },
+        });
+    });
+}
+
+/* ── IA: hold the scene on screen for extra scroll ──
+   Without this the scene got exactly its own height of scroll before
+   experiencia started covering it ("dura muy poco"). Pinning the inner
+   frame adds a spacer that pushes everything below down, so the terminal
+   room stays on screen almost a full extra viewport. */
+function initIAHold() {
+    const section = document.querySelector<HTMLElement>("#ia");
+    const pin = section?.querySelector<HTMLElement>("[data-ia-pin]");
+    if (!section || !pin) return;
+
+    gsap.matchMedia().add("(min-width: 1024px)", () => {
+        ScrollTrigger.create({
+            trigger: section,
+            start: "top top",
+            end: () => `+=${window.innerHeight * 0.9}`,
+            pin,
+            // The section keeps a clip-path from its entrance wipe, which
+            // would hijack position:fixed — reparent the pin to <body>.
+            pinReparent: true,
+            anticipatePin: 1,
+            invalidateOnRefresh: true,
         });
     });
 }
@@ -608,24 +748,8 @@ function initTimeline() {
     const wrap = document.querySelector<HTMLElement>("[data-timeline]");
     if (!wrap) return;
 
-    const line = wrap.querySelector<HTMLElement>("[data-timeline-line]");
-    if (line) {
-        gsap.fromTo(
-            line,
-            { scaleY: 0 },
-            {
-                scaleY: 1,
-                transformOrigin: "top center",
-                ease: "none",
-                scrollTrigger: {
-                    trigger: wrap,
-                    start: "top 75%",
-                    end: "bottom 55%",
-                    scrub: 0.8,
-                },
-            },
-        );
-    }
+    // The temporal rail is drawn in FULL by default — it does NOT draw itself
+    // down on scroll (that read as the line "growing" as you went).
 
     wrap.querySelectorAll<HTMLElement>("[data-timeline-item]").forEach(
         (item) => {
@@ -638,6 +762,58 @@ function initTimeline() {
             });
         },
     );
+
+    // Make the rail span EXACTLY from the first node's centre to the last
+    // node's centre (no tail poking past the top or bottom circle). The
+    // opaque nodes then hide it wherever it would cross one, so it never
+    // shows inside a circle. Recomputed on refresh (natural layout only).
+    const railSpans = Array.from(
+        wrap.querySelectorAll<HTMLElement>(":scope > span"),
+    );
+    const fitRail = () => {
+        const dots = wrap.querySelectorAll<HTMLElement>(
+            '[data-buddy-stop="center"]',
+        );
+        if (dots.length < 2 || railSpans.length === 0) return;
+        const wrapTop = wrap.getBoundingClientRect().top;
+        const r0 = dots[0].getBoundingClientRect();
+        const rN = dots[dots.length - 1].getBoundingClientRect();
+        const top = r0.top + r0.height / 2 - wrapTop;
+        // +150 tail past the LAST node: the gradient's faded foot trails on
+        // below Loops n' Grooves, reading as "there's more to come".
+        const height =
+            rN.top + rN.height / 2 - (r0.top + r0.height / 2) + 150;
+        railSpans.forEach((s) => {
+            s.style.top = `${top}px`;
+            s.style.bottom = "auto";
+            s.style.height = `${height}px`;
+        });
+    };
+    fitRail();
+    ScrollTrigger.addEventListener("refresh", () => {
+        if (!ScrollTrigger.getAll().some((t) => t.pin && t.isActive)) fitRail();
+    });
+
+    // Desktop: the rail just FADES OUT (in place) as proyectos rises to cover
+    // experiencia. It must NOT translate — the rail is taller than the
+    // viewport, so sliding it would drag its hidden upper half into view and
+    // read as the line "lengthening" on the way out.
+    const proyectos = document.getElementById("proyectos");
+    if (proyectos && railSpans.length) {
+        gsap.matchMedia().add("(min-width: 1024px)", () => {
+            gsap.to(railSpans, {
+                autoAlpha: 0,
+                ease: "power2.in",
+                scrollTrigger: {
+                    trigger: proyectos,
+                    start: "top 70%",
+                    end: "top 40%",
+                    scrub: 0.5,
+                    invalidateOnRefresh: true,
+                },
+            });
+        });
+    }
 }
 
 /* ── Giant scrub marquees (outline display text) ── */
@@ -674,8 +850,8 @@ function initMarquees() {
 const BUDDY_SECTION_COLORS: Record<string, string> = {
     stack: "#D97757", // Claude orange — matches the AI icon it is born from
     ia: "#ff7043", // Claude orange (matches the burst SVG)
-    experiencia: "#60A5FA", // secondary-hover blue
-    proyectos: "#4DFF88", // state-success green
+    experiencia: "#FACC15", // yellow — the spark stands out on the blue rail
+    proyectos: "#4DFF88", // green — the magnifying glass
     contacto: "#FFFF00", // back to accent for the landing
 };
 
@@ -777,6 +953,7 @@ function initScrollCompanion() {
         el: HTMLElement;
         at: string;
         lift: number;
+        advance: number;
         scrollAt: number;
     }
     let stops: Stop[] = [];
@@ -790,14 +967,45 @@ function initScrollCompanion() {
             .map((el) => {
                 const at = el.dataset.buddyStop || "right";
                 const lift = parseFloat(el.dataset.buddyOffset ?? "30");
+                // Pull a perch's activation EARLIER (px of scroll) — used for
+                // tall perches (the IA card grid) so the buddy is already
+                // resting at its centre while the whole section is on screen,
+                // not only once the next section starts covering it.
+                const advance = parseFloat(el.dataset.buddyAdvance ?? "0");
                 const rect = el.getBoundingClientRect();
                 const anchorDocY =
                     at === "top"
                         ? rect.top + window.scrollY - lift
                         : rect.top + window.scrollY + rect.height / 2;
-                return { el, at, lift, scrollAt: anchorDocY - vh * 0.48 };
+                return {
+                    el,
+                    at,
+                    lift,
+                    advance,
+                    scrollAt: anchorDocY - vh * 0.48 - advance,
+                };
             })
             .sort((a, b) => a.scrollAt - b.scrollAt);
+    };
+
+    /* The active wave perch, decided from LIVE positions (gBCR) instead of
+       cached scroll thresholds: the index is the last stop whose live anchor
+       has crossed the 0.48-viewport line (+ its advance). This is the exact
+       same rule as the cached scrollAt, but immune to the pinSpacing:false
+       flow-shifts that desynced the cache and made the buddy overshoot a
+       perch then teleport back to correct itself. */
+    const PERCH_LINE = 0.48;
+    const liveAnchorY = (s: Stop) => {
+        const r = s.el.getBoundingClientRect();
+        return s.at === "top" ? r.top - s.lift : r.top + r.height / 2;
+    };
+    const waveIndexLive = () => {
+        const line = window.innerHeight * PERCH_LINE;
+        let idx = 0;
+        for (let i = 0; i < stops.length; i++) {
+            if (liveAnchorY(stops[i]) <= line + stops[i].advance) idx = i;
+        }
+        return idx;
     };
     const noPinActive = () =>
         !ScrollTrigger.getAll().some((t) => t.pin && t.isActive);
@@ -847,6 +1055,12 @@ function initScrollCompanion() {
     const pos = { x: window.innerWidth / 2, y: window.innerHeight * 0.3 };
     let target: (() => { x: number; y: number }) | null = null;
     let manualXY = false; // the finale fly/zoom writes x/y itself
+
+    // Scroll velocity (px/s), sampled every tick. Fast scrolling compresses
+    // the hop so the companion keeps pace with its perch instead of trailing
+    // behind and snapping into place when the fling stops.
+    let lastScrollY = window.scrollY;
+    let scrollVel = 0;
 
     let hopping = false;
     let hopT = 0;
@@ -911,6 +1125,13 @@ function initScrollCompanion() {
         hopArc = gsap.utils.clamp(34, 150, dist * 0.32);
         hopDir = probe.x >= pos.x ? 1 : -1;
         hopDur = gsap.utils.clamp(0.34, 0.78, 0.26 + dist / 1300);
+        // Velocity-adaptive: the faster the scroll, the shorter and flatter
+        // the hop, so chained perch changes read as one fluid track instead
+        // of a stuttering "ta-ta-ta" of half-finished arcs. At rest (vf≈1) it
+        // keeps the full playful jump.
+        const vf = gsap.utils.clamp(0.28, 1, 1 - scrollVel / 5000);
+        hopDur *= vf;
+        hopArc *= gsap.utils.clamp(0.45, 1, vf + 0.12);
         hopT = 0;
         hopping = true;
     };
@@ -922,33 +1143,77 @@ function initScrollCompanion() {
     // GSAP ticker passes (time[s], deltaTime[ms]) — use deltaTime directly.
     const tick = (_time: number, deltaTime: number) => {
         const dt = Math.min(0.05, (deltaTime || 16.7) / 1000); // clamp tab gaps
+        const sy = window.scrollY;
+        const scrollDelta = sy - lastScrollY; // <0 = ascending
+        scrollVel = Math.abs(scrollDelta) / dt;
+        lastScrollY = sy;
         if (!alive || manualXY) return;
+        // Hold still (hidden) while a chapter-nav jump flies the scroll past
+        // many sections — then re-appear with the landing section's entrance.
+        if (navScrolling) return;
 
         // Perch selection is a PURE FUNCTION of scroll, evaluated every
         // frame — never set imperatively from a callback. However you reach
         // a scroll position (slow, fling, anchor warp, reverse), the buddy
         // self-corrects to the exact right perch. The finale (busy) owns
         // selection itself via scanTick.
-        if (!busy) {
+        if (!busy && !transitioning) {
             const d = desiredPerch();
             if (d.key !== currentKey) {
                 currentKey = d.key;
-                if (d.rail) {
-                    const panel = panels[d.idx];
-                    panels.forEach((pnl, i) =>
-                        pnl.classList.toggle("stack-panel-active", i === d.idx),
-                    );
-                    // a real jump onto the newly-centred card's number
-                    startHop(railPerch(panel), panel.dataset.accent);
-                } else {
+                if (d.kind === "none") {
+                    // leaving a section into a perch-less gap: spin away and
+                    // wait, hidden, until the next real perch arrives
                     panels.forEach((pnl) =>
                         pnl.classList.remove("stack-panel-active"),
                     );
-                    const st = stops[d.idx];
-                    if (st) startHop(() => livePoint(st));
+                    if (visible) exitHide(curSection, d.toIcon);
+                } else {
+                    const sec = sectionOf(d);
+                    const getter = perchGetter(d);
+                    const tint = tintOf(d, sec);
+                    panels.forEach((pnl, i) =>
+                        pnl.classList.toggle(
+                            "stack-panel-active",
+                            d.rail && i === d.idx,
+                        ),
+                    );
+                    if (!visible) {
+                        // re-entering from a hidden gap. IA gets the orbit
+                        // around the terminal; everywhere else, a clean drop.
+                        if (sec === "ia") orbitInTo(getter, tint);
+                        else enterAt(getter, tint);
+                    } else if (curSection && sec && sec !== curSection) {
+                        // contiguous section change → spin across
+                        playTransition(getter, tint, curSection);
+                    } else {
+                        startHop(getter, tint);
+                    }
+                    curSection = sec;
                 }
             }
         }
+
+        // Stack rail colour, ASCENDING ONLY: a pure function of the slide
+        // progress, written every frame so the way UP repaints the exact card
+        // accents and the buddy never strands on a stale orange (the IA
+        // residual). The descent is deliberately left to the discrete per-card
+        // startHop tint — its loved "rest on each accent" steps stay untouched.
+        if (
+            scrollDelta < 0 &&
+            !busy &&
+            !transitioning &&
+            railTint &&
+            companionRail.trigger?.isActive
+        ) {
+            gsap.set(buddy, {
+                color: railTint(
+                    companionRail.slide ? companionRail.slide() : 0,
+                ),
+            });
+        }
+
+        if (transitioning) return; // the transition timeline owns the buddy
 
         if (hopping) {
             hopT = Math.min(1, hopT + dt / hopDur);
@@ -971,12 +1236,20 @@ function initScrollCompanion() {
                 landPulse();
             }
         } else if (target) {
-            // INSTANT 1:1 glue to the perch — no smoothing, so it tracks
-            // the scroll exactly with zero phantom drift between hops.
+            // INSTANT 1:1 glue to the perch — no smoothing, so it tracks the
+            // scroll exactly with zero phantom drift. BUT if the perch's live
+            // point leaps in a single frame (a pin engaging/releasing shifts
+            // the whole layout — e.g. the IA pin releasing as experiencia
+            // settles), don't teleport with it: arc over with a quick hop so
+            // it reads as a deliberate move, never a snap-back.
             const tgt = target();
-            pos.x = tgt.x;
-            pos.y = tgt.y;
-            gsap.set(buddy, { x: pos.x, y: pos.y });
+            if (Math.hypot(tgt.x - pos.x, tgt.y - pos.y) > 80) {
+                startHop(target);
+            } else {
+                pos.x = tgt.x;
+                pos.y = tgt.y;
+                gsap.set(buddy, { x: pos.x, y: pos.y });
+            }
         }
     };
     gsap.ticker.add(tick);
@@ -984,6 +1257,15 @@ function initScrollCompanion() {
     let busy = false; // the finale owns the companion
     let alive = false; // born at scene 2, never in the hero banner
     let currentKey = ""; // which perch is currently selected
+    let transitioning = false; // playing a between-sections spin transition
+    let curSection = ""; // section of the current perch
+    let visible = false; // shown, vs hidden in a between-sections gap
+    let railEngaged = false; // the stack rail has owned the buddy at least once
+    let railCompleted = false; // the rail slide reached the last card (05)
+    // the in-flight between-sections animation (tween or timeline) — tracked
+    // so a sudden death (scroll back to the hero mid-transition) can kill it
+    // and never strand the `transitioning` flag.
+    let activeTransition: gsap.core.Animation | null = null;
 
     const indexFor = (scroll: number) => {
         let i = 0;
@@ -994,6 +1276,31 @@ function initScrollCompanion() {
     const panels = Array.from(
         document.querySelectorAll<HTMLElement>("[data-stack-panel]"),
     );
+
+    // The buddy's colour through the stack rail is interpolated across the
+    // per-card accents by the slide progress — a PURE FUNCTION of scroll,
+    // applied every frame (see tick). The old discrete per-card tint (a tween
+    // fired only on index change) left a stale orange on the way UP because
+    // the section-colour onToggle and the IA residual won the race. Driving
+    // it parametrically makes the ascent repaint the exact same colours as
+    // the descent, and slide 0 always resolves to card 01's clean accent.
+    const railAccents = panels.map((p) => p.dataset.accent || "#D97757");
+    const railTint: ((prog: number) => string) | null =
+        railAccents.length >= 2
+            ? (prog) => {
+                  const seg =
+                      gsap.utils.clamp(0, 1, prog) * (railAccents.length - 1);
+                  const i = Math.min(railAccents.length - 2, Math.floor(seg));
+                  return gsap.utils.interpolate(
+                      railAccents[i],
+                      railAccents[i + 1],
+                      seg - i,
+                  ) as string;
+              }
+            : railAccents.length === 1
+              ? () => railAccents[0]
+              : null;
+
     const railPerch = (panel: HTMLElement) => () => {
         const perch =
             panel.querySelector<HTMLElement>("[data-rail-perch]") ?? panel;
@@ -1009,37 +1316,411 @@ function initScrollCompanion() {
     };
 
     /* The single source of perch truth: derived purely from scroll. While
-       the stack rail is pinned, the active card index drives it; otherwise
-       the scroll-threshold wave index does. */
-    const stackEl = document.getElementById("stack");
-    const desiredPerch = (): { key: string; idx: number; rail: boolean } => {
-        const cy = window.innerHeight / 2;
-        // In the stack scene (section spans the vertical centre, true both
-        // pre-pin and while pinned) the companion lives on the cards: pick
-        // whichever card is nearest screen-centre and JUMP between them.
-        if (stackEl && panels.length > 0) {
-            const sr = stackEl.getBoundingClientRect();
-            if (sr.top < cy && sr.bottom > cy) {
-                const cx = window.innerWidth / 2;
-                let idx = 0;
-                let best = Infinity;
-                panels.forEach((pnl, i) => {
-                    const r = pnl.getBoundingClientRect();
-                    const d = Math.abs(r.left + r.width / 2 - cx);
-                    if (d < best) {
-                        best = d;
-                        idx = i;
-                    }
-                });
-                return { key: "rail:" + idx, idx, rail: true };
+       the stack rail's OWN pin is active the card index drives it; otherwise
+       the scroll-threshold wave index does. (Gating on the #stack rect was
+       wrong — the scene-cover system keeps #stack pinned under IA, so the
+       companion got stuck on a rail card all through the AI section.) */
+    const desiredPerch = (): Desired => {
+        const railST = companionRail.trigger;
+        if (railST && railST.isActive && panels.length > 0) {
+            railEngaged = true;
+            // Index from the card-SLIDE fraction (excludes the hold at the
+            // end): slide 0 → card 01 (orange, during the banner→stack
+            // transition), … slide 1 → card 05, then it stays on card 05
+            // through the hold (the IA section is gated behind that pause).
+            const prog = companionRail.slide ? companionRail.slide() : 0;
+            if (prog >= 0.92) railCompleted = true; // reached card 05
+            const idx = gsap.utils.clamp(
+                0,
+                panels.length - 1,
+                Math.round(prog * (panels.length - 1)),
+            );
+            return { key: "rail:" + idx, idx, rail: true, kind: "rail" };
+        }
+        const idx = waveIndexLive();
+        // stops[0] is the spark icon — a BIRTH perch only.
+        if (railEngaged && idx === 0) {
+            // The pin's anticipatePin briefly toggles the rail trigger OFF
+            // right after it engages (slide still ~0). If we treated THAT as
+            // "between sections" the buddy hid and re-appeared (the birth→01
+            // disappear-reappear). Only once the rail has actually COMPLETED
+            // (reached card 05) is idx 0 the real post-rail gap → hide. Before
+            // that, hold on card 01.
+            if (!railCompleted && panels.length > 0) {
+                return { key: "rail:0", idx: 0, rail: true, kind: "rail" };
+            }
+            // Reached card 01 and still scrolling UP → leave the rail by
+            // retracting INTO the spark icon (mirror of the birth), not the
+            // downward spin-away. Distinct key so the change is detected.
+            return {
+                key: "none:icon",
+                idx: -1,
+                rail: false,
+                kind: "none",
+                toIcon: true,
+            };
+        }
+        // The MOMENT the next scene starts to peek over the one this perch
+        // belongs to, leave — don't wait for a perch threshold deep in the
+        // cover (the buddy was getting caught half-on-screen by the section
+        // sliding up underneath it). EXIT_PEEK is early in the cover zone.
+        const sec =
+            stops[idx]?.el.closest<HTMLElement>("[data-spy-section]")?.id ?? "";
+        // Stay hidden until IA has all but finished covering the stack — the
+        // orbit around the terminal must play on a CLEAN IA, not over the
+        // half-wiped stack/IA overlap.
+        if (sec === "ia") {
+            const iaCov = sceneCovers["stack"];
+            if (iaCov && iaCov.progress < 0.85) {
+                return { key: "none", idx: -1, rail: false, kind: "none" };
             }
         }
-        const idx = indexFor(window.scrollY);
-        return { key: "wave:" + idx, idx, rail: false };
+        const coverT = sceneCovers[sec];
+        // 0.22 (not 0.18): a directional:false snap rebounding back toward 0
+        // can briefly overshoot ~0.19, which at 0.18 made the buddy hide then
+        // re-show (a flicker) as the cut settled. 0.22 clears that overshoot.
+        // Experiencia leaves EARLY (0.08) so it slips under the rising
+        // proyectos wipe instead of riding on top of it; and it stays hidden
+        // for the WHOLE proyectos cover (no upper bound) — proyectos has no
+        // wave perches (the finale lupa owns it), so re-showing at the last
+        // experiencia dot once cover hits 1 was the "yellow lupa over the
+        // proyectos title" bug.
+        const isExp = sec === "experiencia";
+        const exitT = isExp ? 0.08 : 0.22;
+        if (coverT && coverT.progress > exitT && (isExp || coverT.progress < 1)) {
+            return { key: "none", idx: -1, rail: false, kind: "none" };
+        }
+        return { key: "wave:" + idx, idx, rail: false, kind: "wave" };
+    };
+
+    interface Desired {
+        key: string;
+        idx: number;
+        rail: boolean;
+        kind: string; // "rail" | "wave" | "none"
+        toIcon?: boolean; // a "none" exit that retracts INTO the spark icon
+    }
+    const sectionOf = (d: Desired) =>
+        d.rail
+            ? "stack"
+            : (stops[d.idx]?.el.closest("[data-spy-section]")?.id ?? "");
+    const perchGetter = (d: Desired) =>
+        d.rail
+            ? railPerch(panels[d.idx])
+            : () => livePoint(stops[d.idx]);
+    const tintOf = (d: Desired, sec: string) =>
+        d.rail
+            ? panels[d.idx]?.dataset.accent ?? "#D97757"
+            : BUDDY_SECTION_COLORS[sec] ?? "#FFFF00";
+
+    /* The companion LEAVES a scene into a perch-less gap (then waits, hidden,
+       for the next one). Two flavours:
+       • from the stack → the spin-away the user liked.
+       • from any later scene → it streaks DOWN into the rising next section
+         (stretch + dive + fade, a ring left behind) — NOT a rotate-and-shrink,
+         which the user disliked. */
+    /* Every between-sections transition brackets itself with these so the
+       idle bob (an infinite yPercent tween) can't add vertical wobble on top
+       of the transition's own y motion, and so a fresh transition never
+       stacks on a half-finished one. */
+    const beginTransition = () => {
+        transitioning = true;
+        activeTransition?.kill();
+        bob.pause(0); // freeze the breathing AT yPercent 0
+        gsap.set(buddy, { yPercent: 0 });
+        gsap.killTweensOf(buddy, "rotation,scaleX,scaleY,autoAlpha,x,y");
+    };
+    const endTransition = () => {
+        transitioning = false;
+        activeTransition = null;
+        bob.play(); // resume the idle breathing
+    };
+
+    const exitHide = (fromSec: string, toIcon = false) => {
+        beginTransition();
+        const done = () => {
+            visible = false;
+            hopping = false;
+            target = null; // nothing to glue to while hidden
+            gsap.set(buddy, { scaleX: 1, scaleY: 1, rotation: 0 });
+            endTransition();
+        };
+        // Top of the rail, scrolling UP: the spark retracts INTO the very SVG
+        // icon it was born from — the exact mirror of the birth emerge ("se
+        // esconde dentro del SVG de donde sale") — instead of the downward
+        // spin-away kept for the stack→IA exit below.
+        if (toIcon && origin) {
+            // Track the LIVE icon every frame: the page keeps scrolling during
+            // the retract, so a one-shot snapshot landed the spark where the
+            // icon WAS — desyncing the fade from the SVG. Position, scale AND
+            // opacity all ride the SAME eased progress, so the spark reaches
+            // opacity 0 exactly as it arrives at the centre of the card-01 SVG
+            // — the precise inverse of the birth emerge.
+            const liveIcon = () => {
+                const r = origin.getBoundingClientRect();
+                return {
+                    x: gsap.utils.clamp(
+                        24,
+                        window.innerWidth - 24,
+                        r.left + r.width / 2,
+                    ),
+                    y: gsap.utils.clamp(
+                        NAV_OFFSET + 22,
+                        window.innerHeight - 24,
+                        r.top + r.height / 2,
+                    ),
+                };
+            };
+            const from = { x: pos.x, y: pos.y };
+            // the icon pulses as it reabsorbs the spark (mirror of release)
+            gsap.fromTo(
+                origin,
+                { scale: 1 },
+                {
+                    scale: 1.3,
+                    duration: 0.18,
+                    yoyo: true,
+                    repeat: 1,
+                    ease: "power2.out",
+                },
+            );
+            const prog = { t: 0 };
+            activeTransition = gsap.to(prog, {
+                t: 1,
+                duration: 0.46,
+                ease: "power2.in",
+                onUpdate: () => {
+                    const e = prog.t;
+                    const ic = liveIcon();
+                    pos.x = gsap.utils.interpolate(from.x, ic.x, e);
+                    pos.y = gsap.utils.interpolate(from.y, ic.y, e);
+                    const sc = gsap.utils.interpolate(1, 0.1, e);
+                    gsap.set(buddy, {
+                        x: pos.x,
+                        y: pos.y,
+                        scaleX: sc,
+                        scaleY: sc,
+                        rotation: -200 * e,
+                        autoAlpha: 1 - e,
+                    });
+                },
+                onComplete: done,
+            });
+            return;
+        }
+        if (fromSec === "stack") {
+            activeTransition = gsap.to(buddy, {
+                y: pos.y - 80,
+                rotation: "+=540",
+                scaleX: 0.1,
+                scaleY: 0.1,
+                autoAlpha: 0,
+                duration: 0.48,
+                ease: "power2.in",
+                onComplete: done,
+            });
+            return;
+        }
+        if (fromSec === "experiencia" || fromSec === "proyectos") {
+            // experiencia: fires EARLY (cover 0.08) and just shrinks away in
+            // place, so the rising proyectos wipe sweeps over where it was — it
+            // reads as covered, not as flying off; the lupa re-emerges behind
+            // 01. proyectos: the same neutral shrink-away when the finale hands
+            // back UP into experiencia (no downward dive, which would point the
+            // wrong way on the ascent).
+            activeTransition = gsap.to(buddy, {
+                scaleX: 0.5,
+                scaleY: 0.5,
+                autoAlpha: 0,
+                duration: 0.3,
+                ease: "power2.in",
+                onComplete: done,
+            });
+            return;
+        }
+        landPulse(); // a ring blooms where it dives off
+        activeTransition = gsap.to(buddy, {
+            y: pos.y + 130,
+            scaleY: 2,
+            scaleX: 0.5,
+            autoAlpha: 0,
+            duration: 0.4,
+            ease: "power2.in",
+            onComplete: done,
+        });
+    };
+
+    /* The companion DROPS IN at a perch — used when it (re)enters a section
+       from a hidden gap. It pops in scaled-up, tinted to the section. */
+    const enterAt = (
+        getter: () => { x: number; y: number },
+        tint: string,
+    ) => {
+        beginTransition();
+        const t = getter();
+        pos.x = t.x;
+        pos.y = t.y;
+        target = getter;
+        hopping = false;
+        visible = true;
+        gsap.set(buddy, { x: t.x, y: t.y, rotation: 0, color: tint });
+        activeTransition = gsap.fromTo(
+            buddy,
+            { scaleX: 0.1, scaleY: 0.1, autoAlpha: 0 },
+            {
+                scaleX: 1,
+                scaleY: 1,
+                autoAlpha: 1,
+                duration: 0.5,
+                ease: "back.out(1.7)",
+                onComplete: endTransition,
+            },
+        );
+    };
+
+    /* IA entrance: the spark ORBITS the "claude — sesión real" terminal —
+       emerging small & dim from behind it, looping around (a depth pulse
+       fakes the going-behind since a global fixed element can't truly be
+       occluded), then spiralling inward to settle dead-centre of the 4
+       cards. Time-based one-shot; the ticker is yielded while it plays. */
+    const orbitInTo = (
+        getter: () => { x: number; y: number },
+        tint: string,
+    ) => {
+        beginTransition();
+        const term = document.querySelector<HTMLElement>("[data-terminal]");
+        // Centre is read LIVE each frame: while IA is still sliding into
+        // place the terminal keeps moving, and the orbit must hug it the
+        // whole time (a one-shot snapshot orbited a stale, low position).
+        const termCentre = () => {
+            const tr = term?.getBoundingClientRect();
+            return tr
+                ? { x: tr.left + tr.width / 2, y: tr.top + tr.height / 2 }
+                : { x: window.innerWidth * 0.72, y: window.innerHeight * 0.42 };
+        };
+        const tr0 = term?.getBoundingClientRect();
+        // A snug orbit that hugs the terminal box (not a screen-wide swing).
+        const R = tr0
+            ? gsap.utils.clamp(80, 140, Math.min(tr0.width, tr0.height) * 0.4)
+            : 130;
+        const turns = 1.2;
+        const startA = -Math.PI / 2; // emerge at the terminal's top edge
+        const o = { t: 0 };
+        visible = true;
+        hopping = false;
+        target = getter;
+        gsap.set(buddy, { color: tint, rotation: 0 });
+        activeTransition = gsap.timeline({
+            onComplete: () => {
+                const f = getter();
+                pos.x = f.x;
+                pos.y = f.y;
+                gsap.set(buddy, { scaleX: 1, scaleY: 1, autoAlpha: 1 });
+                endTransition();
+            },
+        }).to(o, {
+            t: 1,
+            duration: 0.95,
+            ease: "power2.inOut",
+            onUpdate: () => {
+                // killed/orphaned if the buddy died mid-orbit (scrolled back
+                // to the hero) — never paint a dead companion.
+                if (!alive) return;
+                const t = o.t;
+                const ang = startA + t * turns * Math.PI * 2;
+                // hold the orbit radius for the first ~55% (a clear loop or
+                // so around the box), THEN spiral inward to the grid centre.
+                const spiral = Math.max(0, (t - 0.45) / 0.55);
+                const r = R * (1 - spiral);
+                const tc = termCentre();
+                const dest = getter();
+                const cx = gsap.utils.interpolate(tc.x, dest.x, spiral);
+                const cy = gsap.utils.interpolate(tc.y, dest.y, spiral);
+                pos.x = cx + Math.cos(ang) * r;
+                pos.y = cy + Math.sin(ang) * r;
+                // depth: dimmer/smaller on the far (upper) arc — reads as
+                // passing BEHIND the terminal, brighter as it comes round.
+                const front = (Math.sin(ang) + 1) / 2; // 0 = behind/top, 1 = front
+                const grow = gsap.utils.interpolate(0.4, 1, t);
+                const sc = grow * gsap.utils.interpolate(0.78, 1.04, front);
+                gsap.set(buddy, {
+                    x: pos.x,
+                    y: pos.y,
+                    scaleX: sc,
+                    scaleY: sc,
+                    autoAlpha:
+                        Math.min(1, t * 3.5) *
+                        gsap.utils.interpolate(0.72, 1, front),
+                });
+            },
+        });
+    };
+
+    /* Between two CONTIGUOUS sections (no hidden gap, e.g. IA → experiencia):
+       spin away then drop straight in at the next section's first perch. */
+    const playTransition = (
+        getter: () => { x: number; y: number },
+        tint: string,
+        fromSec: string,
+    ) => {
+        beginTransition();
+        const fast = fromSec === "ia";
+        activeTransition = gsap
+            .timeline({ onComplete: endTransition })
+            .to(buddy, {
+                y: pos.y - 70,
+                rotation: `+=${fast ? 1080 : 520}`,
+                scaleX: 0.05,
+                scaleY: 0.05,
+                autoAlpha: 0,
+                duration: fast ? 0.32 : 0.46,
+                ease: "power2.in",
+            })
+            // a beat fully gone before it drops back in (the user wants the
+            // IA→experiencia exit to clearly VANISH, not bounce straight back)
+            .to({}, { duration: fast ? 0.16 : 0.04 })
+            .add(() => {
+                const t = getter();
+                pos.x = t.x;
+                pos.y = t.y;
+                target = getter;
+                hopping = false;
+                gsap.set(buddy, {
+                    x: t.x,
+                    y: t.y,
+                    rotation: 0,
+                    color: tint,
+                });
+            })
+            .to(buddy, {
+                scaleX: 1,
+                scaleY: 1,
+                autoAlpha: 1,
+                duration: 0.52,
+                ease: "back.out(1.7)",
+            });
     };
 
     companionRail.reset = () => {
         currentKey = ""; // force a fresh perch evaluation next frame
+    };
+
+    // A chapter-nav jump hides the companion; once the jump lands and the
+    // tick resumes, desiredPerch + the !visible branch re-play the landing
+    // section's own entrance (orbit / lupa focus / drop-in). The finale owns
+    // itself, so don't touch it there.
+    companionNav.hide = () => {
+        if (busy) return;
+        cancelHop();
+        activeTransition?.kill();
+        activeTransition = null;
+        transitioning = false;
+        visible = false;
+        currentKey = "";
+        curSection = "";
+        target = null;
+        gsap.killTweensOf(buddy, "x,y,scaleX,scaleY,autoAlpha,rotation");
+        gsap.set(buddy, { autoAlpha: 0 });
     };
 
     (window as unknown as { __buddyXY?: () => object }).__buddyXY = () => ({
@@ -1085,9 +1766,17 @@ function initScrollCompanion() {
             pos.y = at.y;
             target = () => livePoint(s);
             currentKey = "wave:" + idx;
+            curSection = "stack";
             hopping = false;
             alive = true;
-            gsap.set(buddy, { x: pos.x, y: pos.y });
+            visible = true;
+            // Born on card 01 → its clean accent, so a fresh descent never
+            // inherits a stale colour from a previous trip down the page.
+            gsap.set(buddy, {
+                x: pos.x,
+                y: pos.y,
+                color: BUDDY_SECTION_COLORS.stack,
+            });
             if (origin) {
                 // the icon "releases" the spark with a quick pulse
                 gsap.fromTo(
@@ -1102,6 +1791,8 @@ function initScrollCompanion() {
                     },
                 );
             }
+            // Snappy: pops out of the icon and is handed straight to the rail
+            // (card 01) with no wait — "del SVG al 01, pum".
             gsap.fromTo(
                 buddy,
                 { autoAlpha: 0, scale: 0, rotation: -90 },
@@ -1109,9 +1800,8 @@ function initScrollCompanion() {
                     autoAlpha: 1,
                     scale: 1,
                     rotation: 0,
-                    duration: 0.55,
-                    delay: 0.12,
-                    ease: "back.out(1.9)",
+                    duration: 0.3,
+                    ease: "back.out(2)",
                     overwrite: "auto",
                     onComplete: landPulse,
                 },
@@ -1119,9 +1809,20 @@ function initScrollCompanion() {
         },
         onLeaveBack: () => {
             alive = false;
+            // Kill any in-flight transition so its onUpdate stops painting a
+            // now-dead buddy and `transitioning` never stays stuck true.
+            activeTransition?.kill();
+            activeTransition = null;
+            transitioning = false;
             cancelHop();
             target = null;
             currentKey = "";
+            curSection = "";
+            visible = false;
+            railEngaged = false; // a fresh descent is born on the icon again
+            railCompleted = false;
+            bob.play(); // ensure the idle bob is live for the next birth
+            gsap.set(buddy, { yPercent: 0 });
             gsap.to(buddy, {
                 autoAlpha: 0,
                 scale: 0,
@@ -1265,15 +1966,22 @@ function initScrollCompanion() {
         let lastClip = "";
         let lastBlockAlpha = -1;
 
+        // The lupa sits squarely OVER each card's big 01 / 02 / 0X numeral.
         const cardPerch = (card: HTMLElement) => () => {
-            const rect = card.getBoundingClientRect();
+            const numEl =
+                card.querySelector<HTMLElement>("[data-card-number]") ?? card;
+            const rect = numEl.getBoundingClientRect();
             return {
                 x: gsap.utils.clamp(
                     24,
                     window.innerWidth - 24,
                     rect.left + rect.width / 2,
                 ),
-                y: Math.max(NAV_OFFSET + 22, rect.top - 24),
+                y: gsap.utils.clamp(
+                    NAV_OFFSET + 22,
+                    window.innerHeight - 24,
+                    rect.top + rect.height / 2,
+                ),
             };
         };
 
@@ -1339,7 +2047,7 @@ function initScrollCompanion() {
             });
         };
 
-        const applyFinale = (p: number) => {
+        const applyFinale = (p: number, dir = 1) => {
             // Past the reveal the landing sequence owns the companion —
             // but the scene endgame (clip release to true corner coverage
             // + final fade to 1) still follows the scroll.
@@ -1380,12 +2088,68 @@ function initScrollCompanion() {
                 morphShape("proyectos", true); // back to the glass, unseen
             }
 
-            const scale = buddyScale(p);
+            const ascending = dir < 0;
+            // lensScale ALWAYS drives the contacto iris (the clip math); the
+            // buddy's VISUAL scale is 1 on the way up so the lupa never grows
+            // to a giant centre over the projects — it rides a card, small.
+            const lensScale = buddyScale(p);
+            const scale = ascending ? 1 : lensScale;
             const visible = p < 0.92 && (p >= 0.02 || alive);
+            // Ascending: the lupa is only shown once contacto's iris has shut
+            // (proyectos is the on-screen scene again); above that it stays
+            // hidden so there is no stray glyph floating over the closing
+            // contacto circle. Descending keeps its exact original visibility.
+            const buddyAlpha = ascending
+                ? gsap.utils.clamp(0, 1, (0.68 - p) / 0.06) *
+                  (p >= 0.02 || alive ? 1 : 0)
+                : visible
+                  ? 1
+                  : 0;
 
-            // Phase ownership of x/y — deterministic in BOTH directions:
-            // scan hops < parametric flight < centre assert (zoom).
-            if (p < FLY_START) {
+            // The blue lupa shifts to the contacto YELLOW as it flies in and
+            // zooms — the next scene's colour arrives through the glass. The
+            // glow rides currentColor, so it is never lost, just recoloured.
+            if (p >= FLY_START && p < 0.94) {
+                const ct = gsap.utils.clamp(
+                    0,
+                    1,
+                    (p - FLY_START) / (0.86 - FLY_START),
+                );
+                gsap.set(buddy, {
+                    color: gsap.utils.interpolate(
+                        BUDDY_SECTION_COLORS.proyectos,
+                        BUDDY_SECTION_COLORS.contacto,
+                        ct,
+                    ),
+                });
+            }
+
+            // Phase ownership of x/y.
+            if (ascending) {
+                // Going UP: NO centre, ever (owner's call). The scan zone hops
+                // as usual; above it the lupa simply holds small on its scan
+                // home (the last card) while the contacto iris closes over it —
+                // it never flies through the middle of the projects grid.
+                if (p < FLY_START) {
+                    manualXY = false;
+                    scanTick(p);
+                } else {
+                    manualXY = true;
+                    cancelHop();
+                    if (scanIdx !== -1) {
+                        scanIdx = -1;
+                        inspect(-1);
+                    }
+                    const home = flyFrom(); // the last card's numeral
+                    gsap.set(buddy, {
+                        x: home.x,
+                        y: home.y,
+                        rotation: 0,
+                        scaleX: 1,
+                        scaleY: 1,
+                    });
+                }
+            } else if (p < FLY_START) {
                 // scan: the ticker drives the hops (startHop via scanTick)
                 manualXY = false;
                 scanTick(p);
@@ -1435,7 +2199,7 @@ function initScrollCompanion() {
                 height: rasterPx,
                 marginLeft: -rasterPx / 2,
                 marginTop: -rasterPx / 2,
-                autoAlpha: visible ? 1 : 0,
+                autoAlpha: buddyAlpha,
             };
             if (scale > 1.001) {
                 // zoom phases own the transform; during the scan the hop
@@ -1448,12 +2212,16 @@ function initScrollCompanion() {
             // The glass stays a magnifier for the whole zoom; the headset
             // only appears on landing. Giant glow would wash the screen.
             if (p > 0.05 && p < 0.92) morphShape("proyectos", scale > 3);
-            buddy.classList.toggle("buddy-zooming", scale > 3);
+            // Keep the glow through the visible part of the zoom (the user
+            // wants it kept while it recolours to yellow); only drop it once
+            // the glass is huge enough that the blur would wash the frame.
+            buddy.classList.toggle("buddy-zooming", scale > 9);
 
-            // During the zoom the parametric drive also owns the position:
-            // scrolling back up from the landing used to leave the giant
-            // glass stuck at the tip (no tween reasserts x/y up there).
-            if (p >= FLY_END) {
+            // During the DESCENDING zoom the parametric drive also owns the
+            // position: scrolling back up from the landing used to leave the
+            // giant glass stuck at the tip (no tween reasserts x/y up there).
+            // Ascending never centres (the lupa holds on its card above).
+            if (!ascending && p >= FLY_END) {
                 gsap.set(buddy, {
                     x: window.innerWidth / 2,
                     y: window.innerHeight / 2,
@@ -1467,7 +2235,7 @@ function initScrollCompanion() {
             // the viewport lens position. Redundant writes are skipped.
             const cy = (p - 0.5) * window.innerHeight;
             const iris = gsap.utils.clamp(0, 1, (p - 0.68) / 0.06);
-            const radius = Math.max(0, LENS_R * scale - 6) * iris;
+            const radius = Math.max(0, LENS_R * lensScale - 6) * iris;
             const clip = `circle(${radius.toFixed(1)}px at 50% ${cy.toFixed(1)}px)`;
             if (clip !== lastClip) {
                 lastClip = clip;
@@ -1488,7 +2256,15 @@ function initScrollCompanion() {
 
         ScrollTrigger.create({
             trigger: contacto,
-            start: "top bottom",
+            // The lupa must SHOW UP the instant proyectos is entered (nav snap
+            // or natural scroll), not after scrolling to the section's foot.
+            // "top bottom" fired only when contacto's top reached the viewport
+            // bottom — i.e. when proyectos' foot was already at the fold, a
+            // ~182px gap past the snap. Pulling the start down by
+            // (proyectosHeight - viewport + NAV_OFFSET) lands the activation
+            // exactly on the proyectos snap, so the scan begins on arrival.
+            start: () =>
+                `top bottom+=${Math.max(0, proyectos.offsetHeight - window.innerHeight + NAV_OFFSET)}`,
             end: "top top",
             invalidateOnRefresh: true,
             onToggle: (self) => {
@@ -1499,7 +2275,47 @@ function initScrollCompanion() {
                     // the scan re-claim immediately if it just started.
                     scanIdx = -1;
                     inspect(-1);
-                    scanTick(self.progress);
+                    // The lupa SHOWS UP already placed on card 01's numeral —
+                    // it pops in from behind the first card, not travelling in
+                    // from the experiencia rail. Gated on the SCAN zone (not
+                    // scroll direction): the focus-in pop belongs to the fresh
+                    // top-entry only; re-entering from below lands at high
+                    // progress (the zoom), where applyFinale owns placement.
+                    if (cards[0] && self.progress < FLY_START) {
+                        const c0 = cardPerch(cards[0])();
+                        pos.x = c0.x;
+                        pos.y = c0.y;
+                        // back on top (it dipped under the wipe leaving exp),
+                        // BLUE, popping out from behind card 01's numeral.
+                        buddy.style.zIndex = "";
+                        gsap.set(buddy, {
+                            x: c0.x,
+                            y: c0.y,
+                            color: BUDDY_SECTION_COLORS.proyectos,
+                        });
+                        // Lens FOCUS-IN: swoops in big, rotated and blurred,
+                        // then snaps sharp onto the 01 with a ring bloom — like
+                        // a magnifier finding focus.
+                        gsap.fromTo(
+                            buddy,
+                            { scale: 2.6, rotation: -45, autoAlpha: 0 },
+                            {
+                                scale: 1,
+                                rotation: 0,
+                                autoAlpha: 1,
+                                duration: 0.6,
+                                ease: "power3.out",
+                                overwrite: "auto",
+                                onComplete: landPulse,
+                            },
+                        );
+                    }
+                    // Only the SCAN zone owns card placement/highlight. Gating
+                    // this (like the focus-in pop above) stops a high-progress
+                    // re-entry while scrolling UP from stranding a .card-
+                    // inspected highlight on card 03; the zoom/land branches of
+                    // applyFinale own everything above FLY_START.
+                    if (self.progress < FLY_START) scanTick(self.progress);
                 } else {
                     scanIdx = -1;
                     inspect(-1);
@@ -1513,10 +2329,21 @@ function initScrollCompanion() {
                     // perch next frame (the contacto title stop coincides
                     // with the landing tip, so no extra hop forward).
                     currentKey = "";
-                    if (self.direction < 0) target = null;
+                    if (self.direction < 0) {
+                        // Ascending OUT of the finale into experiencia: the
+                        // lupa must LEAVE (shrink away) like experiencia does
+                        // on the way down, then re-appear popped-in on the
+                        // experiencia dot once the cover clears — instead of
+                        // stranding, visible-but-untracked, on the card-01
+                        // alignment until the experiencia perch finally snaps
+                        // in (the "stuck then sudden jump" the owner saw).
+                        target = null;
+                        visible = true; // so exitHide actually runs
+                        exitHide("proyectos");
+                    }
                 }
             },
-            onUpdate: (self) => applyFinale(self.progress),
+            onUpdate: (self) => applyFinale(self.progress, self.direction),
             onLeave: () => {
                 gsap.set(contacto, { clipPath: "none" });
                 gsap.set(contactoBlocks, { autoAlpha: 1 });
@@ -1637,6 +2464,135 @@ function initMagnetic() {
     });
 }
 
+/* ── Scroll speed limit ──
+   Desktop wheel/trackpad scrolling is taken over and EASED toward a target
+   with a hard per-frame cap, so you can never fling past the cinematic
+   animations — the spark, the wipes and the snaps always get their moment.
+   It stays idle (native scroll) unless a wheel gesture is in flight, so the
+   chapter-nav scrollTo, the cinematic snaps, the keyboard and the scrollbar
+   keep working untouched (the eased gesture ends the instant it settles, and
+   ScrollTrigger only fires a snap on that settle). Touch keeps native
+   momentum (no wheel events fire). */
+function initSmoothScroll() {
+    if (!window.matchMedia("(min-width: 1024px)").matches) return;
+
+    let target = window.scrollY;
+    let active = false;
+    let lastApplied = window.scrollY; // the scroll value WE last wrote
+    const maxScroll = () =>
+        Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+
+    window.addEventListener(
+        "wheel",
+        (e) => {
+            if (e.ctrlKey) return; // leave pinch-zoom alone
+            e.preventDefault();
+            if (navScrolling) return; // a nav jump owns the scroll: swallow it
+            if (!active) target = window.scrollY; // sync on a fresh gesture
+            target = gsap.utils.clamp(0, maxScroll(), target + e.deltaY);
+            active = true;
+        },
+        { passive: false },
+    );
+
+    const LERP = 0.1; // lower = more controlled
+    const cap = () => window.innerHeight * 0.09; // hard speed ceiling / frame
+
+    gsap.ticker.add(() => {
+        if (navScrolling || !active) {
+            active = false;
+            lastApplied = window.scrollY; // track so we never false-trigger
+            return; // idle / nav jump: leave the scroll alone
+        }
+        const cur = window.scrollY;
+        // A programmatic scroll (chapter-nav scrollTo, a cinematic snap, the
+        // keyboard or the scrollbar) moved the page since our last frame —
+        // YIELD instantly. Otherwise we ease the page back to our stale
+        // target, i.e. "click a nav link, it goes there, then snaps back to
+        // where you were". That is the bug this guards against.
+        if (Math.abs(cur - lastApplied) > 2) {
+            active = false;
+            target = cur;
+            lastApplied = cur;
+            return;
+        }
+        const diff = target - cur;
+        if (Math.abs(diff) < 0.5) {
+            active = false;
+            lastApplied = cur;
+            return;
+        }
+        const step = gsap.utils.clamp(-cap(), cap(), diff * LERP);
+        window.scrollTo(0, cur + step);
+        lastApplied = window.scrollY;
+    });
+}
+
+/* ── Custom cursor (desktop, fine pointer) ──
+   A precise dot that tracks instantly + a ring that trails with easing and
+   swells over anything interactive. mix-blend keeps it legible on any tone. */
+function initCustomCursor() {
+    if (!window.matchMedia("(pointer: fine)").matches) return;
+    if (document.querySelector(".custom-cursor")) return;
+
+    const wrap = document.createElement("div");
+    wrap.className = "custom-cursor";
+    wrap.setAttribute("aria-hidden", "true");
+    wrap.innerHTML = `<span class="cc-ring"></span><span class="cc-dot"></span>`;
+    document.body.appendChild(wrap);
+    document.documentElement.classList.add("has-custom-cursor");
+
+    const ring = wrap.querySelector<HTMLElement>(".cc-ring");
+    const dot = wrap.querySelector<HTMLElement>(".cc-dot");
+    if (!ring || !dot) return;
+
+    const rx = gsap.quickTo(ring, "x", { duration: 0.14, ease: "power3" });
+    const ry = gsap.quickTo(ring, "y", { duration: 0.14, ease: "power3" });
+    const dx = gsap.quickTo(dot, "x", { duration: 0.03, ease: "power2" });
+    const dy = gsap.quickTo(dot, "y", { duration: 0.03, ease: "power2" });
+
+    let shown = false;
+    window.addEventListener(
+        "mousemove",
+        (e) => {
+            if (!shown) {
+                shown = true;
+                wrap.classList.add("cc-visible");
+            }
+            rx(e.clientX);
+            ry(e.clientY);
+            dx(e.clientX);
+            dy(e.clientY);
+        },
+        { passive: true },
+    );
+
+    const INTERACTIVE =
+        "a, button, [data-magnetic], [data-tilt], input, textarea, select, label, [role='button'], .chapter-nav a, .lang-switch";
+    document.addEventListener("mouseover", (e) => {
+        if ((e.target as HTMLElement).closest(INTERACTIVE)) {
+            wrap.classList.add("cc-hover");
+        }
+    });
+    document.addEventListener("mouseout", (e) => {
+        const to = (e as MouseEvent).relatedTarget as HTMLElement | null;
+        if (
+            (e.target as HTMLElement).closest(INTERACTIVE) &&
+            !to?.closest?.(INTERACTIVE)
+        ) {
+            wrap.classList.remove("cc-hover");
+        }
+    });
+    document.addEventListener("mousedown", () => wrap.classList.add("cc-down"));
+    document.addEventListener("mouseup", () => wrap.classList.remove("cc-down"));
+    document.documentElement.addEventListener("mouseleave", () =>
+        wrap.classList.remove("cc-visible"),
+    );
+    document.documentElement.addEventListener("mouseenter", () => {
+        if (shown) wrap.classList.add("cc-visible");
+    });
+}
+
 function init() {
     if (prefersReduced()) {
         revealAll();
@@ -1666,6 +2622,7 @@ function init() {
     // triggers so refresh measures positions with the spacers in place.
     initHero();
     initStackRail();
+    initIAHold();
     initCinematicTransitions();
     initScrollCompanion();
     initSectionTitles();
@@ -1674,6 +2631,8 @@ function init() {
     initTimeline();
     initMarquees();
     initScrollSpy();
+    initSmoothScroll();
+    initCustomCursor();
 
     // All triggers exist now — sort refresh order by page position and
     // recompute every start/end with the pin spacers in place.
