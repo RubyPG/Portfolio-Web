@@ -1061,6 +1061,7 @@ function initScrollCompanion() {
     // behind and snapping into place when the fling stops.
     let lastScrollY = window.scrollY;
     let scrollVel = 0;
+    let lastScrollDir = 1; // 1 = descending, -1 = ascending (last real move)
 
     let hopping = false;
     let hopT = 0;
@@ -1146,6 +1147,7 @@ function initScrollCompanion() {
         const sy = window.scrollY;
         const scrollDelta = sy - lastScrollY; // <0 = ascending
         scrollVel = Math.abs(scrollDelta) / dt;
+        if (scrollDelta !== 0) lastScrollDir = scrollDelta < 0 ? -1 : 1;
         lastScrollY = sy;
         if (!alive || manualXY) return;
         // Hold still (hidden) while a chapter-nav jump flies the scroll past
@@ -1340,6 +1342,16 @@ function initScrollCompanion() {
         const idx = waveIndexLive();
         // stops[0] is the spark icon — a BIRTH perch only.
         if (railEngaged && idx === 0) {
+            // BELOW the rail zone this is the post-rail (stack→IA) gap →
+            // hidden, always. Decided by SCROLL POSITION, not railCompleted:
+            // a fast fling leaves the scrubbed track lagging, so the rail
+            // could go inactive with railCompleted stale-false — the card-01
+            // hold below then parked the buddy, visible, on card 01's perch
+            // (slid off-screen → clamped to the left edge) instead of hiding
+            // it, and coming back it re-entered at that wrong spot.
+            if (railST && window.scrollY >= railST.end) {
+                return { key: "none", idx: -1, rail: false, kind: "none" };
+            }
             // The pin's anticipatePin briefly toggles the rail trigger OFF
             // right after it engages (slide still ~0). If we treated THAT as
             // "between sections" the buddy hid and re-appeared (the birth→01
@@ -1521,7 +1533,14 @@ function initScrollCompanion() {
             });
             return;
         }
-        if (fromSec === "experiencia" || fromSec === "proyectos") {
+        // ia ASCENDING (ia → stack) joins the neutral shrink too: the
+        // generic branch below dives DOWNWARD, which on the way up dropped
+        // the buddy below where it stood before re-entering the rail.
+        if (
+            fromSec === "experiencia" ||
+            fromSec === "proyectos" ||
+            (fromSec === "ia" && lastScrollDir < 0)
+        ) {
             // experiencia: fires EARLY (cover 0.08) and just shrinks away in
             // place, so the rising proyectos wipe sweeps over where it was — it
             // reads as covered, not as flying off; the lupa re-emerges behind
@@ -1738,6 +1757,12 @@ function initScrollCompanion() {
         hopping,
         manualXY,
         shape: currentShape,
+        transitioning,
+        visible,
+        railEngaged,
+        railCompleted,
+        navScrolling,
+        hasTarget: target !== null,
     });
 
     /* Birth: the companion EMERGES from the AI-Engineering card's spark
