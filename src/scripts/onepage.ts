@@ -916,9 +916,12 @@ function initScrollCompanion() {
 
     /* Shape morph: shrink, swap the SVG, pop back — smooth, no jump cuts. */
     let currentShape = "spark";
+    let appliedShape = "spark";
+    let shapeTransition: gsap.core.Timeline | null = null;
     const applyShape = (next: string) => {
         if (!core) return;
         core.innerHTML = BUDDY_SHAPES[next] ?? BUDDY_SVG;
+        appliedShape = next;
         if (BUDDY_SPINS[next]) {
             spin?.play();
         } else {
@@ -928,8 +931,27 @@ function initScrollCompanion() {
     };
     const morphShape = (id: string, instant = false) => {
         const next = BUDDY_SHAPES[id] ? id : "spark";
-        if (next === currentShape || !core) return;
+        if (!core) return;
+        if (next === currentShape) {
+            const needsApply = appliedShape !== next;
+            if (
+                (instant && (shapeTransition !== null || needsApply)) ||
+                (!shapeTransition && needsApply)
+            ) {
+                shapeTransition?.kill();
+                shapeTransition = null;
+                gsap.killTweensOf(core, "scale");
+                gsap.set(core, { scale: 1 });
+                applyShape(next);
+            }
+            return;
+        }
         currentShape = next;
+        // Kill the whole timeline, including its deferred SVG-swap callback.
+        // Killing only the scale tween lets an older callback overwrite the
+        // new shape later while currentShape already points at this request.
+        shapeTransition?.kill();
+        shapeTransition = null;
         if (instant) {
             // Mid-zoom swaps must not run the shrink/pop mini-anim: at
             // giant scales a half-morphed shape reads as a glitch.
@@ -938,7 +960,13 @@ function initScrollCompanion() {
             applyShape(next);
             return;
         }
-        gsap.timeline({ overwrite: "auto" })
+        const transition = gsap.timeline({
+            onComplete: () => {
+                if (shapeTransition === transition) shapeTransition = null;
+            },
+        });
+        shapeTransition = transition;
+        transition
             .to(core, { scale: 0, duration: 0.22, ease: "power2.in" })
             .add(() => applyShape(next))
             .to(core, { scale: 1, duration: 0.34, ease: "back.out(1.9)" });
@@ -2047,9 +2075,11 @@ function initScrollCompanion() {
             // gut the scrubbed timeline's scan/fly tweens (and the idle
             // bob) forever — reversing left the glass stuck mid-screen.
             gsap.killTweensOf(buddy, "scale,autoAlpha");
+            pos.x = tipCache.x;
+            pos.y = tipCache.y;
             gsap.set(buddy, {
-                x: tipCache.x,
-                y: tipCache.y,
+                x: pos.x,
+                y: pos.y,
                 width: 36,
                 height: 36,
                 marginLeft: -18,
@@ -2072,7 +2102,7 @@ function initScrollCompanion() {
             });
         };
 
-        const applyFinale = (p: number, dir = 1) => {
+        const applyFinale = (p: number) => {
             // Past the reveal the landing sequence owns the companion —
             // but the scene endgame (clip release to true corner coverage
             // + final fade to 1) still follows the scroll.
@@ -2104,6 +2134,11 @@ function initScrollCompanion() {
                         gsap.utils.clamp(0, 1, (p - 0.94) / 0.012),
                     ),
                 });
+                // These writes bypass the cached setters below. Invalidate
+                // both caches so reversing below 0.94 restores the exact
+                // progress-derived clip and content alpha immediately.
+                lastClip = "";
+                lastBlockAlpha = -1;
                 land();
                 return;
             }
@@ -2113,23 +2148,14 @@ function initScrollCompanion() {
                 morphShape("proyectos", true); // back to the glass, unseen
             }
 
-            const ascending = dir < 0;
-            // lensScale ALWAYS drives the contacto iris (the clip math); the
-            // buddy's VISUAL scale is 1 on the way up so the lupa never grows
-            // to a giant centre over the projects — it rides a card, small.
             const lensScale = buddyScale(p);
-            const scale = ascending ? 1 : lensScale;
-            const visible = p < 0.92 && (p >= 0.02 || alive);
-            // Ascending: the lupa is only shown once contacto's iris has shut
-            // (proyectos is the on-screen scene again); above that it stays
-            // hidden so there is no stray glyph floating over the closing
-            // contacto circle. Descending keeps its exact original visibility.
-            const buddyAlpha = ascending
-                ? gsap.utils.clamp(0, 1, (0.68 - p) / 0.06) *
-                  (p >= 0.02 || alive ? 1 : 0)
-                : visible
-                  ? 1
-                  : 0;
+            const scale = lensScale;
+            // Visibility follows progress, not scroll direction. On the way
+            // back up the shape has already changed from the headset to the
+            // magnifier, so using the same gate makes its SVG reappear at the
+            // exact point where it disappeared during the descent.
+            const shouldShowBuddy = p < 0.92 && (p >= 0.02 || alive);
+            const buddyAlpha = shouldShowBuddy ? 1 : 0;
 
             // The blue lupa shifts to the contacto YELLOW as it flies in and
             // zooms — the next scene's colour arrives through the glass. The
@@ -2149,32 +2175,26 @@ function initScrollCompanion() {
                 });
             }
 
-            // Phase ownership of x/y.
-            if (ascending) {
-                // Going UP: NO centre, ever (owner's call). The scan zone hops
-                // as usual; above it the lupa simply holds small on its scan
-                // home (the last card) while the contacto iris closes over it —
-                // it never flies through the middle of the projects grid.
-                if (p < FLY_START) {
-                    manualXY = false;
-                    scanTick(p);
-                } else {
-                    manualXY = true;
-                    cancelHop();
-                    if (scanIdx !== -1) {
-                        scanIdx = -1;
-                        inspect(-1);
-                    }
-                    const home = flyFrom(); // the last card's numeral
+            // Position is a pure function of progress, so scrolling upward
+            // retraces the exact same card → centre path in reverse.
+            if (p < FLY_START) {
+                if (manualXY) {
+                    // Hand the ticker the exact visible position reached by
+                    // the reversed flight. A stale `pos` made startHop() jump
+                    // back to the centre and repeat the trip to card 03.
+                    pos.x = Number(gsap.getProperty(buddy, "x"));
+                    pos.y = Number(gsap.getProperty(buddy, "y"));
+                    gsap.killTweensOf(
+                        buddy,
+                        "scaleX,scaleY,rotation,color",
+                    );
                     gsap.set(buddy, {
-                        x: home.x,
-                        y: home.y,
-                        rotation: 0,
                         scaleX: 1,
                         scaleY: 1,
+                        rotation: 0,
+                        color: BUDDY_SECTION_COLORS.proyectos,
                     });
                 }
-            } else if (p < FLY_START) {
                 // scan: the ticker drives the hops (startHop via scanTick)
                 manualXY = false;
                 scanTick(p);
@@ -2189,30 +2209,35 @@ function initScrollCompanion() {
                 if (p < FLY_END) {
                     const t = flyEase((p - FLY_START) / (FLY_END - FLY_START));
                     const from = flyFrom();
+                    pos.x = gsap.utils.interpolate(
+                        from.x,
+                        window.innerWidth / 2,
+                        t,
+                    );
+                    pos.y = gsap.utils.interpolate(
+                        from.y,
+                        window.innerHeight / 2,
+                        t,
+                    );
                     gsap.set(buddy, {
-                        x: gsap.utils.interpolate(
-                            from.x,
-                            window.innerWidth / 2,
-                            t,
-                        ),
-                        y: gsap.utils.interpolate(
-                            from.y,
-                            window.innerHeight / 2,
-                            t,
-                        ),
+                        x: pos.x,
+                        y: pos.y,
                         rotation: 0,
+                    });
+                } else {
+                    pos.x = window.innerWidth / 2;
+                    pos.y = window.innerHeight / 2;
+                    gsap.set(buddy, {
+                        x: pos.x,
+                        y: pos.y,
                     });
                 }
             }
 
-            // The idle bob is a % of the element height: at lens size it
-            // shoves the glass ~80px off-centre. Freeze it while zooming.
-            if (scale > 1.2) {
-                bob.pause();
-                gsap.set(buddy, { yPercent: 0 });
-            } else if (bob.paused()) {
-                bob.play();
-            }
+            // A time-based bob cannot be reversed by scroll. Freeze it for the
+            // whole scrubbed finale so equal progress always means equal Y.
+            bob.pause(0);
+            gsap.set(buddy, { yPercent: 0 });
             // Resize the element (vector re-raster = crisp), but cap the
             // raster at 1440px and bridge the rest with transform scale:
             // re-rasterising a 3240px layer per tick was the #1 jank
@@ -2236,22 +2261,13 @@ function initScrollCompanion() {
 
             // The glass stays a magnifier for the whole zoom; the headset
             // only appears on landing. Giant glow would wash the screen.
-            if (p > 0.05 && p < 0.92) morphShape("proyectos", scale > 3);
+            // The finale is scrubbed, so its shape must be deterministic too:
+            // never leave a deferred morph callback between two scroll frames.
+            if (p > 0.05 && p < 0.92) morphShape("proyectos", true);
             // Keep the glow through the visible part of the zoom (the user
             // wants it kept while it recolours to yellow); only drop it once
             // the glass is huge enough that the blur would wash the frame.
             buddy.classList.toggle("buddy-zooming", scale > 9);
-
-            // During the DESCENDING zoom the parametric drive also owns the
-            // position: scrolling back up from the landing used to leave the
-            // giant glass stuck at the tip (no tween reasserts x/y up there).
-            // Ascending never centres (the lupa holds on its card above).
-            if (!ascending && p >= FLY_END) {
-                gsap.set(buddy, {
-                    x: window.innerWidth / 2,
-                    y: window.innerHeight / 2,
-                });
-            }
 
             // Contact revealed exactly through the lens — but only once
             // the glass has taken centre stage (a quick iris-in, then it
@@ -2295,6 +2311,13 @@ function initScrollCompanion() {
             onToggle: (self) => {
                 busy = self.isActive;
                 if (busy) {
+                    // The finale takes exclusive control. A still-running
+                    // section transition would otherwise keep overwriting its
+                    // progress-derived x/y/alpha/color on the first frames.
+                    activeTransition?.kill();
+                    activeTransition = null;
+                    transitioning = false;
+                    gsap.killTweensOf(buddy, "color");
                     cancelHop();
                     // onUpdate fires BEFORE onToggle in the same tick: let
                     // the scan re-claim immediately if it just started.
@@ -2368,10 +2391,12 @@ function initScrollCompanion() {
                     }
                 }
             },
-            onUpdate: (self) => applyFinale(self.progress, self.direction),
+            onUpdate: (self) => applyFinale(self.progress),
             onLeave: () => {
                 gsap.set(contacto, { clipPath: "none" });
                 gsap.set(contactoBlocks, { autoAlpha: 1 });
+                lastClip = "";
+                lastBlockAlpha = -1;
                 inspect(-1);
                 land();
             },
