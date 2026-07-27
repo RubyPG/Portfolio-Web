@@ -31,6 +31,20 @@ jobs:
         run: pnpm build
 
       - name: Deploy dist via FTP
+        id: ftp_deploy
+        continue-on-error: true
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftp
+          port: 21
+          local-dir: ./dist/
+          server-dir: ./
+
+      - name: Retry FTP deployment after a transient failure
+        if: ${{ steps.ftp_deploy.outcome == 'failure' }}
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
           server: ${{ secrets.FTP_HOST }}
