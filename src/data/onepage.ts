@@ -143,10 +143,10 @@ export const onePageCopy: Record<Lang, OnePageCopy> = {
                 },
                 {
                     period: "2025 — 2026",
-                    title: "iLead CRM & iServices",
+                    title: "iLead CRM",
                     context: "Producto propio",
-                    body: "Dos CRMs en producción: desktop (Kotlin + Compose, Stripe, Grafana) y SaaS (Astro SSR + Supabase Realtime).",
-                    tags: ["Kotlin", "Compose", "Astro SSR", "Stripe"],
+                    body: "CRM desktop en producción: Kotlin + Compose, facturación con Stripe, automatizaciones n8n y observabilidad con Grafana.",
+                    tags: ["Kotlin", "Compose", "Stripe", "Grafana"],
                 },
                 {
                     period: "2025",
@@ -254,10 +254,10 @@ export const onePageCopy: Record<Lang, OnePageCopy> = {
                 },
                 {
                     period: "2025 — 2026",
-                    title: "iLead CRM & iServices",
-                    context: "Own products",
-                    body: "Two CRMs in production: desktop (Kotlin + Compose, Stripe, Grafana) and SaaS (Astro SSR + Supabase Realtime).",
-                    tags: ["Kotlin", "Compose", "Astro SSR", "Stripe"],
+                    title: "iLead CRM",
+                    context: "Own product",
+                    body: "Desktop CRM in production: Kotlin + Compose, Stripe billing, n8n automations and Grafana observability.",
+                    tags: ["Kotlin", "Compose", "Stripe", "Grafana"],
                 },
                 {
                     period: "2025",

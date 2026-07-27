@@ -76,7 +76,6 @@ pnpm astro check
 â”‚     â”œâ”€ loops-grooves/thumb.jpg          # (Nota: carpeta pÃºblica mantiene nombre original)
 â”‚     â”œâ”€ icreategroup-web/thumb.jpg
 â”‚     â”œâ”€ icreategroup-automation/thumb.png
-â”‚     â””â”€ iservices-crm/thumb.png
 â”œâ”€ src/
 â”‚  â”œâ”€ components/
 â”‚  â”‚  â”œâ”€ layout/                          # Navbar, Footer, LanguageSwitcher, MotionControllers
