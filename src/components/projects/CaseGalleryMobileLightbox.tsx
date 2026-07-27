@@ -116,6 +116,7 @@ const CaseGalleryMobileLightbox = ({
     role="dialog"
     aria-modal="true"
     aria-label={`Galeria ampliada de ${projectTitle}`}
+    tabIndex={-1}
     className="relative w-full overflow-hidden bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.2),transparent_32%),linear-gradient(180deg,#03060b,#070b11_58%,#020407)] lg:hidden"
     initial={reduceMotion ? { opacity: 1 } : { opacity: 0, y: 14 }}
     animate={{ opacity: 1, y: 0 }}
@@ -306,18 +307,18 @@ const CaseGalleryMobileLightbox = ({
                       type="button"
                       onClick={() => onSelect(index)}
                       className={cn(
-                        'group w-32 shrink-0 overflow-hidden rounded-[1.35rem] border text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70',
+                        'group w-40 shrink-0 overflow-hidden rounded-[1.35rem] border text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70',
                         isCurrent
                           ? 'border-accent/45 bg-[linear-gradient(180deg,rgba(255,255,0,0.12),rgba(255,255,255,0.02))] shadow-[0_0_0_1px_rgba(255,255,0,0.08)]'
                           : 'border-white/8 bg-black/20 hover:border-white/16 hover:bg-white/[0.03]'
                       )}
                     >
-                      <div className="relative aspect-[4/5] overflow-hidden">
+                      <div className="relative aspect-video overflow-hidden bg-black/35">
                         <img
                           src={galleryItem.image}
-                          alt={galleryItem.alt}
+                          alt=""
                           className={cn(
-                            'h-full w-full object-cover transition duration-300',
+                            'h-full w-full object-contain transition duration-300',
                             isCurrent ? 'scale-[1.04]' : 'group-hover:scale-[1.03]'
                           )}
                           loading="lazy"

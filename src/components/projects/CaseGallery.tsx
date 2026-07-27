@@ -1,4 +1,11 @@
-import React, { startTransition, useEffect, useRef, useState } from 'react';
+import React, {
+  startTransition,
+  useEffect,
+  useId,
+  useRef,
+  useState
+} from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
 import CaseGalleryMobileLightbox from './CaseGalleryMobileLightbox';
@@ -108,8 +115,11 @@ const CaseGallery = ({
   const [isZoomInModifierActive, setIsZoomInModifierActive] = useState(false);
   const [isZoomOutModifierActive, setIsZoomOutModifierActive] = useState(false);
   const [isCompactLayout, setIsCompactLayout] = useState(false);
-  const [railHeight, setRailHeight] = useState<number | null>(null);
-  const previewPanelRef = useRef<HTMLDivElement>(null);
+  const galleryTitleId = useId();
+  const isLightboxOpen = lightboxIndex !== null;
+  const lightboxTriggerRef = useRef<HTMLElement | null>(null);
+  const thumbnailRailRef = useRef<HTMLDivElement>(null);
+  const thumbnailRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const lightboxFrameRef = useRef<HTMLDivElement>(null);
   const lightboxDragPointerIdRef = useRef<number | null>(null);
   const lightboxDragStartRef = useRef({ x: 0, y: 0 });
@@ -144,7 +154,7 @@ const CaseGallery = ({
   }, []);
 
   useEffect(() => {
-    if (lightboxIndex === null || typeof document === 'undefined') return;
+    if (!isLightboxOpen || typeof document === 'undefined') return;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -152,7 +162,24 @@ const CaseGallery = ({
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [lightboxIndex]);
+  }, [isLightboxOpen]);
+
+  useEffect(() => {
+    if (!isLightboxOpen || typeof document === 'undefined') return;
+
+    const frameId = window.requestAnimationFrame(() => {
+      const dialog = Array.from(
+        document.querySelectorAll<HTMLElement>('[role="dialog"]')
+      ).find((element) => element.getClientRects().length > 0);
+      dialog?.focus({ preventScroll: true });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      lightboxTriggerRef.current?.focus({ preventScroll: true });
+      lightboxTriggerRef.current = null;
+    };
+  }, [isLightboxOpen]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || lightboxIndex === null) {
@@ -170,6 +197,41 @@ const CaseGallery = ({
 
       if (event.key === 'Escape') {
         setLightboxIndex(null);
+        return;
+      }
+
+      if (event.key === 'Tab') {
+        const dialog = Array.from(
+          document.querySelectorAll<HTMLElement>('[role="dialog"]')
+        ).find((element) => element.getClientRects().length > 0);
+        if (!dialog) return;
+
+        const focusable = Array.from(
+          dialog.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+          )
+        ).filter((element) => element.getClientRects().length > 0);
+
+        if (focusable.length === 0) {
+          event.preventDefault();
+          dialog.focus();
+          return;
+        }
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const activeElement = document.activeElement;
+
+        if (
+          event.shiftKey &&
+          (activeElement === first || !dialog.contains(activeElement))
+        ) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
         return;
       }
 
@@ -240,36 +302,27 @@ const CaseGallery = ({
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    const rail = thumbnailRailRef.current;
+    const activeThumbnail = thumbnailRefs.current[activeIndex];
+    if (!rail || !activeThumbnail || rail.clientHeight === 0) return;
 
-    const previewPanel = previewPanelRef.current;
-    if (!previewPanel) return;
+    const railBounds = rail.getBoundingClientRect();
+    const thumbnailBounds = activeThumbnail.getBoundingClientRect();
+    let delta = 0;
 
-    const desktopQuery = window.matchMedia('(min-width: 1024px)');
-    const updateRailHeight = () => {
-      if (!desktopQuery.matches) {
-        setRailHeight(null);
-        return;
-      }
+    if (thumbnailBounds.top < railBounds.top) {
+      delta = thumbnailBounds.top - railBounds.top;
+    } else if (thumbnailBounds.bottom > railBounds.bottom) {
+      delta = thumbnailBounds.bottom - railBounds.bottom;
+    }
 
-      const nextHeight = Math.ceil(previewPanel.getBoundingClientRect().height);
-      setRailHeight(nextHeight > 0 ? nextHeight : null);
-    };
-
-    updateRailHeight();
-
-    const resizeObserver = new ResizeObserver(updateRailHeight);
-    resizeObserver.observe(previewPanel);
-
-    desktopQuery.addEventListener('change', updateRailHeight);
-    window.addEventListener('resize', updateRailHeight);
-
-    return () => {
-      resizeObserver.disconnect();
-      desktopQuery.removeEventListener('change', updateRailHeight);
-      window.removeEventListener('resize', updateRailHeight);
-    };
-  }, []);
+    if (Math.abs(delta) > 1) {
+      rail.scrollTo({
+        top: rail.scrollTop + delta,
+        behavior: reduceMotion ? 'auto' : 'smooth'
+      });
+    }
+  }, [activeIndex, reduceMotion]);
 
   if (items.length === 0) return null;
 
@@ -280,6 +333,9 @@ const CaseGallery = ({
   };
 
   const openLightbox = (index: number) => {
+    if (!isLightboxOpen && document.activeElement instanceof HTMLElement) {
+      lightboxTriggerRef.current = document.activeElement;
+    }
     startTransition(() => setActiveIndex(index));
     setLightboxIndex(index);
   };
@@ -462,13 +518,19 @@ const CaseGallery = ({
 
   return (
     <>
-      <section className={cn('not-prose mt-16', className)}>
+      <section
+        aria-labelledby={galleryTitleId}
+        className={cn('not-prose mt-16', className)}
+      >
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[0.7rem] font-semibold uppercase tracking-[0.32em] text-secondary/80">
               {eyebrow}
             </p>
-            <h2 className="mt-2 text-2xl font-black tracking-[-0.03em] text-text-primary sm:text-3xl">
+            <h2
+              id={galleryTitleId}
+              className="mt-2 text-2xl font-black tracking-[-0.03em] text-text-primary sm:text-3xl"
+            >
               {title}
             </h2>
           </div>
@@ -478,7 +540,12 @@ const CaseGallery = ({
           </p>
         </div>
 
-        <div className="relative overflow-hidden rounded-[1.7rem] border border-white/10 bg-[linear-gradient(145deg,rgba(18,18,18,0.98),rgba(10,10,10,0.9))] p-3 shadow-[0_24px_90px_rgba(0,0,0,0.34)] lg:hidden">
+        <p className="sr-only" aria-live="polite">
+          Captura {formatSlideNumber(activeIndex)} de {totalSlidesLabel}:{' '}
+          {activeItem.title}
+        </p>
+
+        <div className="relative overflow-hidden rounded-[1.7rem] border border-white/10 bg-[linear-gradient(145deg,rgba(18,18,18,0.98),rgba(10,10,10,0.9))] p-3 shadow-[0_24px_90px_rgba(0,0,0,0.34)] xl:hidden">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,0,0.14),transparent_30%),radial-gradient(circle_at_82%_18%,rgba(59,130,246,0.18),transparent_34%)]" />
             <div className="relative overflow-hidden rounded-[1.3rem] border border-white/10 bg-black/35">
               <button
@@ -487,8 +554,8 @@ const CaseGallery = ({
                 className="group block w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
                 aria-label={`Abrir captura ${activeItem.title} de ${projectTitle}`}
               >
-                <div className="relative aspect-16/10 overflow-hidden">
-                  <AnimatePresence mode="wait">
+                <div className="relative aspect-video overflow-hidden">
+                  <AnimatePresence initial={false} mode="wait">
                     <motion.div
                       key={activeItem.image}
                       className="absolute inset-0"
@@ -507,7 +574,7 @@ const CaseGallery = ({
                       <img
                         src={activeItem.image}
                         alt={activeItem.alt}
-                        className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]"
+                        className="h-full w-full bg-black/35 object-contain transition duration-500 group-hover:scale-[1.015]"
                         loading="lazy"
                       />
                     </motion.div>
@@ -523,6 +590,18 @@ const CaseGallery = ({
                   </div>
                 </div>
               </button>
+            </div>
+
+            <div className="relative mt-3 rounded-[1.2rem] border border-white/8 bg-black/28 px-4 py-3">
+              <p className="text-[0.64rem] font-semibold uppercase tracking-[0.22em] text-secondary">
+                {activeItem.label ?? 'Vista seleccionada'}
+              </p>
+              <h3 className="mt-1.5 text-lg font-black tracking-[-0.025em] text-text-primary">
+                {activeItem.title}
+              </h3>
+              <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-text-muted">
+                {activeItem.description}
+              </p>
             </div>
 
             <div className="relative mt-3 flex items-center justify-between gap-2">
@@ -557,12 +636,12 @@ const CaseGallery = ({
               </button>
             </div>
           </div>
-        <div className="relative hidden overflow-hidden rounded-4xl border border-white/10 bg-[linear-gradient(145deg,rgba(18,18,18,0.98),rgba(10,10,10,0.86))] shadow-[0_30px_120px_rgba(0,0,0,0.35)] lg:block">
+        <div className="relative hidden overflow-hidden rounded-4xl border border-white/10 bg-[linear-gradient(145deg,rgba(18,18,18,0.98),rgba(10,10,10,0.86))] shadow-[0_30px_120px_rgba(0,0,0,0.35)] xl:block">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,0,0.16),transparent_28%),radial-gradient(circle_at_82%_18%,rgba(59,130,246,0.20),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.04),transparent_38%)]" />
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-white/20 to-transparent" />
 
-          <div className="grid items-start gap-5 p-4 sm:p-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(300px,0.95fr)] lg:p-6">
-            <div ref={previewPanelRef} className="relative min-w-0 self-start">
+          <div className="grid items-stretch gap-5 p-4 sm:p-5 lg:p-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(300px,0.95fr)]">
+            <div className="relative min-w-0 self-start">
               <motion.div
                 layout
                 className="relative overflow-hidden rounded-[1.8rem] border border-white/10 bg-black/40 shadow-[0_24px_80px_rgba(0,0,0,0.34)]"
@@ -584,8 +663,8 @@ const CaseGallery = ({
                     className="group relative block w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
                     aria-label={`Abrir captura ${activeItem.title} de ${projectTitle}`}
                   >
-                    <div className="relative aspect-16/10 overflow-hidden">
-                      <AnimatePresence mode="wait">
+                    <div className="relative aspect-video overflow-hidden">
+                      <AnimatePresence initial={false} mode="wait">
                         <motion.div
                           key={activeItem.image}
                           className="absolute inset-0"
@@ -613,7 +692,7 @@ const CaseGallery = ({
                           <img
                             src={activeItem.image}
                             alt={activeItem.alt}
-                            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.018]"
+                            className="h-full w-full bg-black/35 object-contain transition duration-500 group-hover:scale-[1.018]"
                             loading="lazy"
                           />
                         </motion.div>
@@ -659,8 +738,7 @@ const CaseGallery = ({
             </div>
 
             <aside
-              className="flex min-w-0 flex-col gap-4 overflow-hidden rounded-[1.75rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
-              style={railHeight ? { height: `${railHeight}px` } : undefined}
+              className="flex min-w-0 flex-col gap-4 overflow-hidden rounded-[1.75rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] [contain:size]"
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
@@ -692,7 +770,10 @@ const CaseGallery = ({
               </div>
 
               <div className="min-h-0 flex-1 overflow-hidden">
-                <div className="case-gallery-scroll h-full overflow-x-auto overflow-y-hidden overscroll-x-contain pb-1 sm:overflow-x-hidden sm:overflow-y-auto sm:overscroll-contain sm:pr-1 sm:pb-0">
+                <div
+                  ref={thumbnailRailRef}
+                  className="case-gallery-scroll h-full overflow-x-auto overflow-y-hidden overscroll-x-contain pb-1 sm:overflow-x-hidden sm:overflow-y-auto sm:overscroll-contain sm:pr-1 sm:pb-0"
+                >
                   <div className="flex gap-2 sm:grid sm:grid-cols-2 sm:gap-2 lg:grid-cols-1">
                     {items.map((item, index) => {
                       const isActive = index === activeIndex;
@@ -700,8 +781,12 @@ const CaseGallery = ({
                       return (
                         <button
                           key={item.image}
+                          ref={(node) => {
+                            thumbnailRefs.current[index] = node;
+                          }}
                           type="button"
                           onClick={() => selectSlide(index)}
+                          aria-pressed={isActive}
                           className={cn(
                             'group relative w-[min(82vw,320px)] shrink-0 snap-start overflow-hidden rounded-[1.3rem] border text-left transition duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 sm:w-auto sm:shrink sm:snap-none',
                             isActive
@@ -710,12 +795,12 @@ const CaseGallery = ({
                           )}
                         >
                           <div className="flex min-w-0 flex-col gap-2 p-2.5 sm:flex-row sm:items-stretch sm:gap-3">
-                            <div className="relative aspect-16/10 w-full shrink-0 overflow-hidden rounded-2xl border border-white/8 bg-black/35 sm:h-20 sm:w-24 sm:aspect-auto">
+                            <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-2xl border border-white/8 bg-black/35 sm:h-16 sm:w-28 sm:aspect-auto">
                               <img
                                 src={item.image}
-                                alt={item.alt}
+                                alt=""
                                 className={cn(
-                                  'h-full w-full object-cover transition duration-300',
+                                  'h-full w-full object-contain transition duration-300',
                                   isActive ? 'scale-[1.05]' : 'group-hover:scale-[1.04]'
                                 )}
                                 loading="lazy"
@@ -743,7 +828,7 @@ const CaseGallery = ({
                               >
                                 {item.title}
                               </p>
-                              <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-text-muted">
+                              <p className="mt-1 line-clamp-1 text-xs leading-relaxed text-text-muted">
                                 {item.description}
                               </p>
                             </div>
@@ -778,8 +863,10 @@ const CaseGallery = ({
         </div>
       </section>
 
-      <AnimatePresence>
-        {lightboxIndex !== null && lightboxItem ? (
+      {typeof document !== 'undefined'
+        ? createPortal(
+          <AnimatePresence>
+            {lightboxIndex !== null && lightboxItem ? (
           <motion.div
             className="fixed inset-0 z-70 overflow-y-auto bg-[rgba(2,6,13,0.92)] px-0 py-0 backdrop-blur-md lg:px-6 lg:py-6"
             initial={reduceMotion ? { opacity: 0 } : { opacity: 0 }}
@@ -818,6 +905,7 @@ const CaseGallery = ({
               role="dialog"
               aria-modal="true"
               aria-label={`Galeria ampliada de ${projectTitle}`}
+              tabIndex={-1}
               className="relative mx-auto hidden w-full max-w-[1280px] overflow-hidden rounded-[1.75rem] border border-white/10 bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.92))] shadow-[0_28px_120px_rgba(0,0,0,0.55)] lg:block lg:max-h-[calc(100dvh-3rem)]"
               initial={
                 reduceMotion
@@ -999,8 +1087,11 @@ const CaseGallery = ({
               </div>
             </motion.div>
           </motion.div>
-        ) : null}
-      </AnimatePresence>
+            ) : null}
+          </AnimatePresence>,
+          document.body
+        )
+        : null}
     </>
   );
 };
