@@ -1,0 +1,19 @@
+.overlay {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  overflow: hidden;
+  background: var(--paper);
+  /* Release the SSR overlay even if JavaScript never hydrates. */
+  animation: release-loader 0s 8s forwards;
+}
+
+@keyframes release-loader {
+  to {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}

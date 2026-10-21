@@ -1,0 +1,10 @@
+/node_modules/
+/.next/
+/out/
+/output/
+/.playwright-cli/
+*.tsbuildinfo
+next-env.d.ts
+.env*
+!.env.example
+*.log

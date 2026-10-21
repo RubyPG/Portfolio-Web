@@ -1,0 +1,266 @@
+.section {
+  --chrome-inline: 5vw;
+  --chrome-fade: clamp(18px, 3svh, 28px);
+  --project-button-size: 48px;
+  --project-button-gap: 10px;
+  --project-controls-width: calc(
+    var(--project-button-size) * 2 + var(--project-button-gap)
+  );
+  --project-controls-clearance: 16px;
+  position: relative;
+  height: 100svh;
+  min-height: 540px;
+  color: var(--ink);
+  overflow: clip;
+}
+.header {
+  position: absolute;
+  z-index: 2;
+  top: clamp(24px, 5svh, 56px);
+  inset-inline: var(--chrome-inline);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  pointer-events: none;
+}
+.header::before,
+.footer::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset-inline: calc(-1 * var(--chrome-inline));
+  pointer-events: none;
+  opacity: var(--chrome-backdrop-opacity, 1);
+}
+.header::before {
+  top: -64px;
+  bottom: calc(-1 * var(--chrome-fade));
+  background: linear-gradient(
+    to bottom,
+    var(--paper) 0,
+    var(--paper) calc(100% - var(--chrome-fade)),
+    transparent 100%
+  );
+}
+.footer::before {
+  top: calc(-1 * var(--chrome-fade));
+  bottom: -64px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0,
+    var(--paper) var(--chrome-fade),
+    var(--paper) 100%
+  );
+}
+.header h2 {
+  min-width: 0;
+  margin: 0;
+  font-family: "League Gothic", sans-serif;
+  font-weight: 400;
+  font-size: clamp(3.8rem, 9vw, 8rem);
+  line-height: 0.9;
+  letter-spacing: -0.015em;
+}
+.index {
+  min-width: 0;
+  padding-top: max(40px, calc(env(safe-area-inset-top) + 24px));
+  text-align: right;
+  font-size: var(--text-meta);
+  line-height: 1.6;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+.stackLink {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-height: 44px;
+  color: var(--ink);
+  font-size: var(--text-action);
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  pointer-events: auto;
+  transition: opacity 200ms ease;
+}
+.stackLink svg {
+  width: 16px;
+  height: 16px;
+}
+.stackLink:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 4px;
+}
+.stackLink[inert] {
+  opacity: 0;
+  pointer-events: none;
+}
+.gallery {
+  position: absolute;
+  inset: 0;
+}
+.section[data-detail-open] .gallery {
+  visibility: hidden;
+}
+.section[data-detail-open] > .header,
+.section[data-detail-open] > .footer {
+  z-index: 7;
+  pointer-events: none;
+}
+.footer {
+  position: absolute;
+  z-index: 2;
+  bottom: clamp(24px, 4svh, 48px);
+  inset-inline: var(--chrome-inline);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  pointer-events: none;
+}
+.projectCopy {
+  min-width: 0;
+  max-width: 680px;
+}
+.category {
+  display: block;
+  font-size: var(--text-meta);
+  line-height: 1.5;
+  letter-spacing: 0.06em;
+}
+.projectCopy h3 {
+  margin: 6px 0 0;
+  font-family: "League Gothic", sans-serif;
+  font-size: clamp(2.5rem, 4vw, 3.6rem);
+  font-weight: 400;
+  line-height: 1.04;
+  text-wrap: balance;
+}
+.summary {
+  height: 0;
+  overflow: clip;
+  overflow-clip-margin: 6px;
+}
+.detail {
+  display: flex;
+  align-items: flex-end;
+  gap: 28px;
+  padding-top: 12px;
+  pointer-events: auto;
+}
+.projectLink {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  flex-shrink: 0;
+  display: inline-flex;
+  gap: 18px;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 0;
+  border-bottom: 1px solid currentColor;
+  color: var(--ink);
+  font-size: var(--text-action);
+  line-height: 1.4;
+  text-decoration: none;
+}
+.projectLink span {
+  font-size: 22px;
+  line-height: 1;
+}
+.controls {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  pointer-events: auto;
+}
+.projectLink:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 4px;
+}
+
+@media (max-width: 699px) {
+  .section {
+    --chrome-inline: 6vw;
+    --project-button-size: 44px;
+    --project-button-gap: 6px;
+    --project-controls-clearance: 12px;
+    min-height: 0;
+  }
+  .header {
+    top: 5svh;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: clamp(12px, 3vw, 20px);
+  }
+  .header h2 {
+    font-size: clamp(2.5rem, 13vw, 5rem);
+    line-height: 0.96;
+  }
+  .index {
+    justify-self: end;
+    max-width: 11rem;
+    line-height: 1.5;
+    letter-spacing: 0.03em;
+  }
+  .stackLink[inert] {
+    height: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .footer {
+    display: block;
+    bottom: 4svh;
+    gap: 16px;
+  }
+  .projectCopy h3 {
+    font-size: clamp(2rem, 9vw, 3rem);
+    padding-right: calc(
+      var(--project-controls-width) + var(--project-controls-clearance)
+    );
+  }
+  .controls {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+  }
+  .section[data-focused] .controls {
+    bottom: auto;
+    top: calc(var(--text-meta) * 1.5 + 6px);
+  }
+  .detail {
+    gap: 14px;
+    align-items: center;
+    padding-top: 8px;
+  }
+  .projectLink {
+    gap: 10px;
+  }
+}
+
+@media (max-height: 550px) {
+  .section {
+    min-height: 0;
+  }
+  .header {
+    top: 20px;
+  }
+  .header h2 {
+    font-size: clamp(2.5rem, 13vw, 3rem);
+  }
+  .footer {
+    bottom: 16px;
+  }
+  .projectCopy h3 {
+    font-size: 2rem;
+  }
+  .detail {
+    padding-top: 5px;
+  }
+}

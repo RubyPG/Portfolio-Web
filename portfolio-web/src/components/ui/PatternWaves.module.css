@@ -1,0 +1,31 @@
+.root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  contain: layout paint;
+  pointer-events: none;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 400ms ease;
+}
+
+.root[data-pattern-ready] .canvas {
+  opacity: 1;
+}
+
+.root[data-pattern-exited] .canvas {
+  visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canvas {
+    transition: none;
+  }
+}

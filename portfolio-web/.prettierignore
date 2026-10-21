@@ -1,0 +1,8 @@
+node_modules
+.next
+out
+output
+.playwright-cli
+package-lock.json
+next-env.d.ts
+public/fonts

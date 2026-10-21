@@ -1,0 +1,38 @@
+.word {
+  position: relative;
+  display: block;
+  width: fit-content;
+  white-space: nowrap;
+  touch-action: pan-y;
+}
+
+.source {
+  font: inherit;
+}
+
+.baseline {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  vertical-align: baseline;
+}
+
+.canvas {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
+.word[data-effect-active] .source {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .word[data-effect-active] .source {
+    opacity: 1;
+  }
+
+  .canvas {
+    display: none;
+  }
+}

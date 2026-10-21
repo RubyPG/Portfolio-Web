@@ -1,0 +1,51 @@
+Stack icons
+===========
+
+Existing and recovered assets
+-----------------------------
+Extracted as SVG data, without executing the archived code, from:
+_archive/Portfolio viejo/src/data/tech-icons.ts
+
+The archive identifies Simple Icons for brand paths, Devicon for Java/Kotlin/
+Gradle/Maven, and Dashboard Icons for Traefik. SVG paths are retained unchanged.
+amazon.svg omits the archive's rounded background rectangle and fits its viewBox
+to the AWS lettering/arrow (24 64 208 128), so the alpha mask shows the mark rather
+than an opaque square. Logo paths and proportions are not changed.
+Devicon MIT notice is included in LICENSE-devicon.txt.
+RLS, REST APIs, SQL/RPC and Webhooks use the archive's functional symbols; these
+are category illustrations rather than invented product logos.
+Combined technology labels retain a representative mark (HTML5 for HTML5/CSS3,
+Git for Git/GitHub, Docker for Docker/Compose, Amazon for SES/IAM).
+
+Additional assets retrieved 2026-10-20
+------------------------------------
+nextjs.svg, claude.svg and woocommerce.svg: Simple Icons, CC0-1.0.
+https://github.com/simple-icons/simple-icons
+https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/nextdotjs.svg
+https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/claude.svg
+https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/woo.svg
+woocommerce.svg uses the current short Woo wordmark rather than the archive's
+long WooCommerce lockup. Its original geometry and proportions are retained.
+Brand reference: https://woocommerce.com/brand-and-logo-guidelines/
+
+codex.svg, claudecode.svg and mcp.svg: Lobe Icons, MIT.
+https://github.com/lobehub/lobe-icons
+https://github.com/lobehub/lobe-icons/tree/master/packages/static-svg/icons
+Copyright (c) 2023 LobeHub. Full notice in LICENSE-lobe-icons.txt.
+
+Brand names and marks belong to their respective owners. The site stores the
+SVGs locally and uses their shapes as CSS masks; it makes no endorsement claim.
+Woo: viewBox tightened around the unchanged mark to remove blank space for a 44px CSS mask.
+
+Hermes Agent retrieved 2026-10-21
+-------------------------------
+hermes.svg: official Hermes Agent emblem from Nous Research's repository.
+Product reference: https://hermes-agent.nousresearch.com/
+Source pinned to commit 3fa571a51a6bf1220dfe9a7a23fcd5bb9482a1af:
+https://raw.githubusercontent.com/NousResearch/hermes-agent/3fa571a51a6bf1220dfe9a7a23fcd5bb9482a1af/website/static/img/favicon.svg
+Only the outer white background rectangle was removed for the transparent CSS
+mask. Original logo path, clipping, positions, viewBox and proportions retained.
+No scripts, event handlers, embedded images or external references are included.
+Repository license: MIT, Copyright (c) 2025 Nous Research.
+Full notice preserved in LICENSE-hermes.txt, from:
+https://raw.githubusercontent.com/NousResearch/hermes-agent/3fa571a51a6bf1220dfe9a7a23fcd5bb9482a1af/LICENSE

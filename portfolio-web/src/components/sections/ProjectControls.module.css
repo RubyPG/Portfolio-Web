@@ -1,0 +1,95 @@
+.controls {
+  position: relative;
+  width: var(--project-controls-width);
+  height: var(--project-button-size);
+}
+.positioner,
+.arrows {
+  position: absolute;
+  inset: 0;
+}
+.hint {
+  position: absolute;
+  right: calc(100% + 28px);
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  white-space: nowrap;
+  font-size: var(--text-meta);
+  line-height: 1.5;
+  color: #3c4c44;
+  pointer-events: none;
+}
+.previous,
+.next,
+.close {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #7a122940;
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+.previous,
+.next {
+  width: var(--project-button-size);
+  padding: 0;
+  font-size: 22px;
+}
+.previous {
+  left: 0;
+}
+.next {
+  right: 0;
+}
+.close {
+  inset-inline: 0;
+  width: 100%;
+  padding: 0;
+  gap: 12px;
+  font-size: var(--text-action);
+  line-height: 1.4;
+  opacity: 0;
+  visibility: hidden;
+}
+.cross {
+  font-size: 24px;
+  line-height: 1;
+}
+.previous:hover,
+.next:hover,
+.close:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+.previous:focus-visible,
+.next:focus-visible,
+.close:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 4px;
+}
+@media (max-width: 699px) {
+  .hint {
+    display: none;
+  }
+  .close {
+    gap: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .previous,
+  .next,
+  .close {
+    transition: none;
+  }
+}

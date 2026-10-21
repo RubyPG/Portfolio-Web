@@ -1,0 +1,153 @@
+.section {
+  position: relative;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: clamp(36px, 7svh, 72px);
+  min-height: 100svh;
+  padding: max(68px, 8svh, calc(env(safe-area-inset-top) + 56px)) 6vw
+    clamp(24px, 5svh, 56px);
+  color: var(--ink);
+  background: transparent;
+  text-align: center;
+}
+
+.content {
+  align-self: center;
+  width: min(100%, 1400px);
+  min-width: 0;
+  margin-inline: auto;
+  container-type: inline-size;
+}
+
+.title {
+  margin: 0;
+  font-family: "League Gothic", sans-serif;
+  font-size: min(clamp(5rem, 17vw, 16rem), 28cqw);
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: -0.015em;
+}
+
+.intro {
+  max-width: 34ch;
+  margin: clamp(20px, 3svh, 36px) auto 0;
+  color: #3c4c44;
+  font-size: clamp(1rem, 0.85rem + 0.6vw, 1.5rem);
+  line-height: 1.5;
+  text-wrap: balance;
+}
+
+.emailGroup {
+  margin-top: clamp(32px, 6svh, 64px);
+}
+
+.email {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 1.5vw, 20px);
+  max-width: 100%;
+  min-height: 44px;
+  padding-block: 8px;
+  color: inherit;
+  font-size: clamp(1rem, 1.6vw, 1.75rem);
+  line-height: 1.5;
+  text-decoration: none;
+}
+
+.email span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.3em;
+}
+
+.email svg,
+.socials svg,
+.back svg {
+  flex: 0 0 auto;
+}
+
+.socials {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px clamp(24px, 4vw, 48px);
+  margin-top: 20px;
+}
+
+.socials a,
+.back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 44px;
+  padding-block: 8px;
+  color: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+  text-decoration: none;
+  text-underline-offset: 0.3em;
+}
+
+.socials svg {
+  width: 18px;
+  height: 18px;
+}
+
+.navigation {
+  justify-self: center;
+}
+
+.back {
+  font-size: var(--text-action);
+}
+
+.section a:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 5px;
+}
+
+@media (hover: hover) {
+  .email:hover span {
+    text-decoration-thickness: 2px;
+  }
+  .socials a:hover,
+  .back:hover {
+    text-decoration: underline;
+  }
+}
+
+@media (max-width: 767px) {
+  .section {
+    padding-top: max(68px, 10svh, calc(env(safe-area-inset-top) + 56px));
+    gap: 40px;
+  }
+  .title {
+    font-size: min(clamp(5rem, 24vw, 10rem), 28cqw);
+  }
+  .intro {
+    max-width: 28ch;
+  }
+}
+
+@media (max-height: 550px) {
+  .section {
+    gap: 24px;
+    padding-block: max(68px, calc(env(safe-area-inset-top) + 56px)) 16px;
+  }
+  .title {
+    font-size: min(clamp(4.5rem, 18svh, 8rem), 28cqw);
+  }
+  .intro {
+    margin-top: 16px;
+  }
+  .emailGroup {
+    margin-top: 24px;
+  }
+  .socials {
+    margin-top: 12px;
+  }
+}

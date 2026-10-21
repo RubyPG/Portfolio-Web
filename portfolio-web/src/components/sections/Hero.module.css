@@ -1,0 +1,123 @@
+.hero {
+  position: relative;
+  display: grid;
+  width: 100%;
+  height: 100svh;
+  place-items: center;
+  overflow: clip;
+  isolation: isolate;
+  background: var(--paper);
+}
+
+.background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.composition {
+  --title-size: clamp(4rem, 30cqw, 30rem);
+  --signature-size: clamp(2rem, 7.2cqw, 5.4rem);
+  --developer-top: clamp(50%, calc(44% + 8cqw), 57%);
+  position: relative;
+  z-index: 1;
+  width: min(94vw, 148svh);
+  /* Interpolate the portrait layout without a jump at tablet aspect ratios. */
+  height: min(90svh, 125vw, max(64vw, calc(156svh - 100vw)));
+  container-type: size;
+}
+
+.filters {
+  position: absolute;
+  pointer-events: none;
+}
+
+.title {
+  margin: 0;
+  font-family: "League Gothic", sans-serif;
+  font-size: var(--title-size);
+  font-weight: 400;
+  font-stretch: 100%;
+  line-height: 0.8;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+
+.enter {
+  display: block;
+}
+
+.fullstack,
+.developer {
+  position: absolute;
+  right: 0;
+  left: 0;
+  display: block;
+  width: max-content;
+  margin-inline: auto;
+  white-space: nowrap;
+}
+
+.fullstack {
+  z-index: 1;
+  top: clamp(14%, calc(32% - 12cqw), 22%);
+}
+
+.portrait {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 50%;
+  width: auto;
+  height: clamp(90%, calc(80% + 12cqw), 100%);
+  max-width: 100%;
+  aspect-ratio: 1086 / 1448;
+  overflow: clip;
+  transform: translateX(-50%);
+  /* Gently soften the top 4%; preserve the PNG's alpha and lower edge fades. */
+  mask-image:
+    linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 70%) 0%,
+      #000 4% 62%,
+      rgb(0 0 0 / 70%) 76%,
+      transparent 96% 100%
+    ),
+    linear-gradient(to right, transparent, #000 4% 94%, transparent);
+  mask-composite: intersect;
+  -webkit-mask-composite: source-in;
+}
+
+.portraitContent {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.developer {
+  z-index: 3;
+  top: var(--developer-top);
+}
+
+.signature {
+  position: absolute;
+  z-index: 4;
+  /* Keep the signature attached to the title's baseline at every viewport. */
+  top: min(
+    calc(
+      var(--developer-top) + var(--title-size) * 0.8 - var(--signature-size) *
+        0.45
+    ),
+    calc(100% - var(--signature-size) * 0.95)
+  );
+  right: clamp(5%, calc(15cqw - 10cqh), 8%);
+  margin: 0;
+  font-family: "Amazed", cursive;
+  font-size: var(--signature-size);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--accent);
+  transform: rotate(-9deg);
+  transform-origin: center;
+}

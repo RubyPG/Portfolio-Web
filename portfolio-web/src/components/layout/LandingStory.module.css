@@ -1,0 +1,153 @@
+.story {
+  position: relative;
+  overflow-anchor: none;
+}
+.stage {
+  position: relative;
+}
+.surface {
+  position: relative;
+}
+.hero {
+  position: relative;
+}
+.particles {
+  display: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 3;
+}
+.projects {
+  position: relative;
+}
+.stack {
+  position: relative;
+  background: var(--ink);
+}
+.personal {
+  position: relative;
+  background: var(--paper);
+  isolation: isolate;
+}
+.about,
+.contact {
+  position: relative;
+  z-index: 1;
+}
+.radar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100svh;
+  pointer-events: none;
+  z-index: 0;
+  mask-image: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / var(--radar-top-alpha, 1)),
+    #000 46%
+  );
+}
+.stackScroll:focus-visible,
+.aboutScroll:focus-visible,
+.contactScroll:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -4px;
+}
+.aboutScroll:focus-visible,
+.contactScroll:focus-visible {
+  outline-color: var(--ink);
+}
+.story[data-scroll-story] {
+  height: 260svh;
+}
+.story[data-scroll-story] .stage {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  isolation: isolate;
+  overflow: clip;
+  background: var(--paper);
+}
+.story[data-scroll-story] .surface {
+  position: absolute;
+  inset: 0;
+}
+.story[data-scroll-story] .hero {
+  position: absolute;
+  inset: 0;
+}
+.story[data-scroll-story] .particles {
+  display: block;
+}
+.story[data-scroll-story] .projects {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+}
+.story[data-scroll-story] .stack {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  visibility: hidden;
+  will-change: transform;
+}
+.story[data-scroll-story] .personal {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  visibility: hidden;
+  overflow: clip;
+}
+.story[data-scroll-story] .about,
+.story[data-scroll-story] .contact {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+}
+.story[data-scroll-story] .radar {
+  inset: 0;
+  height: 100%;
+}
+.story[data-scroll-story] .stackScroll,
+.story[data-scroll-story] .aboutScroll,
+.story[data-scroll-story] .contactScroll {
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  touch-action: pan-y;
+}
+.story[data-scroll-story] .stackScroll {
+  scrollbar-color: var(--accent) var(--ink);
+}
+.story[data-scroll-story] .aboutScroll,
+.story[data-scroll-story] .contactScroll {
+  scrollbar-color: var(--ink) var(--paper);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .story[data-scroll-story] {
+    height: auto;
+  }
+  .story[data-scroll-story] .stage {
+    position: relative;
+    height: auto;
+    overflow: visible;
+  }
+  .story[data-scroll-story] .hero,
+  .story[data-scroll-story] .surface,
+  .story[data-scroll-story] .projects,
+  .story[data-scroll-story] .stack,
+  .story[data-scroll-story] .personal,
+  .story[data-scroll-story] .about,
+  .story[data-scroll-story] .contact {
+    position: relative;
+  }
+  .story[data-scroll-story] .particles {
+    display: none;
+  }
+}

@@ -1,76 +1,130 @@
-# RubénPG — Personal Portfolio 🚀
+# Portfolio
 
-![Astro](https://img.shields.io/badge/astro-%232C2052.svg?style=for-the-badge&logo=astro&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
-![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
+Portfolio personal de RubenPG. La aplicación activa está en `portfolio-web/`; la versión anterior se conserva localmente en `_archive/Portfolio viejo/`, excluida de Git.
 
-Mi portfolio personal como **Full Stack Developer & CTO**. Construido desde cero para ser estático, rápido, escalable y con un diseño moderno enfocado en la conversión y presentación de servicios/proyectos.
+Ubicación: `D:\Dev\src\RPG\10_Projects\Portfolio`.
 
-## 🌟 Características Destacadas
+## Estructura
 
-- **Estética Premium:** UI/UX de alto nivel con glassmorphism, efectos de iluminación dinámica, tipografía moderna (Inter) y un sistema de movimiento consistente (`motion-system`) sobre Tailwind CSS v4.
-- **Interactividad 3D:** Integración fluida de fondos y elementos interactivos mediante OGL, Three.js y canvas custom (Prism, Ballpit, LetterGlitch) para una experiencia "Wowed".
-- **Totalmente Bilingüe (i18n):** Soporte nativo multi-idioma con rutas limpias y cambio de idioma instantáneo.
-- **Rendimiento Extremo:** Optimización de carga mediante Astro v5, lazy loading inteligente y métricas Core Web Vitals en mente.
-- **Arquitectura Escalable:** Tipado estricto con TypeScript, colecciones de contenido para Case Studies y gestión centralizada de iconos tecnológicos.
+```text
+Portfolio/
+├── AGENTS.md          Normas compartidas para los asistentes
+├── CLAUDE.md          Entrada para Claude; remite a AGENTS.md
+├── README.md          Mapa, estado y punto de entrada
+├── portfolio-web/     Nueva web
+├── portfolio-vault/   Contexto, decisiones y planificación
+├── _archive/
+│   └── Portfolio viejo/   Web anterior y su repositorio Git
+└── _temp/             Temporales y resultados auxiliares
+```
 
-## 💻 Tech Stack
+La aplicación activa está en `portfolio-web/`; las decisiones del nuevo portfolio se conservan en `portfolio-vault/`.
 
-- **Core:** [Astro v5](https://astro.build/) (Static/SSR)
-- **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
-- **UI Interaction:** [React](https://react.dev/) + [Framer Motion](https://www.framer.com/motion/)
-- **3D / Graphics:** [OGL](https://oframe.github.io/ogl/) + [Three.js](https://threejs.org/)
-- **Automation Integration:** [n8n](https://n8n.io/)
-- **Data & Auth:** [Supabase](https://supabase.com/)
+## Abrir y trabajar
 
-## 🚀 Instalación y Desarrollo Local
+En Codex, crear el proyecto **Portfolio** con una única carpeta de origen:
 
-1. Clona el repositorio e instala las dependencias:
+```text
+D:\Dev\src\RPG\10_Projects\Portfolio
+```
 
-   ```bash
-   pnpm install
-   ```
+Esa raíz contiene la web, el contexto y el archivo: no hace falta añadir por separado sus subcarpetas, todo RPG ni `D:\Dev`. Las carpetas adicionales tienen sentido cuando el trabajo necesita recursos que viven fuera del contenedor. [Documentación oficial sobre carpetas de proyectos](https://learn.chatgpt.com/docs/projects).
 
-2. Arranca el servidor de desarrollo en `http://localhost:4321`:
+Después, abrir un chat dentro del proyecto para crear o editar la web. Las normas están en [AGENTS.md](AGENTS.md); las decisiones y el estado se conservan en los archivos del proyecto. El historial de otros chats no sustituye ese contexto escrito.
 
-   ```bash
-   pnpm dev
-   ```
+Para Claude, dar acceso a esta misma raíz y comenzar por [CLAUDE.md](CLAUDE.md). Si el cliente no carga los archivos automáticamente, pedirle que lea `AGENTS.md` y `README.md`. No asumir que Claude Desktop/Cowork y Claude Code procesan los archivos del mismo modo.
 
-3. Construye para producción (generará la carpeta `./dist/`):
+## Estado actual · 22 de octubre de 2026
 
-   ```bash
-   pnpm build
-   ```
+- Menú global StaggeredMenu adaptado al diseño: saltos directos entre las cinco secciones con slide y fade, sin recorrer las intermedias. Navegar desde una ficha abierta recupera un estado limpio del carrusel. Rendimiento, recursos y alcance de las pruebas en [Rendimiento y navegación](portfolio-vault/rendimiento-y-navegacion.md).
+- Optimización de fuentes, carga diferida del radar y trabajo redundante de los efectos, conservando sus parámetros visuales. Pruebas de regresión permanentes disponibles con `npm test`; no sustituyen la validación visual pendiente.
+- Verificación final de menú y rendimiento: build, TypeScript, ESLint, formato y cinco suites de pruebas correctos. Detector Impeccable sin hallazgos en las superficies ajustadas. PNG −13,2 % sin cambiar RGBA; fuentes −54,1 %. La comprobación visual y FPS siguen pendientes del acceso al navegador local.
+- PatternWaves integrado como fondo independiente de la Hero: ondas y marcas cuadradas Jade sobre Pebble, detrás de las cuatro capas originales. Durante Hero ↔ proyectos, nueve franjas diagonales salen alternando arriba-izquierda y abajo-derecha y se reconstruyen al regresar; no añade gestos ni recorrido. Detalles y alcance de la validación en [Fondo PatternWaves](portfolio-vault/base-tecnica-y-visual.md#fondo-patternwaves).
+- Aplicación Next.js con App Router, React, TypeScript y Tailwind inicializada en `portfolio-web/`. La página principal muestra una carga inicial con CallChip, la Hero editorial, proyectos, «Mi stack», «Sobre mí» y contacto, conectadas mediante scroll.
+- Con la navegación animada activa, se oculta únicamente la barra de scroll del documento; se mantienen las barras interiores de las secciones y el desplazamiento que necesitan las animaciones. Sin JavaScript o con movimiento reducido, el flujo natural conserva su barra nativa.
+- Stack compactado: grupos en dos columnas desde 768 px, una en móvil; cabecera horizontal en tablet y lateral desde 1200 px. Iconos y espacios menores, con todas las tecnologías, etiquetas legibles y el hover conservados. Tras descartar el revelado curvo, la entrada a «Sobre mí» funciona como un paso de página lateral de 1,08 s: stack hacia la izquierda y papel entrante desde la derecha, con radar asentado en esa página y texto nítido. Reversa completa sin recorrido de scroll adicional; validación visual pendiente del acceso al navegador.
+- Contacto cierra la landing con «HABLEMOS», el correo y GitHub confirmados por Rubén; LinkedIn sigue pendiente y no se muestra. Un único radar compartido gira de horizonte a cenital en 1,25 s, mientras ambos planos de texto siguen el mismo progreso reversible. Entrada por gesto nuevo al final de «Sobre mí» o por «Hablemos»; regreso por gesto desde el inicio o enlace. Conserva bloqueo de ráfagas, foco, acceso inicial por `#contacto` y flujo natural con movimiento reducido. Contenido, contactos y transición en [Sobre mí y contacto](portfolio-vault/sobre-mi.md).
+- Refinamiento tipográfico con `ui-ux-pro-max` e `impeccable`: escala común de texto, metadatos de 12 px, acciones de 15 px y controles móviles de 44 px; títulos y nombres adaptados al ancho, protección de la cabecera del stack en pantallas bajas y más espacio para leer el contexto de proyectos. Se conservan las fuentes, la paleta y los recorridos de animación. La captura se reduce en pantallas muy cortas mediante la geometría compartida de WebGL, alternativa HTML y ficha. Detalle y límites en [Tipografía responsive](portfolio-vault/base-tecnica-y-visual.md#tipografía-responsive).
+- Hermes Agent de Nous Research añadido al grupo IA con SVG oficial local y procedencia documentada. El stack tiene ahora 37 entradas; las tecnologías concretas de Sophos siguen pendientes de confirmación.
+- Nueva sección personal «Sobre mí», centrada en aprendizaje rápido, actualización, IA y adaptación, sin repetir proyectos ni currículum. Fondo Radar de React Bits en Jade tenue y posición horizonte. Transición reversible desde el final del stack o su enlace, con foco y scroll interior propios; su siguiente escena es contacto. Contenido, criterios de comunicación y alternativas en [Sobre mí y contacto](portfolio-vault/sobre-mi.md).
+- Comprobaciones de este cambio: build, TypeScript, ESLint y formato correctos; detector de las superficies modificadas sin hallazgos. La revisión tipográfica global solo señala Arial, conservada como fuente de lectura existente. Gestos comprobados con eventos simulados y reversa/resize con GSAP sobre objetos; geometría estimada con las fuentes reales. **No equivale a validación visual:** persiste la denegación del navegador al origen local. Las capturas y verificaciones que figuran más abajo son anteriores.
+- Introducción del stack: «Tecnologías usadas en proyectos en producción.», por petición del usuario. «MI STACK» integra TechText adaptado a League Gothic: contornos discontinuos, marco Jade y una reacción suave al pulsar, sin barrido automático. Conserva el texto real y el movimiento reducido; detalle en [Sección Mi stack](portfolio-vault/base-tecnica-y-visual.md#sección-mi-stack).
+- Hero de `100svh` con cuatro elementos separados: FULLSTACK y DEVELOPER como sendos `h1`, PNG original y firma RubenPG. Cada capa conserva su identificador `data-hero-layer` para animaciones independientes. League Gothic y Amazed reales, alojadas localmente.
+- Fondo Pebble Mist `#E4EAE8`, títulos Sangria Deep `#7A1229` y firma Jade Botanical `#479C73`, sin inversión de color. La fotografía original está en `portfolio-web/public/images/ruben-hero.png`, sin duplicado en la raíz. Conserva transparencia y proporciones; una máscara CSS suaviza los cortes y, muy levemente, el 4 % superior del pelo. Detalles en [Base técnica y visual](portfolio-vault/base-tecnica-y-visual.md).
+- Entrada inicial con GSAP tras la carga: fotografía con fade-in de 1 s, FULLSTACK desde la izquierda, DEVELOPER desde la derecha y firma desde abajo. Se respeta movimiento reducido.
+- Navegación confirmada: **Hero ↔ carrusel abierto**, con una transición completa por gesto. La tarjeta reunida queda como fase interna de la animación, sin pausa ni clic adicional para desplegarla. Desde una tarjeta seleccionada, subir o cerrar recompone su SVG central y reproduce la aparición del carrusel; un gesto nuevo hacia arriba puede regresar después a la Hero. Arrastrar horizontalmente, en cambio, recupera el mismo carrusel abierto y continúa ese gesto hacia otro proyecto, sin repetir el reparto. Se conservan las partículas, el proyecto central y el bloqueo de ráfagas sin acciones en cola. Detalles en [Transición y proyectos](portfolio-vault/base-tecnica-y-visual.md#transición-de-scroll-y-sección-de-proyectos).
+- FlexCarousel del adjunto adaptado con el preset `liquid` y entrada `deal` disparada por scroll y completada por tiempo. La selección confirmada es **Sophos**, «Segundo Cerebro de IA personal», seguido de **Loops n’ Grooves**. Ambos usan los SVG aportados por el usuario, trasladados intactos a `public/images/projects/`; las miniaturas WebP anteriores se conservan en `_temp/proyectos-anteriores/`, fuera de la web. Sophos sustituye a iLead. La selección se hace con clic, arrastre o flechas laterales; la rueda vertical u horizontal no cambia de proyecto. Pulsar una tarjeta abre una captura rectangular con el degradado original como marco; el logo se reduce y viaja a una cabecera pequeña encima de la captura, a la izquierda, sin desaparecer. «Qué resuelve», «Mi aportación» y tecnologías discretas aparecen a los lados en escritorio y debajo en móvil. Al cerrar se invierte la transición. «Ver proyecto» abre el detalle integrado.
+- La preselección con captura y contexto está aprobada. El usuario confirma «Diseño y desarrollo completos.» para ambos proyectos. Las tecnologías de Sophos siguen pendientes, sin valores inventados. Carpeta para las capturas reales: [`portfolio-web/public/images/projects/capturas/`](portfolio-web/public/images/projects/capturas/). De momento ambos proyectos usan el SVG `sin-captura.svg`, de 1600 × 1000, como marcador explícito; la imagen antigua de Loops permanece como referencia.
+- `ProjectDetail` sigue integrado en la landing: amplía el marco de la captura hasta el borde de la ficha y lleva el SVG desde su cabecera hasta la izquierda del título, siempre visible. La captura se desvanece durante la expansión; el detalle mantiene el degradado perimetral y su scroll interior. Los grupos de las esquinas y el contexto lateral salen con fade en sus direcciones y regresan al cerrar. Se abre por botón o gesto nuevo desde una tarjeta ampliada y estable; «Volver a proyectos», Escape o un gesto de regreso desde el inicio del contenido invierten la transición y recuperan captura, marco y logo con la misma selección. Mientras está abierto, la navegación por etapas cede el control al detalle; no hay rutas independientes de proyecto.
+- «Mi stack» presenta 37 tecnologías como una galería abierta de SVG, con nombres debajo y hover suave; 19 herramientas principales tienen más presencia y el resto acompaña en tamaño pequeño. Mantiene fondo Sangria, scroll interior y regreso al carrusel; bajar con un proyecto seleccionado sigue abriendo su ficha. La versión anterior a Hermes y al refinamiento tipográfico fue revisada en escritorio y móvil hasta 320 px, sin desbordamiento; hover y cabecera fija comprobados en esa versión. Build y tipos correctos; ESLint y formato comprobados. Procedencia, diseño y verificaciones en [Sección Mi stack](portfolio-vault/base-tecnica-y-visual.md#sección-mi-stack).
+- Refinamiento actual: Sophos usa un fondo diagonal dorado/lila con halo blanco suave detrás del logo; Loops, un radial de centro blanco a borde azul `#0057B7`. La composición compartida mantiene los mismos fondos en partículas, carrusel, alternativa HTML y detalle integrado, con los SVG intactos. La ficha conserva el degradado original en el perímetro y vela de blanco el centro para leer el contenido. Cabecera y pie tienen una protección Pebble Mist difuminada ante las curvas del carrusel. Las tarjetas se proporcionan al ancho disponible, sin lente deformadora en móvil o con puntero táctil; en escritorio, cursor de enlace y hover uniforme de escala `1.025` con elevación de 4 px. Al volver del carrusel a la Hero, el proyecto central sirve de ancla; no se fuerza el regreso a Sophos.
+- Durante una transición se bloquean las entradas y se corta la inercia, sin ejecutar otro paso al terminar. El pie y los controles se activan al completar el reparto; la cabecera ya aparece durante la reunión de la tarjeta. La selección dura 0,72 s; el cierre explícito añade la aparición del carrusel tras recomponer el logo. El arrastre horizontal conserva la navegación directa entre tarjetas. La ficha abre y cierra en 0,8 s.
+- Al seleccionar una tarjeta, «Arrastra o pulsa una imagen» baja y se desvanece; los botones de flecha se juntan y forman «Cerrar ×» en una animación reversible de 0,64 s. «Ver proyecto» conserva su entrada desde abajo con fade y apertura del espacio. La información se muestra en `ProjectPreview`, sin repetir la descripción en el pie. `ProjectControls` mantiene los elementos montados, desactiva los que no corresponden y conserva la salida independiente de la esquina al abrir la ficha. El pie mantiene una estructura estable en móvil para evitar saltos al cerrar; con movimiento reducido los cambios son inmediatos.
+- Arrastre desde la captura revisado a 1036 × 884 y 390 × 844: un solo gesto cambia al otro proyecto y deja el carrusel abierto. Escape conserva el regreso al mismo proyecto con reparto; sin desbordamiento móvil. TypeScript, build y revisiones del motor correctos. Detalles en [Transición y proyectos](portfolio-vault/base-tecnica-y-visual.md#transición-de-scroll-y-sección-de-proyectos).
+- Verificación del flujo continuo: escritorio a 1280 × 720 y móvil a 390 × 844 completan Hero ↔ carrusel sin gesto adicional; regresar con rueda desde una selección conserva el proyecto central y reproduce el reparto. Las ráfagas no encadenan acciones; redimensionado estable, sin desbordamiento horizontal ni errores de consola. Build, TypeScript, ESLint y formato correctos. Alcance y capturas en [Transición y proyectos](portfolio-vault/base-tecnica-y-visual.md#transición-de-scroll-y-sección-de-proyectos).
+- Verificación previa del logo persistente y marco: Sophos a 1280 × 720 y Loops a 390 × 844 completan selección, apertura de ficha, regreso y cierre de la selección. El logo conserva continuidad, el degradado permanece en el borde y los controles se recuperan al volver. Sin desbordamiento móvil ni mensajes de error o advertencia en consola. Build, TypeScript, ESLint y formato correctos. Esta comprobación precede al flujo continuo Hero ↔ carrusel y al nuevo reparto al deseleccionar. Detalles y límites en [Base técnica y visual](portfolio-vault/base-tecnica-y-visual.md#transición-de-scroll-y-sección-de-proyectos). Captura: [project-preview-frame.png](_temp/project-preview-frame.png).
+- Verificación previa de la preselección: Sophos y Loops muestran captura y contexto en escritorio; cerrar invierte la entrada, y abrir la ficha y volver conserva la selección. Revisado también a 390 × 844, 320 × 568 y 320 × 480: contexto y tecnologías legibles, separados del pie y sin desbordamiento horizontal. Redimensionar después de volver de la ficha conserva la composición, sin desplazamientos residuales. Build final correcto; TypeScript, ESLint y formato comprobados. Consola sin errores ni advertencias. Movimiento reducido y alternativa sin GPU revisados por código, sin emularlos. Captura: [project-preview.png](_temp/project-preview.png). Esta revisión precede al logo persistente y al marco de la captura.
+- Verificación previa de la descripción animada: entrada y salida comprobadas en escritorio, con cierre completo del espacio y contenido inactivo al ocultarse. A 390 × 844, Loops muestra el resumen completo, sin desbordamiento horizontal ni solapamiento de botones; título y categoría permanecen estables. Abrir y volver de la ficha conserva la selección y el resumen; cerrar después completa la reversa. Build, TypeScript, ESLint y formato correctos tras los ajustes finales; consola sin errores ni advertencias. Movimiento reducido revisado por código, sin emularlo. Captura: [project-summary.png](_temp/project-summary.png). Esta revisión precede a la preselección con captura y contexto lateral.
+- Verificación previa de los controles: selección y reversa comprobadas a 1058 × 884; la ayuda baja 22 px y desaparece, los marcos se juntan y «Cerrar» queda visible. Al regresar se restauran las flechas, la ayuda y el foco en Proyectos. A 390 × 844, los controles conservan continuidad al recolocarse y terminan separados del texto y de «Ver proyecto», sin desbordamiento. Comprobado también el cambio entre 699 y 700 px sin perder «Cerrar». Build, TypeScript, ESLint y formato correctos. Consola final sin errores ni advertencias. Captura: [project-controls.png](_temp/project-controls.png).
+- Verificación histórica del flujo de tres etapas, ya sustituido, a 1058 × 884 y 390 × 844: tarjeta cuadrada, PROYECTOS antes del reparto y apertura por clic, Enter y Espacio, con foco en la región Proyectos. Las ráfagas durante una transición no cambian su destino ni dejan acciones en cola. Sophos y Loops abren y cierran sin reapertura ni recogida por inercia. En móvil, un gesto nuevo recoge Loops sin saltar a la Hero y enfoca «Desplegar proyectos»; el cambio de tamaño conserva la etapa y la selección. Build, TypeScript, ESLint y formato globales correctos; consola final sin errores ni advertencias. Captura en [scene-steps.png](_temp/scene-steps.png). Gestos táctiles nativos, movimiento reducido y alternativa sin GPU revisados por código, sin emularlos. Las comprobaciones siguientes son históricas.
+- Validación anterior de sincronización: ciclos de Loops entre Hero, carrusel y detalle a 1058 × 884 y 390 × 844, sin reapertura por inercia ni desbordamiento horizontal; build, TypeScript, ESLint y formato correctos, consola limpia. Captura histórica en [carousel-timing.png](_temp/carousel-timing.png). Corresponde al recorrido controlado por ScrollTrigger, ya sustituido.
+- Validación anterior de salida y regreso de los cuatro grupos: escritorio y móvil a 390 × 844, con direcciones correctas, desvanecimiento progresivo y final oculto; al cerrar recuperaban posición, opacidad y controles activos. Sin desbordamiento horizontal en móvil ni errores o advertencias de consola. Build, TypeScript, ESLint y formato globales correctos en esa revisión. La transición a la Hero conservaba su control independiente.
+- Validación anterior a la salida de esos grupos, a 1058 × 884 y 390 × 844: apertura por rueda con estados inicial e intermedio visibles, finalización de la animación y foco en el título; degradado perimetral comprobado en ambos tamaños. La rueda horizontal sobre Loops mantiene su índice. En escritorio se comprobó Loops → cuadrado con su logo → partículas → Hero. En móvil se completó Loops ampliado → ficha → cierre con rueda → Hero → carrusel, conservando Loops como `02 / 02`, sin desbordamiento horizontal. Sin nuevos errores de ejecución; la sesión conservaba avisos históricos de desarrollo. Estos resultados anteriores no cubren la nueva salida de los grupos.
+- Validación anterior del detalle integrado: 1058 × 884, 390 × 844 y horizontal a 640 × 320; giro con la ficha abierta, cierre con misma selección y regreso al final de la escena. Comprobados Enter, botón y rueda hacia abajo para abrir, «Volver», rueda hacia arriba y Escape para cerrar; URL en `/#proyectos`. Build con `/` y `/_not-found`, ESLint, TypeScript y formato globales correctos en esa revisión; consola sin errores ni advertencias. Movimiento reducido y cambio de preferencia, alternativa sin GPU y gestos táctiles revisados por código, sin emularlos en navegador.
+- Validación anterior del carrusel y los fondos: composición a 1058 × 884, 390 × 844, 320 × 568 y horizontal a 640 × 320 sin desbordamiento; unión de partículas y tarjeta en ambos sentidos, fondos y halo a 1058 × 884 y 390 × 844. La comprobación a 320 × 568 corresponde a esa versión anterior, no al detalle integrado.
+- DitherVeil adaptado al PNG transparente: tramado Floyd más fino, con sombras en verde oscuro derivado de Jade y luces Pebble Mist para distinguir silueta y cara. La trama de 1 px aporta cuatro veces más celdas que la anterior de 2 px, con tonos ajustados para conservar textura en el traje. Revelado del color original con cursor y onda al pulsar. Conserva el fondo de la Hero, sus capas, el fade-in y las máscaras de bordes. Con movimiento reducido, sin JavaScript o sin WebGL2 se mantiene el PNG original. Detalles en [Tramado interactivo](portfolio-vault/base-tecnica-y-visual.md#tramado-interactivo-del-retrato).
+- CallChip del adjunto adaptado a TypeScript y a la paleta: indicador centrado, contador y check verde antes de iniciar la entrada de la Hero. Espera las fuentes y el PNG, con salida automática ante fallos y contenido disponible sin JavaScript. Decisiones en [Carga inicial](portfolio-vault/base-tecnica-y-visual.md#carga-inicial).
+- Carga y entrada inicial revisadas antes de añadir la segunda sección a 320 × 568 y en escritorio hasta 1440 × 900, sin errores de consola ni desbordamiento. Build, TypeScript, ESLint y formato correctos; detector Impeccable sin hallazgos en los componentes de carga. Los casos de fallo de recursos e hidratación lenta se han revisado por código, sin simularlos en navegador.
+- Skills globales de Codex instaladas: Taste Skill (`design-taste-frontend`), `ui-ux-pro-max` e `impeccable`. Fuentes, adaptaciones y uso de referencias y subagentes en [Herramientas de diseño](portfolio-vault/base-tecnica-y-visual.md#herramientas-de-diseño).
+- Hero refinada con las tres skills: títulos más presentes y compactos, foto algo menor en móvil y firma alineada con el extremo inferior de DEVELOPER. La composición escala de forma continua entre teléfono, tablet y escritorio. Ambas fuentes se precargan; se ha eliminado la línea tenue al final del degradado inferior.
+- Composición revisada en escritorio, tablet y móvil; límites comprobados desde 320 × 568 hasta 1440 × 900, incluyendo horizontal a 640 × 320 y 844 × 390. Transición 800/801 × 1000 continua, sin desbordamiento horizontal ni cortes de las cuatro capas en su posición final. Build, TypeScript, ESLint y formato correctos; detector Impeccable sin hallazgos. La huella actual del PNG está registrada en el vault.
+- Amazed incluye una licencia de uso personal no lucrativo. El autor exige licencia Webfont para incrustarla en una web; resolver ese permiso antes de publicar. No se presupone que todo portfolio sea lucrativo. Hosting pendiente, con Hostinger como opción.
+- El archivo conserva código, recursos, documentación y su carpeta `.git`. Su configuración utiliza Astro con React y Tailwind; describe la versión antigua, no una elección para la nueva.
+- Repositorio Git en la raíz `Portfolio/`, enlazado con `RubyPG/Portfolio-Web` sobre `main`. El nuevo proyecto sustituye al antiguo conservando su historial. El archivo local mantiene su repositorio independiente y no se incorpora al nuevo índice; también se excluyen temporales, dependencias, compilados y secretos.
+- No se ha instalado, arrancado ni compilado la web archivada. Esta preparación comprueba la estructura y la documentación, no el funcionamiento del proyecto antiguo.
 
-4. Si en desarrollo `Prism` deja de hidratar o Vite muestra errores tipo `Outdated Optimize Dep` con `ogl`, reinicia `pnpm dev` para forzar el re-optimize de dependencias.
+## Desarrollo
 
-## Notas UI recientes
+Ejecutar desde `portfolio-web/`:
 
-- SkyBanner en /sobre-mi:
-  - desktop con efecto 3D por ratón
-  - móvil con efecto 3D por scroll
-- BackgroundBeamsWithCollision:
-  - mantiene estilo tech y colisión inferior
-  - caída ajustada para sensación más orgánica tipo lluvia
-- En desktop se eliminó el blur/sombreado extra del bloque de texto del hero de /sobre-mi.
+| Comando | Uso |
+| --- | --- |
+| `npm ci` | Instalar las versiones del lockfile. |
+| `npm run dev` | Vista local en `http://localhost:3000`. |
+| `npm run build` | Compilación de producción. |
+| `npm start` | Servir la compilación de producción. |
+| `npm run lint` | Revisar el código con ESLint. |
+| `npm run typecheck` | Comprobar tipos. |
+| `npm test` | Regresiones de navegación y ciclo de vida de efectos. |
+| `npm run format:check` | Comprobar formato. |
+| `npm run format` | Aplicar formato. |
 
-## 📖 Documentación Completa
+Componente: [Hero.tsx](portfolio-web/src/components/sections/Hero.tsx). Composición responsive: [Hero.module.css](portfolio-web/src/components/sections/Hero.module.css). Fuentes y colores: [globals.css](portfolio-web/src/app/globals.css).
 
-Para detalles específicos sobre la arquitectura de carpetas, cómo agregar nuevos proyectos o cambiar el copy, consulta el archivo completo:
-➡️ [DOCUMENTACION.md](./DOCUMENTACION.md)
+Carga inicial: [PortfolioIntro.tsx](portfolio-web/src/components/layout/PortfolioIntro.tsx). Indicador reutilizable: [CallChip.tsx](portfolio-web/src/components/ui/CallChip.tsx).
 
----
+Retrato interactivo: [DitherVeil.tsx](portfolio-web/src/components/ui/DitherVeil.tsx) y [motor WebGL](portfolio-web/src/components/ui/dither-veil.ts).
 
-*Desarrollado con ❤️ y mucho código limpio por **Rubén Pezuela García**.*
+Fondo de la Hero: [PatternWaves.tsx](portfolio-web/src/components/ui/PatternWaves.tsx), coordinado con la transición a proyectos.
 
-## 📦 Publicar el proyecto Archai (coming soon)
+Transición: [LandingStory.tsx](portfolio-web/src/components/layout/LandingStory.tsx) y [partículas del retrato](portfolio-web/src/components/animations/portrait-particles.ts). Proyectos: [ProjectShowcase.tsx](portfolio-web/src/components/sections/ProjectShowcase.tsx), [ProjectPreview.tsx](portfolio-web/src/components/sections/ProjectPreview.tsx), [ProjectControls.tsx](portfolio-web/src/components/sections/ProjectControls.tsx), [FlexCarousel.tsx](portfolio-web/src/components/ui/FlexCarousel.tsx), [composición compartida de tarjetas](portfolio-web/src/lib/project-card.ts), [datos](portfolio-web/src/data/projects.ts) y [ProjectDetail.tsx](portfolio-web/src/components/sections/ProjectDetail.tsx).
 
-El ERP **Archai by Sepharim** ya está cargado en `src/data/projects.ts` con `comingSoon: true`
-(se muestra como tarjeta "Próximamente" en `/proyectos`). Para publicarlo:
+Navegación global: [StaggeredMenu.tsx](portfolio-web/src/components/ui/StaggeredMenu.tsx), coordinada por LandingStory. Pruebas reproducibles: [`portfolio-web/tests/`](portfolio-web/tests/).
 
-1. En `src/data/projects.ts`, busca el proyecto `archai-erp` y pon `comingSoon: false`.
-2. Añade una captura en `public/projects/archai-erp/thumb.png` y apunta `thumbnail` a esa ruta.
-3. (Opcional) Crea su case study en `src/content/cases/archai-erp.md` y rellena `casePath: "/cases/archai-erp"`.
+Stack: [TechStack.tsx](portfolio-web/src/components/sections/TechStack.tsx), [estilos](portfolio-web/src/components/sections/TechStack.module.css), [tecnologías](portfolio-web/src/data/stack.ts) y [TechText](portfolio-web/src/components/ui/TechText.tsx).
 
-Nada más: la tarjeta pasa automáticamente al grid principal con el resto de proyectos en ES y EN.
+Zona personal: [About.tsx](portfolio-web/src/components/sections/About.tsx), [Contact.tsx](portfolio-web/src/components/sections/Contact.tsx), [contactos confirmados](portfolio-web/src/config/contact.ts), [cámara y planos de texto](portfolio-web/src/lib/contact-transition.ts) y [Radar](portfolio-web/src/components/ui/Radar.tsx).
+
+Auditoría inicial: `npm audit --omit=dev` informa de cero vulnerabilidades. La auditoría completa señala cinco avisos de alta severidad en la cadena de desarrollo de ESLint (`braces` → `micromatch` → `fast-glob`); no se ha aplicado la degradación de Next ESLint propuesta por npm. Revisar cuando exista una actualización compatible.
+
+## Siguiente paso
+
+Comprobar visualmente el menú y sus entradas/salidas, también desde una ficha abierta, en móvil, tablet y escritorio. El código está preparado para teclado, movimiento reducido y scroll interno; falta su comprobación en un navegador autorizado.
+
+Completar la comprobación visual de PatternWaves y sus franjas en Hero ↔ proyectos, la tipografía, TechText y «Sobre mí» → contacto con su radar en escritorio, tablet y móvil cuando se resuelva la denegación guardada del navegador para `http://127.0.0.1:3000`; recargar la pestaña o ampliar los permisos de terminal no la resolvió. Revisar especialmente contraste de la Hero, continuidad de las franjas, contexto de proyectos a 320 × 480 y 640 × 320 y perspectiva durante el giro del radar. Detalles en [Fondo PatternWaves](portfolio-vault/base-tecnica-y-visual.md#fondo-patternwaves), [Tipografía responsive](portfolio-vault/base-tecnica-y-visual.md#tipografía-responsive) y [Sobre mí y contacto](portfolio-vault/sobre-mi.md).
+
+Incorporar las capturas reales que aporte el usuario en `portfolio-web/public/images/projects/capturas/` y actualizar `preview` en los datos de cada proyecto. Confirmar las tecnologías de Sophos y añadir LinkedIn cuando Rubén facilite su URL. La selección, los logos, la preselección con contexto y la responsabilidad completa sobre ambos proyectos están confirmados; el contenido extenso de los casos se ampliará después de la landing.
+
+El diseño del resto de la web, idiomas, dominio y despliegue siguen pendientes. La configuración y los textos antiguos son referencias, no decisiones nuevas confirmadas.
+
+Cuando haya decisiones o planes que necesiten más detalle, guardarlos en `portfolio-vault/` y enlazarlos desde este documento.

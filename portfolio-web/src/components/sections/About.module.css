@@ -1,0 +1,147 @@
+.section {
+  position: relative;
+  min-height: 100svh;
+  isolation: isolate;
+  overflow: clip;
+  padding: max(68px, 7svh, calc(env(safe-area-inset-top) + 56px)) 6vw
+    clamp(190px, 28svh, 320px);
+  color: var(--ink);
+  background: transparent;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(36px, 7vw, 120px);
+  width: min(100%, 1560px);
+  margin-inline: auto;
+}
+
+.heading {
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.title {
+  margin: 0;
+  font-family: "League Gothic", Impact, sans-serif;
+  font-size: min(clamp(7rem, 17vw, 18rem), 49cqw);
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: -0.015em;
+}
+
+.title span {
+  display: block;
+}
+
+.back,
+.next {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  margin-top: clamp(24px, 4svh, 44px);
+  font-size: var(--text-action);
+  line-height: 1.5;
+  text-decoration: none;
+  text-underline-offset: 0.25em;
+}
+
+.back svg {
+  flex: 0 0 auto;
+}
+.back:focus-visible,
+.next:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 5px;
+}
+
+.next {
+  display: flex;
+  width: fit-content;
+  margin-top: 24px;
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+.copy {
+  min-width: 0;
+  max-width: 43ch;
+  padding-top: clamp(4px, 1.5svh, 18px);
+  font-size: clamp(1rem, 0.875rem + 0.4vw, 1.25rem);
+  line-height: 1.6;
+  color: #3c4c44;
+}
+
+.copy p {
+  margin: 0 0 1.15em;
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+}
+
+.copy .lead {
+  max-width: 22ch;
+  margin-bottom: 0.9em;
+  color: var(--ink);
+  font-size: clamp(1.75rem, 2.8vw, 2.75rem);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.signature {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--accent);
+  font-family: "Amazed", cursive;
+  font-size: clamp(2.75rem, 4vw, 4.5rem);
+  line-height: 1.2;
+  transform: rotate(-7deg);
+}
+
+@media (hover: hover) {
+  .back:hover,
+  .next:hover {
+    text-decoration: underline;
+  }
+}
+
+@media (max-width: 767px) {
+  .section {
+    padding: max(68px, calc(env(safe-area-inset-top) + 56px)) 6vw 200px;
+  }
+  .content {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+  .title {
+    font-size: min(clamp(4.5rem, 23vw, 10rem), 27cqw);
+    line-height: 0.95;
+  }
+  .title span {
+    display: inline;
+  }
+  .back {
+    margin-top: 14px;
+  }
+  .copy {
+    padding-top: 0;
+  }
+  .copy .lead {
+    font-size: clamp(1.75rem, 6.5vw, 2.5rem);
+  }
+}
+
+@media (max-height: 550px) and (aspect-ratio > 1) {
+  .section {
+    padding-top: max(68px, calc(env(safe-area-inset-top) + 56px));
+  }
+  .title {
+    font-size: clamp(4.5rem, 12vw, 8rem);
+  }
+  .copy .lead {
+    font-size: 1.75rem;
+  }
+}

@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "League Gothic";
+  src: url("/fonts/LeagueGothic-Variable.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 75% 100%;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Amazed";
+  src: url("/fonts/Amazed.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light;
+  --paper: #e4eae8;
+  --ink: #7a1229;
+  --accent: #479c73;
+  --text-meta: 0.75rem;
+  --text-small: 0.875rem;
+  --text-action: 0.9375rem;
+  --text-body: clamp(1rem, 0.95rem + 0.2vw, 1.125rem);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* Keep the document scroll used by the story; show only its inner scrollbars. */
+html:has([data-scroll-story]) {
+  scrollbar-width: none;
+}
+
+html:has([data-scroll-story])::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  font-size: var(--text-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--ink);
+  color: var(--paper);
+}
