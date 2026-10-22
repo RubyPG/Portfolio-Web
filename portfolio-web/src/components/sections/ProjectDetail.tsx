@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import type { Project } from "@/data/projects";
+import { assetPath } from "@/lib/asset-path";
 import {
   getProjectCardBackground,
   getProjectCardBackgroundCss,
@@ -468,7 +469,9 @@ export function ProjectDetail({
             height: composition.media.height,
           }}
           onError={({ currentTarget }) => {
-            const placeholder = "/images/projects/capturas/sin-captura.svg";
+            const placeholder = assetPath(
+              "/images/projects/capturas/sin-captura.svg",
+            );
             if (currentTarget.getAttribute("src") !== placeholder)
               currentTarget.src = placeholder;
           }}

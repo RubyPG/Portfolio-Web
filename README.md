@@ -36,6 +36,7 @@ Para Claude, dar acceso a esta misma raíz y comenzar por [CLAUDE.md](CLAUDE.md)
 
 ## Estado actual · 22 de octubre de 2026
 
+- GitHub Pages conectado a la nueva aplicación: [portfolio público](https://rubypg.github.io/Portfolio-Web/). El workflow de `main` compila `portfolio-web/` como exportación estática, comprueba recursos y publica el resultado; sustituye al despliegue antiguo de Astro. Las rutas incorporan `/Portfolio-Web` en Pages y conservan la raíz en desarrollo. Configuración y límites en [Despliegue de Pages](portfolio-vault/rendimiento-y-navegacion.md#despliegue-de-github-pages).
 - Menú global StaggeredMenu adaptado al diseño: saltos directos entre las cinco secciones con slide y fade, sin recorrer las intermedias. Corregida la suma del desplazamiento CSS con el de GSAP que dejaba el panel fuera de posición; inicialización tras la carga y botón Sangria con texto Pebble e icono Jade estables. Navegar desde una ficha abierta recupera un estado limpio del carrusel. Rendimiento, recursos y alcance de las pruebas en [Rendimiento y navegación](portfolio-vault/rendimiento-y-navegacion.md).
 - Optimización de fuentes, carga diferida del radar y trabajo redundante de los efectos, conservando sus parámetros visuales. Pruebas de regresión permanentes disponibles con `npm test`; no sustituyen la validación visual pendiente.
 - Verificación final de menú y rendimiento: build, TypeScript, ESLint, formato y cinco suites de pruebas correctos. Detector Impeccable sin hallazgos en las superficies ajustadas. PNG −13,2 % sin cambiar RGBA; fuentes −54,1 %. La comprobación visual y FPS siguen pendientes del acceso al navegador local.
@@ -92,6 +93,7 @@ Ejecutar desde `portfolio-web/`:
 | `npm ci` | Instalar las versiones del lockfile. |
 | `npm run dev` | Vista local en `http://localhost:3000`. |
 | `npm run build` | Compilación de producción. |
+| `npm run verify:export` | Comprueba contenido y recursos de `out/` después de una exportación estática. |
 | `npm start` | Servir la compilación de producción. |
 | `npm run lint` | Revisar el código con ESLint. |
 | `npm run typecheck` | Comprobar tipos. |

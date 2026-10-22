@@ -36,4 +36,14 @@ Las pruebas permanentes de `portfolio-web/tests/` ejecutan código real de los c
 
 La revisión visual y la medición real de FPS/Core Web Vitals siguen pendientes: la herramienta de navegador mantiene una denegación de acceso al origen local. No sortearla mediante otro puerto, hostname o herramienta. Los ahorros de bytes y de operaciones redundantes no se presentan como una medición de velocidad del navegador.
 
-El push de código no constituye un despliegue. No se reactivan los workflows del sitio archivado. El destino de hosting confirmado por el usuario sigue siendo Hostinger; su configuración está pendiente.
+## Despliegue de GitHub Pages
+
+El usuario espera que [GitHub Pages](https://rubypg.github.io/Portfolio-Web/) muestre la versión nueva. La revisión encontró que seguía publicado el último despliegue Astro de julio: los pushes de la nueva web no tenían workflow de publicación. Se añade `.github/workflows/deploy-pages.yml` para construir y publicar desde `main`, con ejecución manual disponible. Pages ya estaba configurado para GitHub Actions y sin dominio personalizado.
+
+- El build se ejecuta dentro de `portfolio-web/`, con Node 24 y `npm ci`. ESLint, las pruebas y la verificación de los recursos exportados preceden al despliegue.
+- `STATIC_EXPORT=true` activa `output: "export"`; `NEXT_PUBLIC_BASE_PATH` recibe el prefijo de Pages, actualmente `/Portfolio-Web`. Las imágenes, SVG y fuentes usan un helper común; los chunks y las importaciones diferidas usan el `basePath` de Next. Las fuentes conservan sus nombres y métricas.
+- Se publica únicamente `portfolio-web/out/`, sin archivo, vault, código fuente ni dependencias. El workflow utiliza los permisos de Pages y OIDC de GitHub; no necesita credenciales de FTP.
+- Sin esas variables, `npm run build` y `npm start` conservan el modo servidor local. Hostinger sigue siendo una opción independiente pendiente de configuración; no se reactiva el workflow FTP antiguo.
+- La exportación local para `/Portfolio-Web` compila y valida 50 recursos referenciados en HTML/CSS. Las cinco suites y ESLint pasan. Estas comprobaciones validan la publicación y las rutas; no equivalen a una revisión visual de las animaciones.
+
+Referencias: [exportación estática de Next.js](https://nextjs.org/docs/app/guides/static-exports), [basePath](https://nextjs.org/docs/app/api-reference/config/next-config-js/basePath) y [workflows de GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).

@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/*.test.cjs",
+    "verify:export": "node scripts/verify-export.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

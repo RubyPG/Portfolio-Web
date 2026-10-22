@@ -1,3 +1,5 @@
+import { assetPath } from "@/lib/asset-path";
+
 export interface Project {
   slug: string;
   title: string;
@@ -17,10 +19,10 @@ export const projects: Project[] = [
     title: "Sophos",
     category: "IA personal",
     description: "Segundo Cerebro de IA personal.",
-    image: "/images/projects/sophos.svg",
+    image: assetPath("/images/projects/sophos.svg"),
     imageAlt: "Logotipo de Sophos, Segundo Cerebro de IA personal",
     preview: {
-      src: "/images/projects/capturas/sin-captura.svg",
+      src: assetPath("/images/projects/capturas/sin-captura.svg"),
       alt: "Captura de Sophos pendiente",
       width: 1600,
       height: 1000,
@@ -35,10 +37,10 @@ export const projects: Project[] = [
     category: "E-commerce musical",
     description:
       "Una tienda de productos musicales con catálogo, filtros y carrito. El frontend en Astro se conecta con WordPress y WooCommerce.",
-    image: "/images/projects/loops-grooves.svg",
+    image: assetPath("/images/projects/loops-grooves.svg"),
     imageAlt: "Logotipo azul de Loops n’ Grooves en forma de onda sonora",
     preview: {
-      src: "/images/projects/capturas/sin-captura.svg",
+      src: assetPath("/images/projects/capturas/sin-captura.svg"),
       alt: "Captura de Loops n’ Grooves pendiente",
       width: 1600,
       height: 1000,

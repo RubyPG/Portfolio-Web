@@ -1,3 +1,5 @@
+import { assetPath } from "@/lib/asset-path";
+
 export interface StackTechnology {
   name: string;
   icon?: string;
@@ -18,47 +20,53 @@ export const stackGroups: StackGroup[] = [
     id: "frontend",
     title: "Frontend",
     primary: [
-      { name: "Next.js", icon: "/icons/stack/nextjs.svg" },
-      { name: "React", icon: "/icons/stack/react.svg" },
-      { name: "TypeScript", icon: "/icons/stack/typescript.svg" },
-      { name: "Astro", icon: "/icons/stack/astro.svg" },
-      { name: "Tailwind CSS", icon: "/icons/stack/tailwind.svg" },
-      { name: "GSAP", icon: "/icons/stack/gsap.svg" },
+      { name: "Next.js", icon: assetPath("/icons/stack/nextjs.svg") },
+      { name: "React", icon: assetPath("/icons/stack/react.svg") },
+      { name: "TypeScript", icon: assetPath("/icons/stack/typescript.svg") },
+      { name: "Astro", icon: assetPath("/icons/stack/astro.svg") },
+      { name: "Tailwind CSS", icon: assetPath("/icons/stack/tailwind.svg") },
+      { name: "GSAP", icon: assetPath("/icons/stack/gsap.svg") },
     ],
     additional: [
-      { name: "HTML5 / CSS3", icon: "/icons/stack/html.svg" },
-      { name: "WordPress headless", icon: "/icons/stack/wordpress.svg" },
-      { name: "WooCommerce API", icon: "/icons/stack/woocommerce.svg" },
+      { name: "HTML5 / CSS3", icon: assetPath("/icons/stack/html.svg") },
+      {
+        name: "WordPress headless",
+        icon: assetPath("/icons/stack/wordpress.svg"),
+      },
+      {
+        name: "WooCommerce API",
+        icon: assetPath("/icons/stack/woocommerce.svg"),
+      },
     ],
   },
   {
     id: "backend",
     title: "Backend y datos",
     primary: [
-      { name: "Supabase", icon: "/icons/stack/supabase.svg" },
-      { name: "PostgreSQL", icon: "/icons/stack/postgresql.svg" },
-      { name: "Stripe", icon: "/icons/stack/stripe.svg" },
-      { name: "Firebase", icon: "/icons/stack/firebase.svg" },
+      { name: "Supabase", icon: assetPath("/icons/stack/supabase.svg") },
+      { name: "PostgreSQL", icon: assetPath("/icons/stack/postgresql.svg") },
+      { name: "Stripe", icon: assetPath("/icons/stack/stripe.svg") },
+      { name: "Firebase", icon: assetPath("/icons/stack/firebase.svg") },
     ],
     additional: [
-      { name: "RLS", icon: "/icons/stack/rlsRealtime.svg" },
-      { name: "REST APIs", icon: "/icons/stack/restApi.svg" },
-      { name: "SQL / RPC", icon: "/icons/stack/sqlRpc.svg" },
+      { name: "RLS", icon: assetPath("/icons/stack/rlsRealtime.svg") },
+      { name: "REST APIs", icon: assetPath("/icons/stack/restApi.svg") },
+      { name: "SQL / RPC", icon: assetPath("/icons/stack/sqlRpc.svg") },
     ],
   },
   {
     id: "ai",
     title: "Inteligencia artificial",
     primary: [
-      { name: "Claude Code", icon: "/icons/stack/claudecode.svg" },
-      { name: "Codex", icon: "/icons/stack/codex.svg" },
-      { name: "Hermes Agent", icon: "/icons/stack/hermes.svg" },
+      { name: "Claude Code", icon: assetPath("/icons/stack/claudecode.svg") },
+      { name: "Codex", icon: assetPath("/icons/stack/codex.svg") },
+      { name: "Hermes Agent", icon: assetPath("/icons/stack/hermes.svg") },
     ],
     additional: [
       { name: "Agent Skills" },
-      { name: "MCP", icon: "/icons/stack/mcp.svg" },
+      { name: "MCP", icon: assetPath("/icons/stack/mcp.svg") },
       { name: "Subagentes & Workflows" },
-      { name: "Claude API", icon: "/icons/stack/claude.svg" },
+      { name: "Claude API", icon: assetPath("/icons/stack/claude.svg") },
       { name: "Context Engineering" },
       { name: "RAG" },
     ],
@@ -67,31 +75,34 @@ export const stackGroups: StackGroup[] = [
     id: "automation",
     title: "Automatización",
     primary: [
-      { name: "n8n", icon: "/icons/stack/n8n.svg" },
-      { name: "Docker / Compose", icon: "/icons/stack/docker.svg" },
-      { name: "Git / GitHub", icon: "/icons/stack/git.svg" },
+      { name: "n8n", icon: assetPath("/icons/stack/n8n.svg") },
+      { name: "Docker / Compose", icon: assetPath("/icons/stack/docker.svg") },
+      { name: "Git / GitHub", icon: assetPath("/icons/stack/git.svg") },
     ],
     additional: [
-      { name: "Webhooks", icon: "/icons/stack/webhook.svg" },
-      { name: "Traefik", icon: "/icons/stack/traefik.svg" },
-      { name: "DigitalOcean", icon: "/icons/stack/digitalocean.svg" },
-      { name: "Amazon SES / IAM", icon: "/icons/stack/amazon.svg" },
+      { name: "Webhooks", icon: assetPath("/icons/stack/webhook.svg") },
+      { name: "Traefik", icon: assetPath("/icons/stack/traefik.svg") },
+      {
+        name: "DigitalOcean",
+        icon: assetPath("/icons/stack/digitalocean.svg"),
+      },
+      { name: "Amazon SES / IAM", icon: assetPath("/icons/stack/amazon.svg") },
     ],
   },
   {
     id: "desktop",
     title: "Desktop",
     primary: [
-      { name: "Kotlin", icon: "/icons/stack/kotlin.svg" },
+      { name: "Kotlin", icon: assetPath("/icons/stack/kotlin.svg") },
       {
         name: "Compose Multiplatform",
-        icon: "/icons/stack/compose.svg",
+        icon: assetPath("/icons/stack/compose.svg"),
       },
-      { name: "Java", icon: "/icons/stack/java.svg" },
+      { name: "Java", icon: assetPath("/icons/stack/java.svg") },
     ],
     additional: [
-      { name: "Gradle", icon: "/icons/stack/gradle.svg" },
-      { name: "Maven", icon: "/icons/stack/maven.svg" },
+      { name: "Gradle", icon: assetPath("/icons/stack/gradle.svg") },
+      { name: "Maven", icon: assetPath("/icons/stack/maven.svg") },
     ],
   },
 ];

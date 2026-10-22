@@ -1,22 +1,5 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: "League Gothic";
-  src: url("/fonts/LeagueGothic-Variable.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 400;
-  font-stretch: 75% 100%;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Amazed";
-  src: url("/fonts/Amazed.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-
 :root {
   color-scheme: light;
   --paper: #e4eae8;

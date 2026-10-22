@@ -4,6 +4,7 @@ import { useId, useRef } from "react";
 import type { Ref } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
+import { assetPath } from "@/lib/asset-path";
 import { DitherVeil } from "@/components/ui/DitherVeil";
 import type { DitherVeilHandle } from "@/components/ui/DitherVeil";
 import {
@@ -138,7 +139,7 @@ export function Hero({
             ref={portraitRef}
             className={styles.portraitContent}
             data-hero-enter="portrait"
-            src="/images/ruben-hero.png"
+            src={assetPath("/images/ruben-hero.png")}
             alt="Retrato de Rubén"
             width={1086}
             height={1448}
