@@ -40,7 +40,7 @@ La revisión visual y la medición real de FPS/Core Web Vitals siguen pendientes
 
 El usuario espera que [GitHub Pages](https://rubypg.github.io/Portfolio-Web/) muestre la versión nueva. La revisión encontró que seguía publicado el último despliegue Astro de julio: los pushes de la nueva web no tenían workflow de publicación. Se añade `.github/workflows/deploy-pages.yml` para construir y publicar desde `main`, con ejecución manual disponible. Pages ya estaba configurado para GitHub Actions y sin dominio personalizado.
 
-- El build se ejecuta dentro de `portfolio-web/`, con Node 24 y `npm ci`. ESLint, las pruebas y la verificación de los recursos exportados preceden al despliegue.
+- El build se ejecuta dentro de `portfolio-web/`, con Node 24.22.1 y su npm 11.19.1. El lockfile se ha completado con esa versión de npm para incluir las dependencias opcionales/peer de WASM que impedían `npm ci`, conservando las versiones de los paquetes existentes. ESLint, las pruebas y la verificación de los recursos exportados preceden al despliegue.
 - `STATIC_EXPORT=true` activa `output: "export"`; `NEXT_PUBLIC_BASE_PATH` recibe el prefijo de Pages, actualmente `/Portfolio-Web`. Las imágenes, SVG y fuentes usan un helper común; los chunks y las importaciones diferidas usan el `basePath` de Next. Las fuentes conservan sus nombres y métricas.
 - Se publica únicamente `portfolio-web/out/`, sin archivo, vault, código fuente ni dependencias. El workflow utiliza los permisos de Pages y OIDC de GitHub; no necesita credenciales de FTP.
 - Sin esas variables, `npm run build` y `npm start` conservan el modo servidor local. Hostinger sigue siendo una opción independiente pendiente de configuración; no se reactiva el workflow FTP antiguo.
