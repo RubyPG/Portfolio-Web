@@ -85,9 +85,10 @@
   max-width: 22ch;
   margin-bottom: 0.9em;
   color: var(--ink);
+  font-family: "Nothing You Could Do", "Segoe Print", cursive;
   font-size: clamp(1.75rem, 2.8vw, 2.75rem);
   line-height: 1.2;
-  letter-spacing: -0.025em;
+  letter-spacing: normal;
   text-wrap: balance;
 }
 

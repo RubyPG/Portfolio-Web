@@ -4,6 +4,9 @@ import "./globals.css";
 
 const leagueGothicFont = assetPath("/fonts/LeagueGothic-Variable.woff2");
 const amazedFont = assetPath("/fonts/Amazed.woff2");
+const handwrittenFont = assetPath(
+  "/fonts/NothingYouCouldDo-Regular-latin.woff2",
+);
 
 const fontFaces = `
   @font-face {
@@ -17,6 +20,13 @@ const fontFaces = `
   @font-face {
     font-family: "Amazed";
     src: url("${amazedFont}") format("woff2");
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Nothing You Could Do";
+    src: url("${handwrittenFont}") format("woff2");
     font-style: normal;
     font-weight: 400;
     font-display: swap;
