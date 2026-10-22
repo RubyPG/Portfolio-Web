@@ -7,7 +7,14 @@
 - Enlaces a Inicio, Proyectos, Mi stack, Sobre mí y Contacto. Seleccionar una sección ejecuta salida con desplazamiento y fade, cambio de escena mientras está oculta y entrada inversa; no recorre las secciones intermedias.
 - El menú suspende la interacción con la escena. Tiene cierre por Escape, control de foco y alternativa inmediata con movimiento reducido. Navegar desde una ficha abierta limpia la ficha y su selección manteniendo el proyecto central del carrusel.
 - Subir el nuevo portfolio a `RubyPG/Portfolio-Web`, directamente sobre `main`, conservando el historial anterior. Se versionan `portfolio-web/`, `portfolio-vault/` y las normas/documentación de raíz. `_archive/`, `_temp/`, dependencias, compilados y secretos quedan excluidos.
-- La instrucción posterior del usuario cancela el apagado: **dejar el PC encendido**.
+
+## Corrección del menú
+
+El desplazamiento inicial `translateX(100%)` del CSS se interpretaba como píxeles al inicializar GSAP. Animar solo `xPercent` conservaba ese desplazamiento adicional, dejando el panel fuera de posición. La animación ahora restablece `x: 0` explícitamente y se inicializa cuando termina la carga, con el menú visible para medirlo. El CSS sigue ocultando los paneles antes de hidratar.
+
+El botón conserva fondo Sangria, texto Pebble e icono Jade en todas las secciones, sin cambiar de tema antes de que llegue el panel. Mantiene contraste durante los bloqueos de navegación y un borde Jade al pasar el ratón.
+
+La regresión prueba desplazamientos previos equivalentes a paneles de 320 y 520 px y la espera durante la carga, además de los ciclos de apertura, cierre, foco y movimiento reducido. Usa GSAP sobre objetos con ambos canales de desplazamiento; no verifica la descomposición CSS ni el renderizado en un navegador. Las cinco suites, build, tipos, ESLint y formato pasan. Se ha reiniciado el servidor local con la build corregida; queda pendiente su comprobación visual por la restricción de acceso descrita abajo.
 
 ## Cambios de rendimiento
 

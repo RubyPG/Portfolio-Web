@@ -41,7 +41,7 @@ const compile = (text) =>
     },
   }).outputText;
 
-function fixture(reduced = false) {
+function fixture(reduced = false, initialOffset = 0, ready = true) {
   const timelines = [],
     frames = new Map(),
     calls = [],
@@ -53,6 +53,7 @@ function fixture(reduced = false) {
       Object.assign(this, {
         name,
         parent,
+        x: 0,
         xPercent: 0,
         yPercent: 0,
         y: 0,
@@ -96,6 +97,9 @@ function fixture(reduced = false) {
     surface = new Element("surface", scope),
     trigger = new Element("trigger", scope);
   const layers = [new Element("jade", scope), new Element("sangria", scope)];
+  // CSSPlugin decomposes the stylesheet's translateX(100%) into a pixel x.
+  // Model that existing channel as well as xPercent; plain zeroed objects hid it.
+  for (const sheet of [surface, ...layers]) sheet.x = initialOffset;
   const links = Array.from(
     { length: 7 },
     (_, i) => new Element("link" + i, surface),
@@ -150,6 +154,7 @@ function fixture(reduced = false) {
     resolveNavigation = resolve;
   });
   const context = {
+    ready,
     gsap: {
       ...gsap,
       utils: { ...gsap.utils, toArray: (selector) => selectors.get(selector) },
@@ -222,7 +227,7 @@ function fixture(reduced = false) {
     return e;
   };
   const dispose = () => {
-    cleanup();
+    cleanup?.();
     timelines.forEach((tl) => tl.kill());
   };
   return {
@@ -257,6 +262,45 @@ function fixture(reduced = false) {
 }
 
 async function run() {
+  {
+    const hidden = fixture(false, 520, false);
+    assert.equal(
+      hidden.controls.current,
+      null,
+      "loader-hidden menu is not measured or animated",
+    );
+    assert.equal(hidden.timelines.length, 0);
+    assert.equal(hidden.surface.x, 520);
+    hidden.dispose();
+  }
+  for (const width of [320, 520]) {
+    const f = fixture(false, width);
+    const position = (sheet) => sheet.x + (sheet.xPercent / 100) * width;
+    for (const sheet of [f.surface, ...f.layers])
+      assert.equal(
+        position(sheet),
+        width,
+        "closed sheets are exactly one width offscreen",
+      );
+    f.controls.current.open();
+    f.finish();
+    for (const sheet of [f.surface, ...f.layers])
+      assert.equal(
+        position(sheet),
+        0,
+        "opened sheets have no residual CSS translation",
+      );
+    const closed = f.controls.current.close(false);
+    f.finish();
+    await closed;
+    for (const sheet of [f.surface, ...f.layers])
+      assert.equal(
+        position(sheet),
+        width,
+        "closing preserves the same percentage-based path",
+      );
+    f.dispose();
+  }
   {
     const f = fixture();
     assert.equal(f.surface.xPercent, 100);

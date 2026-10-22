@@ -59,22 +59,18 @@
   min-width: 96px;
   min-height: 44px;
   padding: 10px 8px;
-  border: 0;
-  color: var(--ink);
-  background: var(--paper);
+  border: 1px solid rgb(228 234 232 / 35%);
+  color: var(--paper);
+  background: var(--ink);
   font: inherit;
   font-size: 15px;
   cursor: pointer;
   pointer-events: auto;
+  transition: border-color 180ms ease;
 }
 
-.root[data-dark] .toggle {
-  background: var(--ink);
-  color: var(--paper);
-}
 .toggle:disabled {
-  cursor: default;
-  opacity: 0.65;
+  cursor: progress;
 }
 .textWindow {
   width: 5.5ch;
@@ -96,6 +92,7 @@
   width: 16px;
   height: 16px;
   flex: 0 0 16px;
+  color: var(--accent);
 }
 .icon > span {
   position: absolute;
@@ -204,6 +201,9 @@
 }
 
 @media (hover: hover) {
+  .toggle:not(:disabled):hover {
+    border-color: var(--accent);
+  }
   .link .label {
     transition: color 180ms ease;
   }
@@ -244,6 +244,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .toggle,
   .link .label {
     transition: none;
   }

@@ -57,7 +57,7 @@ export function StaggeredMenu({
 
   useGSAP(
     (_context, contextSafe) => {
-      if (!contextSafe) return;
+      if (!ready || !contextSafe) return;
       const scope = root.current!;
       const surface = panel.current!;
       const trigger = button.current!;
@@ -79,7 +79,9 @@ export function StaggeredMenu({
       let resolveClose: (() => void) | null = null;
       let focusFrame = 0;
 
-      gsap.set([...layers, surface], { xPercent: 100 });
+      // CSS keeps the sheets offscreen before hydration. CSSPlugin reads that
+      // translateX as pixels: clear x before animating the percentage channel.
+      gsap.set([...layers, surface], { x: 0, xPercent: 100 });
       gsap.set(labels, { yPercent: 140, rotation: 10 });
       gsap.set(numbers, { opacity: 0 });
       gsap.set(socials, { y: 25, opacity: 0 });
@@ -118,14 +120,24 @@ export function StaggeredMenu({
         layers.forEach((layer, index) => {
           animation!.to(
             layer,
-            { xPercent: 0, duration: fast ? 0.001 : 0.5, ease: "power4.out" },
+            {
+              x: 0,
+              xPercent: 0,
+              duration: fast ? 0.001 : 0.5,
+              ease: "power4.out",
+            },
             fast ? 0 : index * 0.07,
           );
         });
         animation
           .to(
             surface,
-            { xPercent: 0, duration: fast ? 0.001 : 0.65, ease: "power4.out" },
+            {
+              x: 0,
+              xPercent: 0,
+              duration: fast ? 0.001 : 0.65,
+              ease: "power4.out",
+            },
             fast ? 0 : 0.15,
           )
           .to(
@@ -214,7 +226,7 @@ export function StaggeredMenu({
         animation
           .to(
             [...layers, surface],
-            { xPercent: 100, duration, ease: "power3.in" },
+            { x: 0, xPercent: 100, duration, ease: "power3.in" },
             0,
           )
           .to(horizontal, { rotation: 0, duration, ease: "power3.inOut" }, 0)
@@ -291,7 +303,7 @@ export function StaggeredMenu({
         motion.removeEventListener("change", preferenceChanged);
       };
     },
-    { scope: root },
+    { scope: root, dependencies: [ready], revertOnUpdate: true },
   );
 
   const navigate = async (
@@ -322,7 +334,6 @@ export function StaggeredMenu({
       className={styles.root}
       data-site-menu
       data-open={present || undefined}
-      data-dark={(currentSection === "stack" && !present) || undefined}
       hidden={!ready}
       role={present ? "dialog" : undefined}
       aria-modal={present || undefined}
