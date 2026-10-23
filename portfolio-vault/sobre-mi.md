@@ -64,7 +64,7 @@ La transición se inicia con un gesto nuevo al final del scroll de «Sobre mí»
 - Rueda y tacto iniciados en un campo editable conservan el control durante ese gesto; no vuelven a Sobre mí al alcanzar un borde del mensaje. El bloqueo durante las animaciones conserva prioridad. El textarea contiene su scroll y admite redimensionado vertical. La transición y el canvas no se modifican.
 - No hay PHP, backend propio ni nuevas dependencias. GitHub Pages sirve la exportación estática y Formspree gestionará el envío. Hostinger no se usará como alojamiento ni SMTP; disponer del dominio `sepharim.eu` no cambia esa decisión.
 
-**Decisión del 23 de octubre: GitHub Pages + Formspree.** Rubén creó el formulario y facilitó `https://formspree.io/f/myeeyrzo`. Su ID público está conectado mediante [contact.ts](../portfolio-web/src/config/contact.ts), compartido por desarrollo y la exportación de Pages; el botón de envío queda habilitado. No es una credencial: no necesita `.env.local` ni variables de GitHub. Se conserva el componente React y su transporte AJAX, adaptados al diseño existente, sin añadir dependencias. Cambios locales sin publicar; la entrega al destinatario aún no se ha comprobado.
+**Decisión del 23 de octubre: GitHub Pages + Formspree.** Rubén creó el formulario y facilitó `https://formspree.io/f/myeeyrzo`. Su ID público está conectado mediante [contact.ts](../portfolio-web/src/config/contact.ts), compartido por desarrollo y la exportación de Pages; el botón de envío queda habilitado. No es una credencial: no necesita `.env.local` ni variables de GitHub. Se conserva el componente React y su transporte AJAX, adaptados al diseño existente, sin añadir dependencias. Publicado en GitHub Pages por petición de Rubén; la entrega al destinatario aún no se ha comprobado.
 
 Comprobaciones pendientes del servicio:
 
@@ -73,7 +73,9 @@ Comprobaciones pendientes del servicio:
 
 Referencias: [Formspree AJAX](https://help.formspree.io/articles/building-your-form/submit-forms-with-javascript-ajax), [reCAPTCHA](https://help.formspree.io/articles/form-and-project-settings/recaptcha-settings) y [honeypot](https://help.formspree.io/articles/building-your-form/honeypot-spam-filtering). La revisión interactiva local sigue pendiente por la restricción de acceso documentada abajo.
 
-**Comprobado tras conectar el ID:** build estático con `/Portfolio-Web`, 51 recursos exportados resueltos, TypeScript, ESLint y formato de los archivos ajustados. HTML exportado con el endpoint exacto, método POST, botón habilitado y `noindex, follow`. Las 14 pruebas pasan: nueve de validación/transporte con `fetch` simulado, más las cinco suites existentes; la suite de gestos incorpora rueda/touch y teclado sobre un textarea. El detector de diseño de la revisión anterior no encontró incidencias; esta conexión no cambia estilos. No se ha comprobado entrega real ni interacción visual en navegador. Cambios sin publicar.
+**Comprobado tras conectar el ID:** build estático con `/Portfolio-Web`, 51 recursos exportados resueltos, TypeScript, ESLint y formato de los archivos ajustados. HTML exportado con el endpoint exacto, método POST, botón habilitado y `noindex, follow`. Las 14 pruebas pasan: nueve de validación/transporte con `fetch` simulado, más las cinco suites existentes; la suite de gestos incorpora rueda/touch y teclado sobre un textarea. El detector de diseño de la revisión anterior no encontró incidencias; esta conexión no cambia estilos. No se ha comprobado entrega real ni interacción visual en navegador.
+
+**Publicación comprobada el 23 de octubre a las 20:07 UTC:** `main` incorpora `b235411` (carpetas de capturas) y `4afa68f` (formulario y noindex). El [workflow de este último commit](https://github.com/RubyPG/Portfolio-Web/actions/runs/40016405716) completó build y deploy con éxito. La [web pública](https://rubypg.github.io/Portfolio-Web/) responde HTTP 200 con el endpoint indicado, POST, botón habilitado y `noindex, follow`; sus 11 recursos Next.js referenciados también responden 200. No se han enviado mensajes de prueba ni cambiado DNS o ajustes de Formspree.
 
 ## Dominio y visibilidad
 
@@ -83,7 +85,7 @@ Referencias: [Formspree AJAX](https://help.formspree.io/articles/building-your-f
 - Mantener `sepharim.eu` público e indexable, sin enlace al portfolio desde la raíz.
 - Permitir acceder por enlace al portfolio y a las páginas legales de Sophos, evitando que aparezcan en buscadores.
 
-`noindex, follow` está preparado en [layout.tsx](../portfolio-web/src/app/layout.tsx) y comprobado como meta `robots` en `out/index.html`. Build estático y TypeScript correctos; `verify:export` comprueba 51 recursos. **Cambio local, todavía sin publicar.** DNS y dominio personalizado de Pages siguen pendientes. Excluir esas superficies de sitemaps y enlaces públicos de descubrimiento es la propuesta complementaria; no se bloqueará en `robots.txt` el rastreo necesario para leer `noindex`.
+`noindex, follow` está configurado en [layout.tsx](../portfolio-web/src/app/layout.tsx) y comprobado como meta `robots` tanto en la exportación local como en la web pública de GitHub Pages. Build estático y TypeScript correctos; `verify:export` comprueba 51 recursos. DNS y dominio personalizado de Pages siguen pendientes. Excluir esas superficies de sitemaps y enlaces públicos de descubrimiento es la propuesta complementaria; no se bloqueará en `robots.txt` el rastreo necesario para leer `noindex`.
 
 **Límite:** `noindex` y la ausencia de enlaces no son autenticación ni garantizan secreto. Quien conozca o reciba una URL podrá acceder; si se necesitara acceso privado, haría falta un control de acceso distinto. La raíz pública debe conservar su indexabilidad.
 
