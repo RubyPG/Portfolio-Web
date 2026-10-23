@@ -1,4 +1,5 @@
 type SceneDirection = -1 | 1;
+type GestureRoute = "scene" | "delegate" | "native";
 
 interface SceneInputOptions {
   element: HTMLElement;
@@ -13,13 +14,15 @@ interface TouchGesture {
   x: number;
   y: number;
   consumed: boolean;
-  route: "scene" | "delegate" | null;
+  route: GestureRoute | null;
   direction: SceneDirection | null;
 }
 
 const WHEEL_IDLE_MS = 220;
 const WHEEL_THRESHOLD = 18;
 const TOUCH_THRESHOLD = 24;
+const EDITABLE_SELECTOR =
+  'input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"]';
 
 /** Own one scene step per fresh gesture, without queuing input during motion. */
 export function createSceneInput(options: SceneInputOptions): {
@@ -31,7 +34,7 @@ export function createSceneInput(options: SceneInputOptions): {
     lastAt: -Infinity,
     distance: 0,
     consumed: false,
-    route: "scene" as "scene" | "delegate",
+    route: "scene" as GestureRoute,
     direction: 1 as SceneDirection,
   };
   let touchGesture: TouchGesture | null = null;
@@ -46,6 +49,9 @@ export function createSceneInput(options: SceneInputOptions): {
     // This listener owns the gesture before nested showcase handlers see it.
     event.stopImmediatePropagation();
   };
+  const editsField = (event: Event) =>
+    event.target instanceof Element &&
+    Boolean(event.target.closest(EDITABLE_SELECTOR));
 
   const wheel = (event: WheelEvent) => {
     if (
@@ -62,9 +68,11 @@ export function createSceneInput(options: SceneInputOptions): {
       wheelGesture.distance = 0;
       wheelGesture.consumed = options.isBlocked() || options.isDetailOpen();
       wheelGesture.direction = direction;
-      wheelGesture.route = options.handlesDirection(direction)
-        ? "scene"
-        : "delegate";
+      wheelGesture.route = editsField(event)
+        ? "native"
+        : options.handlesDirection(direction)
+          ? "scene"
+          : "delegate";
     }
     wheelGesture.lastAt = now;
 
@@ -77,6 +85,9 @@ export function createSceneInput(options: SceneInputOptions): {
       consume(event);
       return;
     }
+    // A gesture inside an editor belongs to that field until it ends, even
+    // when its own scroll reaches an edge or the pointer leaves the field.
+    if (wheelGesture.route === "native") return;
     // Ownership is chosen at gesture start, never promoted halfway through.
     if (wheelGesture.route === "delegate") {
       if (options.handlesDirection(direction)) consume(event);
@@ -108,7 +119,7 @@ export function createSceneInput(options: SceneInputOptions): {
       x: touch.clientX,
       y: touch.clientY,
       consumed: options.isBlocked() || options.isDetailOpen(),
-      route: null,
+      route: editsField(event) ? "native" : null,
       direction: null,
     };
   };
@@ -135,6 +146,7 @@ export function createSceneInput(options: SceneInputOptions): {
       consume(event);
       return;
     }
+    if (gesture.route === "native") return;
     const direction: SceneDirection = dy > 0 ? 1 : -1;
     if (gesture.route === null) {
       gesture.direction = direction;
@@ -178,12 +190,7 @@ export function createSceneInput(options: SceneInputOptions): {
       target?.closest('[aria-roledescription="carrusel"]')
     )
       return;
-    if (
-      target?.closest(
-        'input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"]',
-      )
-    )
-      return;
+    if (editsField(event)) return;
     const space = event.key === " " || event.key === "Spacebar";
     if (
       space &&

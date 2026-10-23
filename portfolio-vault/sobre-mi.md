@@ -52,7 +52,42 @@ Alternativas para valorar, sin implementar:
 
 La transición se inicia con un gesto nuevo al final del scroll de «Sobre mí» o su enlace «Hablemos». En contacto, subir desde el inicio o usar «Volver a sobre mí» invierte el giro y recupera la posición de lectura previa. Durante la transición se bloquean gestos nuevos y no se encolan; foco y controles solo se activan al terminar. El hash inicial `#contacto` restaura cámara y contenido final. Sin animación, ambas secciones siguen el flujo del documento y el radar estático queda detrás de contacto. El fondo se pausa fuera de la zona personal; no se reinicia al cambiar entre ambos planos.
 
-[Contact.tsx](../portfolio-web/src/components/sections/Contact.tsx) mantiene título, texto y enlaces reales separados del canvas. League Gothic y la paleta se conservan; los enlaces tienen objetivos de 44 px, el correo admite saltos y las pantallas bajas utilizan scroll interior. No se añade formulario.
+[Contact.tsx](../portfolio-web/src/components/sections/Contact.tsx) mantiene título, texto y enlaces reales separados del canvas. League Gothic y la paleta se conservan; los enlaces tienen objetivos de 44 px, el correo admite saltos y las pantallas bajas utilizan scroll interior. La decisión inicial de usar solo enlaces queda sustituida por la petición de formulario del 23 de octubre.
+
+## Formulario de contacto
+
+**Petición del 23 de octubre de 2026:** recibir mensajes desde la web, mediante formulario integrado o modal a criterio de diseño. Se elige integrado para evitar un paso extra: presentación y enlaces a la izquierda, formulario a la derecha desde 900 px; debajo en pantallas menores. Conserva League Gothic, Sangria/Pebble/Jade y el giro del radar. La firma no cambia.
+
+- [ContactForm.tsx](../portfolio-web/src/components/ui/ContactForm.tsx): nombre, correo y mensaje con etiquetas persistentes, autocompletado y foco visible. Estados de envío, éxito y error anunciados; conserva el texto ante fallos, impide duplicados mientras hay una solicitud y no reintenta automáticamente. Una respuesta tardía no roba el foco si el visitante ha salido del formulario.
+- [contact-form.ts](../portfolio-web/src/lib/contact-form.ts): validación de vacíos y límites, conexión AJAX preparada para Formspree y éxito solo tras respuesta confirmada. La petición utiliza HTTPS y JSON, sin credenciales del navegador. El campo oculto `_gotcha` queda preparado para el filtro del servicio; la validación cliente no sustituye controles del proveedor.
+- El contrato de respuesta se comprobó en el [cliente oficial de Formspree](https://github.com/formspree/formspree-js/blob/main/packages/formspree-core/src/submission.ts): reconoce `{ next: string }` como éxito. El helper admite ese contrato y `{ ok: true }`, siempre con HTTP correcto y sin errores. Los rechazos de verificación conservan el mensaje, muestran aviso y no repiten la petición ni redirigen automáticamente.
+- Rueda y tacto iniciados en un campo editable conservan el control durante ese gesto; no vuelven a Sobre mí al alcanzar un borde del mensaje. El bloqueo durante las animaciones conserva prioridad. El textarea contiene su scroll y admite redimensionado vertical. La transición y el canvas no se modifican.
+- No hay PHP, backend propio ni nuevas dependencias. GitHub Pages sirve la exportación estática y Formspree gestionará el envío. Hostinger no se usará como alojamiento ni SMTP; disponer del dominio `sepharim.eu` no cambia esa decisión.
+
+**Decisión del 23 de octubre: GitHub Pages + Formspree.** Rubén creó el formulario y facilitó `https://formspree.io/f/myeeyrzo`. Su ID público está conectado mediante [contact.ts](../portfolio-web/src/config/contact.ts), compartido por desarrollo y la exportación de Pages; el botón de envío queda habilitado. No es una credencial: no necesita `.env.local` ni variables de GitHub. Se conserva el componente React y su transporte AJAX, adaptados al diseño existente, sin añadir dependencias. Cambios locales sin publicar; la entrega al destinatario aún no se ha comprobado.
+
+Comprobaciones pendientes del servicio:
+
+1. Comprobar una entrega real desde la web al correo confirmado de Rubén. La creación del formulario no acredita que la notificación llegue; por ahora solo se han simulado respuestas y no se ha enviado correo real.
+2. Confirmar protección anti-spam y compatibilidad con AJAX. Si el formulario exige un CAPTCHA propio, conectar su clave pública antes de publicar. No se ha accedido al panel de Formspree ni cambiado su configuración externa; no desactivar protecciones para evitar una integración.
+
+Referencias: [Formspree AJAX](https://help.formspree.io/articles/building-your-form/submit-forms-with-javascript-ajax), [reCAPTCHA](https://help.formspree.io/articles/form-and-project-settings/recaptcha-settings) y [honeypot](https://help.formspree.io/articles/building-your-form/honeypot-spam-filtering). La revisión interactiva local sigue pendiente por la restricción de acceso documentada abajo.
+
+**Comprobado tras conectar el ID:** build estático con `/Portfolio-Web`, 51 recursos exportados resueltos, TypeScript, ESLint y formato de los archivos ajustados. HTML exportado con el endpoint exacto, método POST, botón habilitado y `noindex, follow`. Las 14 pruebas pasan: nueve de validación/transporte con `fetch` simulado, más las cinco suites existentes; la suite de gestos incorpora rueda/touch y teclado sobre un textarea. El detector de diseño de la revisión anterior no encontró incidencias; esta conexión no cambia estilos. No se ha comprobado entrega real ni interacción visual en navegador. Cambios sin publicar.
+
+## Dominio y visibilidad
+
+**Decisiones de Rubén del 23 de octubre y estado de implementación:**
+
+- Mantener el portfolio en GitHub Pages y configurar `ruben.sepharim.eu`, con `noindex`. DNS y dominio personalizado de Pages siguen sin configurar.
+- Mantener `sepharim.eu` público e indexable, sin enlace al portfolio desde la raíz.
+- Permitir acceder por enlace al portfolio y a las páginas legales de Sophos, evitando que aparezcan en buscadores.
+
+`noindex, follow` está preparado en [layout.tsx](../portfolio-web/src/app/layout.tsx) y comprobado como meta `robots` en `out/index.html`. Build estático y TypeScript correctos; `verify:export` comprueba 51 recursos. **Cambio local, todavía sin publicar.** DNS y dominio personalizado de Pages siguen pendientes. Excluir esas superficies de sitemaps y enlaces públicos de descubrimiento es la propuesta complementaria; no se bloqueará en `robots.txt` el rastreo necesario para leer `noindex`.
+
+**Límite:** `noindex` y la ausencia de enlaces no son autenticación ni garantizan secreto. Quien conozca o reciba una URL podrá acceder; si se necesitara acceso privado, haría falta un control de acceso distinto. La raíz pública debe conservar su indexabilidad.
+
+Las páginas legales de Sophos están fuera de este proyecto: no se han inspeccionado ni modificado. Antes de actuar se necesitan sus rutas y acceso al proyecto o servicio correspondiente. GitHub Pages y Formspree son los proveedores elegidos para el portfolio y su formulario; no se necesita configurar alojamiento ni SMTP en Hostinger.
 
 ## Verificación
 

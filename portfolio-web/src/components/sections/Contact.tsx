@@ -1,3 +1,4 @@
+import { ContactForm } from "@/components/ui/ContactForm";
 import styles from "./Contact.module.css";
 
 export interface ContactChannels {
@@ -38,38 +39,38 @@ export function Contact({ contact }: { contact: ContactChannels }) {
       tabIndex={-1}
     >
       <div className={styles.content}>
-        <div data-contact-copy>
+        <div className={styles.presentation} data-contact-copy>
           <h2 id="contact-title" className={styles.title}>
             HABLEMOS
           </h2>
           <p className={styles.intro}>
             Una idea, una oportunidad o una conversación.
           </p>
-        </div>
 
-        {contact.email && (
-          <div className={styles.emailGroup} data-contact-copy>
-            <a className={styles.email} href={`mailto:${contact.email}`}>
-              <span>{contact.email}</span>
-              <OutwardArrow />
-            </a>
-          </div>
-        )}
-
-        {socials.length > 0 && (
-          <nav
-            className={styles.socials}
-            aria-label="Perfiles de contacto"
-            data-contact-copy
-          >
-            {socials.map((social) => (
-              <a key={social.label} href={social.url}>
-                {social.label}
+          {contact.email && (
+            <div className={styles.emailGroup}>
+              <a className={styles.email} href={`mailto:${contact.email}`}>
+                <span>{contact.email}</span>
                 <OutwardArrow />
               </a>
-            ))}
-          </nav>
-        )}
+            </div>
+          )}
+
+          {socials.length > 0 && (
+            <nav className={styles.socials} aria-label="Perfiles de contacto">
+              {socials.map((social) => (
+                <a key={social.label} href={social.url}>
+                  {social.label}
+                  <OutwardArrow />
+                </a>
+              ))}
+            </nav>
+          )}
+        </div>
+
+        <div className={styles.form} data-contact-copy>
+          <ContactForm />
+        </div>
       </div>
 
       <div className={styles.navigation} data-contact-copy>

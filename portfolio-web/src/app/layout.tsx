@@ -36,6 +36,7 @@ const fontFaces = `
 export const metadata: Metadata = {
   title: "RubenPG — Full Stack Developer",
   description: "Portfolio personal de RubenPG, Full Stack Developer.",
+  robots: { index: false, follow: true },
   icons: {
     icon: "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22/>",
   },

@@ -8,21 +8,33 @@
     clamp(24px, 5svh, 56px);
   color: var(--ink);
   background: transparent;
-  text-align: center;
+  text-align: left;
 }
 
 .content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(40px, 6vw, 100px);
   align-self: center;
-  width: min(100%, 1400px);
+  width: min(100%, 1320px);
   min-width: 0;
   margin-inline: auto;
+}
+
+.presentation {
+  min-width: 0;
   container-type: inline-size;
+}
+
+.form {
+  min-width: 0;
 }
 
 .title {
   margin: 0;
   font-family: "League Gothic", sans-serif;
-  font-size: min(clamp(5rem, 17vw, 16rem), 28cqw);
+  font-size: min(clamp(5rem, 10vw, 12rem), 28cqw);
   font-weight: 400;
   line-height: 0.95;
   letter-spacing: -0.015em;
@@ -30,7 +42,7 @@
 
 .intro {
   max-width: 34ch;
-  margin: clamp(20px, 3svh, 36px) auto 0;
+  margin: clamp(20px, 3svh, 36px) 0 0;
   color: #3c4c44;
   font-size: clamp(1rem, 0.85rem + 0.6vw, 1.5rem);
   line-height: 1.5;
@@ -44,13 +56,13 @@
 .email {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: clamp(10px, 1.5vw, 20px);
   max-width: 100%;
   min-height: 44px;
   padding-block: 8px;
   color: inherit;
-  font-size: clamp(1rem, 1.6vw, 1.75rem);
+  font-size: clamp(1rem, 1.1vw, 1.125rem);
   line-height: 1.5;
   text-decoration: none;
 }
@@ -72,7 +84,7 @@
 .socials {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 8px clamp(24px, 4vw, 48px);
   margin-top: 20px;
 }
@@ -98,7 +110,8 @@
 }
 
 .navigation {
-  justify-self: center;
+  width: min(100%, 1320px);
+  margin-inline: auto;
 }
 
 .back {
@@ -120,7 +133,7 @@
   }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 899px) {
   .section {
     padding-top: max(68px, 10svh, calc(env(safe-area-inset-top) + 56px));
     gap: 40px;
@@ -128,8 +141,27 @@
   .title {
     font-size: min(clamp(5rem, 24vw, 10rem), 28cqw);
   }
+  .content {
+    max-width: 600px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+  }
+  .presentation {
+    text-align: center;
+  }
   .intro {
     max-width: 28ch;
+    margin-inline: auto;
+  }
+  .emailGroup {
+    margin-top: 24px;
+  }
+  .email,
+  .socials {
+    justify-content: center;
+  }
+  .navigation {
+    max-width: 600px;
   }
 }
 

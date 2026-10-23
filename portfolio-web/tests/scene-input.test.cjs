@@ -107,8 +107,10 @@ const controller = moduleStub.exports.createSceneInput({
 });
 function dispatch(type, properties = {}) {
   const event = new Event(type, { cancelable: true });
-  Object.assign(event, properties);
-  event.composedPath = () => [element];
+  const { target, ...eventProperties } = properties;
+  Object.assign(event, eventProperties);
+  if (target) Object.defineProperty(event, "target", { value: target });
+  event.composedPath = () => (target ? [target, element] : [element]);
   win.dispatchEvent(event);
   return event;
 }
@@ -238,6 +240,112 @@ dispatch("touchmove", {
   touches: [{ identifier: 4, clientX: 100, clientY: 260 }],
 });
 assert.equal(stage, 4, "fresh touch reverses Contact");
+dispatch("touchend");
+// Editing a message must not rotate Contact away when its parent is at the top.
+const textareaTarget = new ElementStub();
+textareaTarget.closest = (selector) =>
+  selector.includes("textarea") ? textareaTarget : null;
+stage = 5;
+position = 0;
+busy = false;
+const beforeEditing = steps.length;
+const fieldWheel = (gap = 300) => {
+  now += gap;
+  return dispatch("wheel", {
+    target: textareaTarget,
+    deltaY: -70,
+    deltaX: 0,
+    deltaMode: 0,
+  });
+};
+assert.equal(
+  fieldWheel().defaultPrevented,
+  false,
+  "textarea owns wheel scroll",
+);
+assert.equal(
+  wheel(-70).defaultPrevented,
+  false,
+  "wheel ownership survives leaving the textarea during the same gesture",
+);
+for (const key of ["ArrowUp", "PageUp", "Home", "End", " "])
+  assert.equal(
+    dispatch("keydown", { target: textareaTarget, key, repeat: false })
+      .defaultPrevented,
+    false,
+    `textarea retains ${key} editing`,
+  );
+assert.equal(steps.length, beforeEditing, "editing does not leave Contact");
+wheel(-70, 300);
+assert.equal(
+  stage,
+  4,
+  "a fresh gesture outside the field still reverses Contact",
+);
+stage = 5;
+busy = false;
+dispatch("touchstart", {
+  target: textareaTarget,
+  touches: [{ identifier: 6, clientX: 100, clientY: 200 }],
+});
+assert.equal(
+  dispatch("touchmove", {
+    target: textareaTarget,
+    touches: [{ identifier: 6, clientX: 100, clientY: 260 }],
+  }).defaultPrevented,
+  false,
+  "textarea owns touch scroll",
+);
+assert.equal(
+  dispatch("touchmove", {
+    touches: [{ identifier: 6, clientX: 100, clientY: 320 }],
+  }).defaultPrevented,
+  false,
+  "touch ownership survives leaving the field until release",
+);
+assert.equal(stage, 5, "scrolling the message keeps Contact open");
+dispatch("touchend");
+// Native-field ownership must never bypass an in-flight scene transition.
+busy = true;
+assert.equal(
+  fieldWheel().defaultPrevented,
+  true,
+  "busy scene blocks field wheel",
+);
+busy = false;
+assert.equal(
+  fieldWheel(16).defaultPrevented,
+  true,
+  "blocked field gesture stays consumed after the transition",
+);
+assert.equal(
+  fieldWheel().defaultPrevented,
+  false,
+  "fresh field wheel is restored",
+);
+busy = true;
+dispatch("touchstart", {
+  target: textareaTarget,
+  touches: [{ identifier: 7, clientX: 100, clientY: 200 }],
+});
+assert.equal(
+  dispatch("touchmove", {
+    target: textareaTarget,
+    touches: [{ identifier: 7, clientX: 100, clientY: 260 }],
+  }).defaultPrevented,
+  true,
+  "busy scene blocks field touch",
+);
+busy = false;
+assert.equal(
+  dispatch("touchmove", {
+    target: textareaTarget,
+    touches: [{ identifier: 7, clientX: 100, clientY: 320 }],
+  }).defaultPrevented,
+  true,
+  "blocked field touch stays consumed after the transition",
+);
+dispatch("touchend");
 // The menu owns its keyboard and scroll even though it sits inside the story.
 const menuTarget = new ElementStub();
 menuTarget.closest = (selector) =>
