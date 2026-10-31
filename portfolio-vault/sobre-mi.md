@@ -39,11 +39,11 @@ Glifos de la frase y español verificados en el archivo, peso real 400 y detecto
 
 ## Transición y alternativas
 
-**Implementada el 22 de octubre tras descartar la curva:** paso de página lateral. El stack se retira un 16 % hacia la izquierda mientras el papel Pebble de «Sobre mí» entra desde el borde derecho hasta cubrirlo. Ambos usan el mismo reloj y `power3.inOut` durante 1,08 s, permanecen opacos y se solapan; el carrusel inferior nunca queda expuesto entre ellos. El título y el cuerpo llegan juntos, con una diferencia de desplazamiento limitada al 5 % del ancho y un máximo de 64 px. No hay inclinación, escala, desenfoque ni fundido del texto. El radar permanece asentado respecto al papel, sin entrada propia; su giro posterior hacia contacto sigue independiente. El regreso recorre la misma animación y conserva la posición de lectura del stack. Un gesto nuevo al final de su scroll, o el enlace «Sobre mí», abre la sección; no se alarga el recorrido físico de scroll. Con movimiento reducido se mantiene el flujo natural, sin estos efectos.
+**Vigente y publicado · 31 de octubre:** las tecnologías se recogen hacia el radar mientras el suelo Sangria se inclina hacia el horizonte. Sus 34 SVG, incluido anime.js, permanecen como contactos y brillan al pasar el barrido; comparten proyección y frame con el radar, también al girar hacia Contacto. Cámara, entorno y texto conservan la coreografía reversible aprobada de 2,1 s con anime.js y el scroll interior al regresar. Detalles y pruebas en [Coreografía del entorno](base-tecnica-y-visual.md#coreografía-del-entorno-con-animejs).
 
-La apertura inicial desde una línea y el refinamiento posterior con elipsis, perspectiva y desenfoque quedan sustituidos por esta versión. El usuario confirmó que el tramo a revisar era «Mi stack → Sobre mí».
+**Histórico, sustituido:** el 22 de octubre se implementó un paso de página lateral de 1,08 s, con stack retirándose un 16 % a la izquierda y papel entrando por la derecha. Reemplazaba una apertura curva descartada. La petición explícita del 29 de octubre sustituye ese movimiento lateral por la transformación del entorno.
 
-Alternativas para valorar, sin implementar:
+Alternativas históricas, no decisiones vigentes:
 
 - **Pliegue editorial:** una lámina se dobla y descubre el contenido. Más teatral; exige cuidar el texto durante la perspectiva.
 - **Barrido de radar:** la luz revela el contenido por zonas. Más ligado al fondo; puede competir con la lectura si se aplica a cada frase.
@@ -91,7 +91,9 @@ Referencias: [Formspree AJAX](https://help.formspree.io/articles/building-your-f
 
 Las páginas legales de Sophos están fuera de este proyecto: no se han inspeccionado ni modificado. Antes de actuar se necesitan sus rutas y acceso al proyecto o servicio correspondiente. GitHub Pages y Formspree son los proveedores elegidos para el portfolio y su formulario; no se necesita configurar alojamiento ni SMTP en Hostinger.
 
-## Verificación
+## Verificación histórica
+
+La validación vigente del mapa topográfico, las escenas con anime.js y los SVG persistentes del radar está en [Coreografía del entorno](base-tecnica-y-visual.md#coreografía-del-entorno-con-animejs). Lo siguiente documenta las versiones anteriores.
 
 Build, TypeScript, ESLint y Prettier correctos; detector Impeccable sin hallazgos en la nueva superficie. Revisión independiente de la navegación y prueba con GSAP real sobre objetos: construcción de timelines sin callbacks prematuros, reversa que restaura el stack y conservación de progreso al redimensionar. Eventos simulados de rueda, teclado y tacto comprueban que llegar al borde con el mismo gesto no abre la siguiente sección y que las ráfagas no encadenan transiciones. No son pruebas interactivas de navegador.
 

@@ -5,7 +5,7 @@
 - Mantener el diseño, las animaciones y la densidad de los efectos. Optimizar trabajo redundante y carga de recursos antes de reducir calidad.
 - Integrar StaggeredMenu del adjunto del usuario, adaptado a League Gothic y la paleta Sangria / Jade / Pebble.
 - Enlaces a Inicio, Proyectos, Mi stack, Sobre mí y Contacto. Seleccionar una sección ejecuta salida con desplazamiento y fade, cambio de escena mientras está oculta y entrada inversa; no recorre las secciones intermedias.
-- El menú suspende la interacción con la escena. Tiene cierre por Escape, control de foco y alternativa inmediata con movimiento reducido. Navegar desde una ficha abierta limpia la ficha y su selección manteniendo el proyecto central del carrusel.
+- El menú suspende la interacción con la escena. Tiene cierre por Escape, control de foco y alternativa inmediata con movimiento reducido. Navegar desde una ficha abierta limpia la ficha y su selección para recuperar el mapa de proyectos.
 - Subir el nuevo portfolio a `RubyPG/Portfolio-Web`, directamente sobre `main`, conservando el historial anterior. Se versionan `portfolio-web/`, `portfolio-vault/` y las normas/documentación de raíz. `_archive/`, `_temp/`, dependencias, compilados y secretos quedan excluidos.
 
 ## Corrección del menú
@@ -16,7 +16,26 @@ El botón conserva fondo Sangria, texto Pebble e icono Jade en todas las seccion
 
 La regresión prueba desplazamientos previos equivalentes a paneles de 320 y 520 px y la espera durante la carga, además de los ciclos de apertura, cierre, foco y movimiento reducido. Usa GSAP sobre objetos con ambos canales de desplazamiento; no verifica la descomposición CSS ni el renderizado en un navegador. Las cinco suites, build, tipos, ESLint y formato pasan. Se ha reiniciado el servidor local con la build corregida; queda pendiente su comprobación visual por la restricción de acceso descrita abajo.
 
-## Cambios de rendimiento
+## Fluidez del entorno · 31 de octubre de 2026
+
+Petición vigente: mejorar el fondo de proyectos y la transición Mi stack → Sobre mí, incluidos los ángulos, conservando la dirección visual y anime.js.
+
+- **Topography:** objetivo de 60 dibujos/s con cadencia estable a 60/90/120 Hz cuando hay soporte de texturas flotantes; fallback de 30 fps en el camino de cálculo directo. El campo de alturas conserva su cadencia de 30 Hz en reposo, se reutiliza entre dibujos y se invalida al interactuar o cambiar la rejilla. Cámara/uniforms constantes se cachean. Resize sin cambios ya no borra ni redibuja. Sólo se compilan los tres programas necesarios para el preset actual; se elimina el cálculo de fragmentación descartada, manteniendo antialias y límites de resolución. El autofocus vuelve al plano general al salir el cursor, sin esperar a que desaparezca el rastro.
+- **Mi stack → Sobre mí:** duración de 2,1 s y endpoints conservados. Plano y radar giran con el mismo progreso de 0° a 64°; la perspectiva compensa el ancho. SVG frontales, encaje antes del cruce y texto con desplazamiento/giro menores. El render evita lecturas repetidas de estilos y cálculos/promociones de iconos ya ocultos.
+- **Ecos del radar:** el progreso sólo invalida el siguiente frame GPU; cámara y SVG se pintan juntos una vez, evitando una pintura previa con la cámara anterior. Las invalidaciones se agrupan y también funcionan con cámara estática, velocidad cero y movimiento reducido. Se cachean opacidad e intensidad del barrido.
+- **Verificación de navegador:** Chromium local, escritorio 1440 × 900, tablet 768 × 1024 y móvil 390 × 844. Ida/vuelta, 34 SVG, contenido final, scroll interior y movimiento reducido comprobados sin errores ni overflow. En muestras finales de 1,2 s, Topography registró 59,94 actualizaciones/s en móvil y 60,15 en escritorio; intervalos máximos observados de 17 y 20,9 ms respectivamente. Son llamadas de render observadas en ese navegador, no FPS presentados por la GPU ni una garantía para teléfonos físicos. El paso de Stack a About no registró tareas largas de más de 50 ms en la muestra local.
+- **Validación de código:** 79 pruebas, TypeScript, ESLint, formato y build de producción correctos.
+- Capturas de esta revisión en `_temp/terrain-fluid-*.png`, `_temp/motion-after-*.png` y `_temp/motion-fluid-*.png`. Regresiones de pacing/caché/resize, coherencia de ángulos y ciclo de vida del radar en `portfolio-web/tests/`.
+
+## Publicación · 31 de octubre de 2026
+
+Publicado `f9955fa` en `main` por petición expresa de Rubén. [La ejecución de GitHub Actions](https://github.com/RubyPG/Portfolio-Web/actions/runs/41249504488) terminó con `success` en build y deploy. La exportación local validó 52 recursos; CI superó lint, las 79 pruebas, compilación y verificación de la exportación.
+
+[La web pública](https://rubypg.github.io/Portfolio-Web/) responde HTTP 200 y sirve el mapa topográfico nuevo. Los 17 recursos únicos enlazados mediante `src`/`href` y el SVG de anime.js responden 200. En Chromium se comprobaron Hero → Proyectos, selección/cierre de Sophos y Mi stack → Sobre mí; 34 SVG presentes en el radar, sin errores ni advertencias de consola y sin desbordamiento horizontal. Captura local: `_temp/output/playwright/published-about.png`. La revisión responsive y de movimiento reducido descrita arriba se hizo antes del despliegue; no se repite como una auditoría completa de la web pública.
+
+## Cambios de rendimiento históricos
+
+El carrusel y las partículas citados en esta revisión se archivaron el 31 de octubre; la implementación y validación del mapa vigente están en [Coreografía del entorno](base-tecnica-y-visual.md#coreografía-del-entorno-con-animejs).
 
 - Fuentes reales convertidas a WOFF2, conservando originales y licencias. Los dos archivos servidos pasan de 109.848 a 50.368 bytes (−54,1 %). Validación de glifos, contornos, métricas, mapas de caracteres, nombres y variaciones.
 - PNG recompreso sin pérdida: 1.385.044 → 1.202.878 bytes (−13,2 %), con RGBA y dimensiones idénticos. Se mantiene PNG, sin modificar retrato, máscara ni transparencia. La huella actual está en [Base técnica y visual](base-tecnica-y-visual.md).
@@ -28,13 +47,13 @@ La regresión prueba desplazamientos previos equivalentes a paneles de 320 y 520
 - El filtro Floyd del retrato produce los mismos bytes en siete tamaños probados. Redimensionados repetidos no reconstruyen sus texturas y el cursor exterior deja de activar pasadas del retrato. El carrusel evita invalidarse ante callbacks o progresos idénticos; las partículas no redibujan estados sin cambios.
 - En pruebas con GPU sustituida por un registrador, el radar conserva uniforms y contactos durante 60 fotogramas horizonte → cenital, mientras las asignaciones del buffer dinámico pasan de 60 a 1. PatternWaves reutiliza su campo congelado durante la salida, manteniendo los estados de shaders.
 
-## Verificación y límites
+## Verificación histórica y límites
 
 Build de producción, TypeScript, ESLint, formato y cinco suites de pruebas permanentes: correctos. El detector Impeccable no encuentra incidencias en el menú y las superficies ajustadas. Comparación de los scripts modernos incluidos en el HTML de producción (excluido `nomodule`): 724.953 → 714.832 bytes; gzip calculado localmente: 224.268 → 220.302 bytes. Incluye el nuevo menú. Son tamaños de artefactos, no una captura de transferencia de red.
 
 Las pruebas permanentes de `portfolio-web/tests/` ejecutan código real de los controladores, con GSAP real y sustitutos explícitos para DOM/canvas/GPU. Comprueban gestos nuevos frente a inercia, saltos directos del menú, entrada y reversa, foco, limpieza, visibilidad y movimiento reducido. No son capturas ni pruebas de píxeles.
 
-La revisión visual y la medición real de FPS/Core Web Vitals siguen pendientes: la herramienta de navegador mantiene una denegación de acceso al origen local. No sortearla mediante otro puerto, hostname o herramienta. Los ahorros de bytes y de operaciones redundantes no se presentan como una medición de velocidad del navegador.
+En aquella revisión, la comprobación visual y la medición real de FPS/Core Web Vitals quedaron pendientes por una denegación de acceso al origen local. La revisión del 31 de octubre sí dispone de acceso y queda documentada arriba. No sortearla mediante otro puerto, hostname o herramienta. Los ahorros de bytes y de operaciones redundantes no se presentan como una medición de velocidad del navegador.
 
 ## Despliegue de GitHub Pages
 
