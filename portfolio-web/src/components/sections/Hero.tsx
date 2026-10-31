@@ -1,9 +1,8 @@
 "use client";
 
-import { useId, useRef } from "react";
+import { useId, useRef, useLayoutEffect } from "react";
 import type { Ref } from "react";
-import { useGSAP } from "@gsap/react";
-import { gsap } from "gsap";
+import { createTimeline } from "animejs";
 import { assetPath } from "@/lib/asset-path";
 import { DitherVeil } from "@/components/ui/DitherVeil";
 import type { DitherVeilHandle } from "@/components/ui/DitherVeil";
@@ -12,8 +11,6 @@ import {
   type PatternWavesHandle,
 } from "@/components/ui/PatternWaves";
 import styles from "./Hero.module.css";
-
-gsap.registerPlugin(useGSAP);
 
 export function Hero({
   ready = true,
@@ -27,64 +24,48 @@ export function Hero({
   const hero = useRef<HTMLElement>(null);
   const portraitFilterId = useId();
 
-  useGSAP(
-    () => {
-      if (!ready || window.scrollY > 8) return;
-
-      const media = gsap.matchMedia();
-
-      media.add("(prefers-reduced-motion: no-preference)", () => {
-        const timeline = gsap.timeline({
-          defaults: { duration: 1.2, ease: "power3.out" },
-        });
-
-        timeline
-          .fromTo(
-            "[data-hero-background]",
-            { opacity: 0 },
-            { opacity: 1, duration: 1, clearProps: "opacity" },
-            0,
-          )
-          .fromTo(
-            '[data-hero-enter="portrait"]',
-            { autoAlpha: 0 },
-            {
-              autoAlpha: 1,
-              duration: 1,
-              ease: "power2.out",
-              clearProps: "opacity,visibility",
-            },
-            0,
-          )
-          .fromTo(
-            '[data-hero-enter="fullstack"]',
-            { x: () => -(hero.current?.clientWidth ?? 0), autoAlpha: 0 },
-            { x: 0, autoAlpha: 1, clearProps: "transform,opacity,visibility" },
-            0,
-          )
-          .fromTo(
-            '[data-hero-enter="developer"]',
-            { x: () => hero.current?.clientWidth ?? 0, autoAlpha: 0 },
-            { x: 0, autoAlpha: 1, clearProps: "transform,opacity,visibility" },
-            0.15,
-          )
-          .fromTo(
-            '[data-hero-enter="signature"]',
-            { y: 100, autoAlpha: 0 },
-            {
-              y: 0,
-              autoAlpha: 1,
-              duration: 0.9,
-              clearProps: "transform,opacity,visibility",
-            },
-            0.6,
-          );
-      });
-
-      return () => media.revert();
-    },
-    { scope: hero, dependencies: [ready], revertOnUpdate: true },
-  );
+  useLayoutEffect(() => {
+    if (!ready || window.scrollY > 8 || !hero.current) return;
+    const container = hero.current;
+    const media = window.matchMedia("(prefers-reduced-motion: no-preference)");
+    let timeline: ReturnType<typeof createTimeline> | undefined;
+    const run = () => {
+      timeline?.revert();
+      if (!media.matches) return;
+      const layer = (name: string) =>
+        container.querySelector<HTMLElement>(`[data-hero-enter="${name}"]`)!;
+      timeline = createTimeline({
+        defaults: { duration: 1200, ease: "outCubic" },
+      })
+        .add(
+          container.querySelector("[data-hero-background]")!,
+          { opacity: [0, 1], duration: 1000 },
+          0,
+        )
+        .add(layer("portrait"), { opacity: [0, 1], duration: 1000 }, 0)
+        .add(
+          layer("fullstack"),
+          { translateX: [-container.clientWidth, 0], opacity: [0, 1] },
+          0,
+        )
+        .add(
+          layer("developer"),
+          { translateX: [container.clientWidth, 0], opacity: [0, 1] },
+          150,
+        )
+        .add(
+          layer("signature"),
+          { translateY: [100, 0], opacity: [0, 1], duration: 900 },
+          600,
+        );
+    };
+    run();
+    media.addEventListener("change", run);
+    return () => {
+      media.removeEventListener("change", run);
+      timeline?.revert();
+    };
+  }, [ready]);
 
   return (
     <section

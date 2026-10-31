@@ -1,4 +1,5 @@
 import { Renderer, Program, Mesh, Triangle, Texture, RenderTarget } from "ogl";
+import { observeEffectVisibility } from "./effect-visibility";
 
 // Adapted from the user-supplied React Bits DitherVeil: Floyd diffusion and
 // pointer trail, with source alpha preserved instead of an opaque backdrop.
@@ -255,12 +256,15 @@ export function createDitherVeil(
     last = 0,
     activeUntil = 0;
   let visible = true,
+    exposed = true,
     destroyed = false,
     presence = 0,
     resetTrail = false,
     hasLayout = false,
     announcedReady = false;
   const pointer = { x: 0, y: 0, inside: false, fresh: true };
+  // Keep viewport coordinates even while another scene owns pointer events.
+  const cursor = { x: 0, y: 0, known: false };
   const brush = { x: 0, y: 0 };
   const bursts: { x: number; y: number; start: number }[] = [];
 
@@ -272,7 +276,7 @@ export function createDitherVeil(
       const dt = Math.min(0.05, elapsed);
       last = now;
       presence +=
-        ((pointer.inside ? 1 : 0) - presence) * (1 - Math.exp(-elapsed / 0.16));
+        ((pointer.inside ? 1 : 0) - presence) * (1 - Math.exp(-dt / 0.22));
       const previous = [brush.x, brush.y];
       if (pointer.fresh) {
         brush.x = pointer.x;
@@ -323,6 +327,7 @@ export function createDitherVeil(
         options.onReady();
       }
       if (now < activeUntil || bursts.length) wake();
+      else last = 0;
     } catch {
       destroy();
     }
@@ -390,30 +395,48 @@ export function createDitherVeil(
     wake();
   };
 
-  // Listen on the Hero so overlaid headings cannot interrupt the reveal.
+  // Hit-test the Hero so headings work, but menus cannot reveal through it.
   const target =
     host.closest<HTMLElement>("[data-hero]") ?? host.parentElement!;
-  const locate = (event: PointerEvent) => {
-    if (viewUniforms.uRevealProgress.value > 0.001) return;
+  const syncPointer = () => {
+    if (
+      !cursor.known ||
+      !visible ||
+      !exposed ||
+      document.hidden ||
+      viewUniforms.uRevealProgress.value > 0.001
+    )
+      return;
     const rect = host.getBoundingClientRect();
-    pointer.x = event.clientX - rect.left;
-    pointer.y = event.clientY - rect.top;
+    pointer.x = ((cursor.x - rect.left) / Math.max(1, rect.width)) * width;
+    pointer.y = ((cursor.y - rect.top) / Math.max(1, rect.height)) * height;
     const inside =
       pointer.x >= 0 &&
       pointer.x <= width &&
       pointer.y >= 0 &&
-      pointer.y <= height;
+      pointer.y <= height &&
+      target.contains(document.elementFromPoint(cursor.x, cursor.y));
     if (!inside && !pointer.inside) return;
     if (inside && !pointer.inside) pointer.fresh = true;
     pointer.inside = inside;
     activeUntil = performance.now() + 600 + Math.max(0, options.linger) * 1000;
     wake();
   };
+  const locate = (event: PointerEvent) => {
+    cursor.x = event.clientX;
+    cursor.y = event.clientY;
+    cursor.known = true;
+    syncPointer();
+  };
   const leave = () => {
-    if (viewUniforms.uRevealProgress.value > 0.001 || !pointer.inside) return;
+    cursor.known = false;
+    if (!pointer.inside) return;
     pointer.inside = false;
     activeUntil = performance.now() + 700 + Math.max(0, options.linger) * 1000;
     wake();
+  };
+  const out = (event: PointerEvent) => {
+    if (!event.relatedTarget) leave();
   };
   const down = (event: PointerEvent) => {
     if (viewUniforms.uRevealProgress.value > 0.001) return;
@@ -427,7 +450,6 @@ export function createDitherVeil(
     if (bursts.length > 4) bursts.shift();
   };
   const up = (event: PointerEvent) => {
-    if (viewUniforms.uRevealProgress.value > 0.001) return;
     if (event.pointerType !== "mouse") leave();
   };
   const stop = () => {
@@ -436,12 +458,22 @@ export function createDitherVeil(
     last = 0;
   };
   const visibility = () => {
-    if (document.hidden) stop();
-    else wake();
+    stop();
+    if (!exposed || !visible || document.hidden) {
+      pointer.inside = false;
+      pointer.fresh = true;
+      presence = 0;
+      bursts.length = 0;
+      activeUntil = 0;
+      resetTrail = true;
+    } else syncPointer();
+    // Clear a stale reveal once when inert; never run a background loop.
+    wake();
   };
   const onResize = () => {
     try {
       layout();
+      syncPointer();
     } catch {
       destroy();
     }
@@ -449,9 +481,9 @@ export function createDitherVeil(
   const resize = new ResizeObserver(onResize);
   const intersection = new IntersectionObserver(([entry]) => {
     visible = entry.isIntersecting;
-    if (visible) wake();
-    else stop();
+    visibility();
   });
+  let exposure: ReturnType<typeof observeEffectVisibility> | undefined;
   const contextLost = (event: Event) => {
     event.preventDefault();
     destroy();
@@ -462,11 +494,14 @@ export function createDitherVeil(
     stop();
     resize.disconnect();
     intersection.disconnect();
-    target.removeEventListener("pointermove", locate);
+    exposure?.destroy();
+    window.removeEventListener("pointermove", locate);
+    window.removeEventListener("pointerout", out);
+    window.removeEventListener("pointercancel", leave);
+    window.removeEventListener("pointerup", up);
+    window.removeEventListener("blur", leave);
+    window.removeEventListener("scroll", syncPointer);
     target.removeEventListener("pointerdown", down);
-    target.removeEventListener("pointerleave", leave);
-    target.removeEventListener("pointercancel", leave);
-    target.removeEventListener("pointerup", up);
     document.removeEventListener("visibilitychange", visibility);
     window.removeEventListener("resize", onResize);
     canvas.removeEventListener("webglcontextlost", contextLost);
@@ -486,11 +521,21 @@ export function createDitherVeil(
     layout();
     resize.observe(host);
     intersection.observe(host);
-    target.addEventListener("pointermove", locate, { passive: true });
+    exposure = observeEffectVisibility(
+      host,
+      (next) => {
+        exposed = next;
+        visibility();
+      },
+      target,
+    );
+    window.addEventListener("pointermove", locate, { passive: true });
+    window.addEventListener("pointerout", out, { passive: true });
+    window.addEventListener("pointercancel", leave, { passive: true });
+    window.addEventListener("pointerup", up, { passive: true });
+    window.addEventListener("blur", leave);
+    window.addEventListener("scroll", syncPointer, { passive: true });
     target.addEventListener("pointerdown", down, { passive: true });
-    target.addEventListener("pointerleave", leave, { passive: true });
-    target.addEventListener("pointercancel", leave, { passive: true });
-    target.addEventListener("pointerup", up, { passive: true });
     document.addEventListener("visibilitychange", visibility);
     window.addEventListener("resize", onResize);
     canvas.addEventListener("webglcontextlost", contextLost);
@@ -514,6 +559,7 @@ export function createDitherVeil(
         bursts.length = 0;
         activeUntil = 0;
         resetTrail = true;
+        if (next <= 0.001) syncPointer();
       }
       wake();
     },

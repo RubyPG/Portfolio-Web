@@ -208,6 +208,10 @@
   width: 36px;
 }
 
+.primary [data-technology="anime.js"] .icon {
+  width: min(88px, 22vw);
+}
+
 @media (hover: hover) and (pointer: fine) {
   .technology:hover .icon {
     color: var(--accent);

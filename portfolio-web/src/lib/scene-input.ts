@@ -185,11 +185,6 @@ export function createSceneInput(options: SceneInputOptions): {
     )
       return;
     const target = event.target instanceof Element ? event.target : null;
-    if (
-      (event.key === "Home" || event.key === "End") &&
-      target?.closest('[aria-roledescription="carrusel"]')
-    )
-      return;
     if (editsField(event)) return;
     const space = event.key === " " || event.key === "Spacebar";
     if (

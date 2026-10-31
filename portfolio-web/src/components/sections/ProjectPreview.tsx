@@ -1,102 +1,106 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useRef } from "react";
-import { gsap } from "gsap";
-import { useGSAP } from "@gsap/react";
+import {
+  forwardRef,
+  useCallback,
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+} from "react";
 import type { Project } from "@/data/projects";
 import { getProjectPreviewRect } from "@/lib/project-preview";
 import styles from "./ProjectPreview.module.css";
-
-gsap.registerPlugin(useGSAP);
 
 export interface ProjectPreviewHandle {
   setProgress(progress: number): void;
 }
 
-/** The carousel's focus clock owns these reveals, including a reversed gesture. */
+/** The atlas selection's anime.js clock owns the reveals, including their reverse. */
 export const ProjectPreview = forwardRef<
   ProjectPreviewHandle,
   { project: Project; visible: boolean }
 >(function ProjectPreview({ project, visible }, ref) {
   const root = useRef<HTMLDivElement>(null);
-  const timeline = useRef<gsap.core.Timeline | null>(null);
   const progress = useRef(0);
-
+  const reduced = useRef(false);
+  const paint = useCallback(() => {
+    const host = root.current;
+    if (!host) return;
+    const reveals = [
+      {
+        selector: "[data-preview-problem]",
+        start: 0.3,
+        duration: 0.5,
+        x: -18,
+        y: 0,
+      },
+      {
+        selector: "[data-preview-contribution]",
+        start: 0.36,
+        duration: 0.5,
+        x: 18,
+        y: 0,
+      },
+      {
+        selector: "[data-preview-technologies]",
+        start: 0.66,
+        duration: 0.34,
+        x: 0,
+        y: 12,
+      },
+    ];
+    reveals.forEach(({ selector, start, duration, x, y }) => {
+      const element = host.querySelector<HTMLElement>(selector);
+      if (!element) return;
+      const value = Math.max(
+        0,
+        Math.min(1, (progress.current - start) / duration),
+      );
+      const eased = 1 - Math.pow(1 - value, 3);
+      element.style.opacity = String(eased);
+      element.style.visibility = value > 0 ? "visible" : "hidden";
+      element.style.transform = reduced.current
+        ? "none"
+        : `translate3d(${x * (1 - eased)}px, ${y * (1 - eased)}px, 0)`;
+    });
+  }, []);
   useImperativeHandle(
     ref,
     () => ({
       setProgress(value) {
         progress.current = value;
-        timeline.current?.progress(value);
+        paint();
       },
     }),
-    [],
+    [paint],
   );
-
-  useGSAP(
-    () => {
-      const media = gsap.matchMedia();
-      media.add(
-        {
-          reduced: "(prefers-reduced-motion: reduce)",
-          motion: "(prefers-reduced-motion: no-preference)",
-        },
-        (context) => {
-          const reduced = Boolean(context.conditions?.reduced);
-          const animation = gsap.timeline({ paused: true });
-          animation
-            .fromTo(
-              "[data-preview-problem]",
-              { x: reduced ? 0 : -18, autoAlpha: 0 },
-              { x: 0, autoAlpha: 1, duration: 0.5, ease: "power2.out" },
-              0.3,
-            )
-            .fromTo(
-              "[data-preview-contribution]",
-              { x: reduced ? 0 : 18, autoAlpha: 0 },
-              { x: 0, autoAlpha: 1, duration: 0.5, ease: "power2.out" },
-              0.36,
-            )
-            .fromTo(
-              "[data-preview-technologies]",
-              { y: reduced ? 0 : 12, autoAlpha: 0 },
-              { y: 0, autoAlpha: 1, duration: 0.34, ease: "power2.out" },
-              0.66,
-            );
-          timeline.current = animation;
-          animation.progress(progress.current);
-          return () => {
-            timeline.current = null;
-          };
-        },
+  useLayoutEffect(() => {
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => {
+      reduced.current = preference.matches;
+      paint();
+    };
+    update();
+    preference.addEventListener("change", update);
+    return () => preference.removeEventListener("change", update);
+  }, [paint]);
+  useLayoutEffect(() => {
+    const host = root.current;
+    if (!host) return;
+    const layout = () => {
+      const rect = getProjectPreviewRect(
+        host.clientWidth,
+        host.clientHeight,
+        project.preview.width / project.preview.height,
       );
-      return () => media.revert();
-    },
-    { scope: root },
-  );
-
-  useGSAP(
-    () => {
-      const host = root.current!;
-      const layout = () => {
-        const rect = getProjectPreviewRect(
-          host.clientWidth,
-          host.clientHeight,
-          project.preview.width / project.preview.height,
-        );
-        host.style.setProperty("--preview-x", `${rect.x}px`);
-        host.style.setProperty("--preview-bottom", `${rect.y + rect.height}px`);
-      };
-      layout();
-      const observer = new ResizeObserver(layout);
-      observer.observe(host);
-      return () => observer.disconnect();
-    },
-    {
-      scope: root,
-      dependencies: [project.preview.width, project.preview.height],
-    },
-  );
+      host.style.setProperty("--preview-x", `${rect.x}px`);
+      host.style.setProperty("--preview-bottom", `${rect.y + rect.height}px`);
+    };
+    layout();
+    const observer = new ResizeObserver(layout);
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, [project.preview.width, project.preview.height]);
 
   return (
     <div

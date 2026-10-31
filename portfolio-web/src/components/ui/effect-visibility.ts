@@ -3,6 +3,7 @@ export function observeEffectVisibility(
   container: HTMLElement,
   onChange: (exposed: boolean) => void,
   sceneLayer?: HTMLElement | null,
+  ignoreInertOn?: HTMLElement | null,
 ) {
   const nodes: HTMLElement[] = [container];
   for (let node = container.parentElement; node; node = node.parentElement)
@@ -13,7 +14,9 @@ export function observeEffectVisibility(
   let previous: boolean | undefined;
   const refresh = () => {
     const next =
-      !nodes.some((node) => node.hidden || node.inert) &&
+      !nodes.some(
+        (node) => node.hidden || (node.inert && node !== ignoreInertOn),
+      ) &&
       sceneLayer?.getAttribute("aria-hidden") !== "true" &&
       getComputedStyle(container).visibility !== "hidden";
     if (next === previous) return;

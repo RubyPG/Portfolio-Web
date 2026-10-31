@@ -45,6 +45,7 @@ type Pointer = {
 export interface PatternWavesController {
   update(options: PatternWavesOptions): void;
   setExitProgress(progress: number): void;
+  setTerrainProgress(progress: number): void;
   destroy(): void;
 }
 
@@ -255,6 +256,7 @@ function createSurface(canvas: HTMLCanvasElement) {
       uBandSpan: { value: 1 },
       uBandTravel: { value: 1 },
       uExitProgress: { value: 0 },
+      uTerrainProgress: { value: 0 },
     };
     const markMesh = new Mesh(gl, {
       geometry,
@@ -445,6 +447,7 @@ function createSurface(canvas: HTMLCanvasElement) {
       pointer: Pointer,
       rippleActive: boolean,
       dt: number,
+      terrain: number,
     ) => {
       const configurationChanged = needsConfigure || configured !== s;
       if (configurationChanged) configure(s, color, background);
@@ -473,6 +476,7 @@ function createSurface(canvas: HTMLCanvasElement) {
         drawnIntro = intro;
       }
       markUniforms.uExitProgress.value = exit;
+      markUniforms.uTerrainProgress.value = terrain;
       renderer.render({ scene: markMesh });
     };
     return { draw, resize, clear, destroy, hasRipples: () => !!ripple };
@@ -514,6 +518,7 @@ export function createPatternWaves(
   let dirty = true;
   let needsResize = true;
   let exit = clamp(initialExit, 0, 1);
+  let terrain = 0;
   let rippleUntil = 0;
   let pendingMove = false;
   let pointerClientX = 0;
@@ -603,6 +608,7 @@ export function createPatternWaves(
           pointer,
           rippleActive,
           dt,
+          terrain,
         );
         if (!("patternReady" in container.dataset))
           container.dataset.patternReady = "";
@@ -658,7 +664,11 @@ export function createPatternWaves(
     else wake();
   };
   const acceptPointer = () =>
-    canDraw() && exit === 0 && settings.interactive && !motion.matches;
+    canDraw() &&
+    exit === 0 &&
+    terrain === 0 &&
+    settings.interactive &&
+    !motion.matches;
   const locate = (clientX: number, clientY: number) => {
     const rect = container.getBoundingClientRect();
     const x = clientX - rect.left;
@@ -743,11 +753,17 @@ export function createPatternWaves(
     availability();
   });
   intersection.observe(container);
-  // Hero's aria-hidden can change before its visual exit has finished.
-  const exposure = observeEffectVisibility(container, (next) => {
-    exposed = next;
-    availability();
-  });
+  // The Hero disables interaction before its decorative background finishes
+  // fading. Keep that visible background alive; other inert ancestors still pause it.
+  const exposure = observeEffectVisibility(
+    container,
+    (next) => {
+      exposed = next;
+      availability();
+    },
+    undefined,
+    container.closest<HTMLElement>("[data-hero]"),
+  );
   document.addEventListener("visibilitychange", availability);
   motion.addEventListener("change", onMotion);
   coarse.addEventListener("change", resize);
@@ -805,6 +821,14 @@ export function createPatternWaves(
         delete container.dataset.patternExited;
         wake();
       }
+    },
+    setTerrainProgress(progress) {
+      const next = clamp(progress, 0, 1);
+      if (!alive || next === terrain) return;
+      terrain = next;
+      dirty = true;
+      resetPointer();
+      wake();
     },
     destroy() {
       alive = false;

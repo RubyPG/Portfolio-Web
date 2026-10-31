@@ -8,9 +8,33 @@ import {
   type Ref,
 } from "react";
 import type { RadarController, RadarOptions, RadarView } from "./radar-engine";
+import { stackGroups } from "@/data/stack";
+import {
+  getRadarTechnologyIntensity,
+  getRadarTechnologyPoint,
+  getRadarTechnologyPresence,
+  getRadarTechnologySize,
+  projectRadarTechnology,
+  type RadarFrame,
+} from "@/lib/radar-technologies";
 import styles from "./Radar.module.css";
 
 export type { RadarView } from "./radar-engine";
+
+const allTechnologies = stackGroups.flatMap((group) => [
+  ...group.primary,
+  ...group.additional,
+]);
+const technologyEchoes = allTechnologies.flatMap((technology, index) =>
+  technology.icon
+    ? [
+        {
+          ...technology,
+          point: getRadarTechnologyPoint(index, allTechnologies.length),
+        },
+      ]
+    : [],
+);
 
 export interface RadarHandle {
   /** Load the engine before entering the section, without activating its GPU. */
@@ -18,6 +42,8 @@ export interface RadarHandle {
   /** Camera values are in degrees and normalized container coordinates. */
   setView(view: Partial<RadarView>): void;
   setActive(active: boolean): void;
+  /** Original stack icons become permanent radar echoes during its approach. */
+  setTechnologyProgress(progress: number): void;
 }
 
 export interface RadarProps extends Partial<RadarOptions> {
@@ -43,6 +69,9 @@ export function Radar({
 }: RadarProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const technologyRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const technologyProgress = useRef(0);
+  const paintTechnologies = useRef<(frame: RadarFrame) => void>(() => {});
   const controller = useRef<RadarController | null>(null);
   const options = useRef<RadarOptions>({
     active,
@@ -98,6 +127,18 @@ export function Radar({
           load.current();
         }
       },
+      setTechnologyProgress(progress) {
+        const next = Number.isFinite(progress)
+          ? Math.min(1, Math.max(0, progress))
+          : 0;
+        if (technologyProgress.current === next) return;
+        const previousPresence = getRadarTechnologyPresence(
+          technologyProgress.current,
+        );
+        technologyProgress.current = next;
+        if (previousPresence !== getRadarTechnologyPresence(next))
+          controller.current?.invalidate();
+      },
     }),
     [],
   );
@@ -108,13 +149,69 @@ export function Radar({
     if (!root || !canvas) return;
     let alive = true;
     let loading = false;
+    let paintedPresence = NaN;
+    let projectionKey = "";
+    const painted = technologyEchoes.map(() => ({ opacity: "", hit: "" }));
+    paintTechnologies.current = (frame) => {
+      if (!alive) return;
+      const presence = getRadarTechnologyPresence(technologyProgress.current);
+      if (presence === 0) {
+        if (paintedPresence !== 0) {
+          technologyRefs.current.forEach((element, index) => {
+            if (element) element.style.opacity = "0";
+            painted[index].opacity = "0";
+          });
+        }
+        paintedPresence = 0;
+        projectionKey = "";
+        return;
+      }
+      paintedPresence = presence;
+      const scale = getRadarTechnologySize(frame.width) / 28;
+      const nextProjectionKey = `${frame.width}/${frame.height}/${frame.view.tilt}/${frame.view.centerX}/${frame.view.centerY}/${frame.view.scale}`;
+      const moved = nextProjectionKey !== projectionKey;
+      projectionKey = nextProjectionKey;
+      technologyEchoes.forEach(({ point }, index) => {
+        const element = technologyRefs.current[index];
+        if (!element) return;
+        if (moved) {
+          const position = projectRadarTechnology(
+            point,
+            frame.view,
+            frame.width,
+            frame.height,
+          );
+          element.style.transform = `translate3d(${position.x.toFixed(2)}px,${position.y.toFixed(2)}px,0) scale(${scale})`;
+        }
+        const intensity = getRadarTechnologyIntensity(
+          point,
+          frame.sweep,
+          frame.speed,
+        );
+        const opacity = (presence * intensity).toFixed(3);
+        if (painted[index].opacity !== opacity) {
+          element.style.opacity = opacity;
+          painted[index].opacity = opacity;
+        }
+        const hit = ((intensity - 0.06) / 0.54).toFixed(3);
+        if (painted[index].hit !== hit) {
+          element.style.setProperty("--radar-hit", hit);
+          painted[index].hit = hit;
+        }
+      });
+    };
     load.current = () => {
       if (!alive || loading || controller.current) return;
       loading = true;
       void import("./radar-engine")
         .then(({ createRadar }) => {
           if (!alive) return;
-          controller.current = createRadar(root, canvas, options.current);
+          controller.current = createRadar(
+            root,
+            canvas,
+            options.current,
+            (frame) => paintTechnologies.current(frame),
+          );
         })
         .catch(() => {
           // The decorative fallback is the page's existing background.
@@ -137,6 +234,7 @@ export function Radar({
       load.current = () => {};
       controller.current?.destroy();
       controller.current = null;
+      paintTechnologies.current = () => {};
     };
   }, []);
 
@@ -176,6 +274,31 @@ export function Radar({
       data-radar
     >
       <canvas ref={canvasRef} className={styles.canvas} />
+      <div
+        className={styles.technologies}
+        style={{ color }}
+        data-radar-technologies
+      >
+        {technologyEchoes.map((technology, index) => (
+          <span
+            key={technology.name}
+            ref={(element) => {
+              technologyRefs.current[index] = element;
+            }}
+            className={styles.technology}
+            data-radar-technology={technology.name}
+          >
+            <span
+              className={styles.technologyGlow}
+              style={{ maskImage: `url("${technology.icon}")` }}
+            />
+            <span
+              className={styles.technologyMark}
+              style={{ maskImage: `url("${technology.icon}")` }}
+            />
+          </span>
+        ))}
+      </div>
     </div>
   );
 }

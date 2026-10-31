@@ -10,6 +10,7 @@ import {
   COMPOSITE,
 } from "./radar-shaders";
 import { observeEffectVisibility } from "./effect-visibility";
+import { RADAR_FOCAL, type RadarFrame } from "@/lib/radar-technologies";
 type Program = {
   program: WebGLProgram;
   uniforms: Record<string, WebGLUniformLocation | null>;
@@ -36,7 +37,7 @@ type Contact = {
 const TAU = Math.PI * 2;
 const MAX_TARGETS = 16;
 const HISTORY = 4;
-const FOCAL = 2;
+const FOCAL = RADAR_FOCAL;
 const BLOOM_LEVELS = 3;
 
 const clamp = (value: number, min: number, max: number) =>
@@ -129,6 +130,8 @@ export interface RadarOptions extends RadarView {
 
 export interface RadarController {
   update(options: Partial<RadarOptions>): void;
+  /** Coalesce decorative DOM changes with the next camera/sweep frame. */
+  invalidate(): void;
   destroy(): void;
 }
 
@@ -180,6 +183,7 @@ function createRenderer(
   gl: WebGL2RenderingContext,
   canvas: HTMLCanvasElement,
   getSettings: () => Settings,
+  onFrame?: (frame: RadarFrame) => void,
 ) {
   const floatTargets = !!gl.getExtension("EXT_color_buffer_float");
   const range = floatTargets ? 1 : 0.25;
@@ -607,6 +611,21 @@ function createRenderer(
       floatTargets && s.glow > 0 ? up[0].texture : scene.texture,
     );
     run(composite, null, canvas.width, canvas.height);
+    // Decorations consume this exact camera and sweep after the GPU frame.
+    // They never run an independent clock or requestAnimationFrame loop.
+    onFrame?.({
+      time: state.time,
+      sweep: state.sweep,
+      speed: s.speed,
+      width: view.width,
+      height: view.height,
+      view: {
+        tilt: (s.tilt * 180) / Math.PI,
+        centerX: s.centerX,
+        centerY: s.centerY,
+        scale: s.scale,
+      },
+    });
   };
 
   const destroy = () => {
@@ -668,6 +687,7 @@ export function createRadar(
   container: HTMLElement,
   canvas: HTMLCanvasElement,
   initial: RadarOptions,
+  onFrame?: (frame: RadarFrame) => void,
 ): RadarController {
   let options = { ...initial };
   let settings = normalize(options);
@@ -728,7 +748,7 @@ export function createRadar(
       powerPreference: "low-power",
     });
     if (!gl || gl.isContextLost()) return false;
-    renderer = createRenderer(gl, canvas, () => settings);
+    renderer = createRenderer(gl, canvas, () => settings, onFrame);
     if (!renderer) return false;
     needsResize = true;
     return true;
@@ -852,6 +872,11 @@ export function createRadar(
   availability();
 
   return {
+    invalidate() {
+      if (!alive) return;
+      dirty = true;
+      wake();
+    },
     update(next) {
       if (!alive) return;
       if (

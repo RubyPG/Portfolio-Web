@@ -1,6 +1,9 @@
 .root {
   aspect-ratio: 1086 / 1448;
   overflow: clip;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .image,
@@ -13,6 +16,8 @@
 
 .image {
   object-fit: contain;
+  pointer-events: none;
+  -webkit-user-drag: none;
 }
 
 .surface {

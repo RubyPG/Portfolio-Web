@@ -19,8 +19,49 @@
   opacity: 1;
 }
 
+.technologies {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.root[data-radar-ready] .technologies {
+  visibility: visible;
+}
+
+.technology {
+  position: absolute;
+  top: -14px;
+  left: -14px;
+  width: 28px;
+  height: 28px;
+  opacity: 0;
+  transform-origin: 50% 50%;
+}
+
+.technologyMark,
+.technologyGlow {
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+
+.technologyGlow {
+  filter: blur(4px);
+  opacity: var(--radar-hit, 0);
+  transform: scale(1.35);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .canvas {
     transition: none;
+  }
+  .technologyGlow {
+    display: none;
   }
 }

@@ -8,17 +8,11 @@
 .surface {
   position: relative;
 }
+.world {
+  display: none;
+}
 .hero {
   position: relative;
-}
-.particles {
-  display: none;
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 3;
 }
 .projects {
   position: relative;
@@ -76,12 +70,24 @@
   position: absolute;
   inset: 0;
 }
+.story[data-scroll-story] .world {
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: var(--ink);
+  opacity: 0;
+  transform-origin: 50% 94%;
+}
+.story[data-scroll-story] .stack,
+.story[data-scroll-story] [data-stack-content],
+.story[data-scroll-story] .personal {
+  background: transparent;
+}
 .story[data-scroll-story] .hero {
   position: absolute;
   inset: 0;
-}
-.story[data-scroll-story] .particles {
-  display: block;
 }
 .story[data-scroll-story] .projects {
   position: absolute;
@@ -93,7 +99,6 @@
   inset: 0;
   z-index: 5;
   visibility: hidden;
-  will-change: transform;
 }
 .story[data-scroll-story] .personal {
   position: absolute;
@@ -146,8 +151,5 @@
   .story[data-scroll-story] .about,
   .story[data-scroll-story] .contact {
     position: relative;
-  }
-  .story[data-scroll-story] .particles {
-    display: none;
   }
 }

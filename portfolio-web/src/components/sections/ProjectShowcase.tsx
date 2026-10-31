@@ -5,21 +5,22 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
-import FlexCarousel, {
-  type FlexCarouselHandle,
-} from "@/components/ui/FlexCarousel";
+import { animate } from "animejs";
 import { projects } from "@/data/projects";
-import { ProjectDetail } from "./ProjectDetail";
+import { ProjectDetail, type ProjectDetailRect } from "./ProjectDetail";
 import { ProjectPreview, type ProjectPreviewHandle } from "./ProjectPreview";
-import { ProjectControls, type ProjectControlsHandle } from "./ProjectControls";
 import {
   getProjectCardBackground,
-  getProjectCardHeight,
-  PROJECT_CARD_RADIUS,
+  getProjectCardBackgroundCss,
 } from "@/lib/project-card";
+import {
+  getProjectPreviewComposition,
+  getProjectPreviewRect,
+} from "@/lib/project-preview";
 import styles from "./ProjectShowcase.module.css";
 
 export interface ProjectShowcaseHandle {
@@ -28,26 +29,17 @@ export interface ProjectShowcaseHandle {
   setInteractionEnabled(enabled: boolean): void;
   isTransitioning(): boolean;
   hasSelection(): boolean;
-  /** Consume a return gesture only when a project is selected. */
   closeFocus(): boolean;
-  /** Clear a selection/detail while the menu transition covers the scene. */
   resetForNavigation(): void;
 }
-
-const items = projects.map((project) => ({
-  src: project.image,
-  alt: project.imageAlt,
-  title: project.title,
-  subtitle: project.category,
-  background: getProjectCardBackground(project.slug),
-  preview: project.preview,
-}));
-
 interface InlineProject {
   index: number;
-  rect: { x: number; y: number; width: number; height: number };
+  rect: ProjectDetailRect;
 }
+const clamp = (value: number) => Math.max(0, Math.min(1, value));
+const mix = (a: number, b: number, progress: number) => a + (b - a) * progress;
 
+/** Project locations share the landscape; choosing one opens the approved preview. */
 export const ProjectShowcase = forwardRef<
   ProjectShowcaseHandle,
   {
@@ -56,15 +48,28 @@ export const ProjectShowcase = forwardRef<
     onProjectChange?: (index: number) => void;
   }
 >(function ProjectShowcase({ onReady, onDetailChange, onProjectChange }, ref) {
-  const carousel = useRef<FlexCarouselHandle>(null);
   const section = useRef<HTMLElement>(null);
+  const atlas = useRef<HTMLDivElement>(null);
   const gallery = useRef<HTMLDivElement>(null);
-  const summary = useRef<HTMLDivElement>(null);
-  const controls = useRef<ProjectControlsHandle>(null);
+  const selectedSurface = useRef<HTMLDivElement>(null);
+  const selectedInterior = useRef<HTMLDivElement>(null);
+  const selectedMedia = useRef<HTMLImageElement>(null);
+  const selectedLogo = useRef<HTMLImageElement>(null);
   const preview = useRef<ProjectPreviewHandle>(null);
-  const focusedIndex = useRef<number | null>(null);
-  const introProgress = useRef(1);
+  const actions = useRef<HTMLDivElement>(null);
+  const nodes = useRef<(HTMLButtonElement | null)[]>([]);
+  const intro = useRef(1);
   const interactionEnabled = useRef(true);
+  const focusProgress = useRef({ value: 0 });
+  const focusAnimation = useRef<ReturnType<typeof animate> | null>(null);
+  const focusBusy = useRef(false);
+  const focusedIndex = useRef<number | null>(null);
+  const sourceRect = useRef<ProjectDetailRect>({
+    x: 0,
+    y: 0,
+    width: 1,
+    height: 1,
+  });
   const inlineProject = useRef<InlineProject | null>(null);
   const restoreFocusFrame = useRef(0);
   const wheelGesture = useRef({
@@ -73,244 +78,268 @@ export const ProjectShowcase = forwardRef<
     consumed: false,
     distance: 0,
   });
-  const [selected, setSelected] = useState(0);
+  const callbacks = useRef({ onReady, onDetailChange, onProjectChange });
   const [focused, setFocused] = useState<number | null>(null);
   const [summaryIndex, setSummaryIndex] = useState(0);
   const [focusSettled, setFocusSettled] = useState(false);
-  const [cardHeight, setCardHeight] = useState(0.36);
-  const [active, setActive] = useState(false);
   const [interactive, setInteractive] = useState(true);
   const [detail, setDetail] = useState<InlineProject | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const detailMounted = detail !== null;
-  const current = projects[focused ?? selected];
+  const current = projects[summaryIndex];
 
-  const focusProject = useCallback((index: number | null) => {
-    controls.current?.captureLayout();
-    wheelGesture.current.canOpen = false;
-    setFocusSettled(
-      index !== null && Boolean(carousel.current?.isFocusSettled()),
-    );
-    focusedIndex.current = index;
-    // Keep outgoing copy stable if the carousel moves during the reverse animation.
-    if (index !== null) setSummaryIndex(index);
-    setFocused(index);
+  useLayoutEffect(() => {
+    callbacks.current = { onReady, onDetailChange, onProjectChange };
+  }, [onReady, onDetailChange, onProjectChange]);
+
+  const readPreviewRect = useCallback(() => {
+    const host = section.current;
+    const project = projects[focusedIndex.current ?? 0];
+    return host
+      ? getProjectPreviewRect(
+          host.clientWidth,
+          host.clientHeight,
+          project.preview.width / project.preview.height,
+        )
+      : null;
   }, []);
 
-  const readCardRect = useCallback(() => {
-    const rect = carousel.current?.getFocusedCardRect();
-    if (!rect || !gallery.current || !section.current) return null;
-    const galleryRect = gallery.current.getBoundingClientRect();
-    const sectionRect = section.current.getBoundingClientRect();
-    return {
-      ...rect,
-      x: rect.x + galleryRect.left - sectionRect.left,
-      y: rect.y + galleryRect.top - sectionRect.top,
+  const paint = useCallback(() => {
+    if (!section.current) return;
+    const progress = focusProgress.current.value;
+    const index = focusedIndex.current;
+    nodes.current.forEach((node, i) => {
+      if (!node) return;
+      const arrival = clamp((intro.current - i * 0.13) / (1 - i * 0.13));
+      const visible = 1 - Math.pow(1 - arrival, 3);
+      node.style.transform = `translate3d(0, ${(1 - visible) * 16}px, 0)`;
+      node.style.opacity = String(visible);
+      const image = node.querySelector("img");
+      if (image)
+        image.style.visibility = i === index && progress > 0 ? "hidden" : "";
+    });
+    if (atlas.current)
+      atlas.current.style.opacity = String(1 - clamp(progress * 3));
+    preview.current?.setProgress(progress);
+    if (actions.current) {
+      actions.current.style.opacity = String(clamp((progress - 0.6) / 0.4));
+      actions.current.style.transform = `translateY(${(1 - progress) * 16}px)`;
+    }
+    if (index === null) return;
+    const rect = readPreviewRect();
+    if (!rect) return;
+    const project = projects[index];
+    const composition = getProjectPreviewComposition(
+      rect.width,
+      project.preview.width / project.preview.height,
+    );
+    const frameReveal = clamp((progress - 0.18) / 0.82);
+    if (selectedSurface.current)
+      Object.assign(selectedSurface.current.style, {
+        width: `${rect.width}px`,
+        height: `${rect.height}px`,
+        transform: `translate3d(${rect.x}px, ${rect.y}px, 0) scale(${0.86 + frameReveal * 0.14})`,
+        opacity: String(frameReveal),
+      });
+    if (selectedInterior.current)
+      Object.assign(selectedInterior.current.style, {
+        left: `${composition.interior.x}px`,
+        top: `${composition.interior.y}px`,
+        width: `${composition.interior.width}px`,
+        height: `${composition.interior.height}px`,
+      });
+    if (selectedMedia.current)
+      Object.assign(selectedMedia.current.style, {
+        left: `${composition.media.x}px`,
+        top: `${composition.media.y}px`,
+        width: `${composition.media.width}px`,
+        height: `${composition.media.height}px`,
+        opacity: String(clamp((progress - 0.36) / 0.64)),
+      });
+    if (selectedLogo.current) {
+      const source = sourceRect.current;
+      const size = mix(source.width, composition.logo.width, progress);
+      Object.assign(selectedLogo.current.style, {
+        width: `${source.width}px`,
+        height: `${source.height}px`,
+        opacity: String(progress > 0 ? 1 : 0),
+        transform: `translate3d(${mix(source.x, rect.x + composition.logo.x, progress)}px, ${mix(source.y, rect.y + composition.logo.y, progress)}px, 0) scale(${size / source.width})`,
+      });
+    }
+  }, [readPreviewRect]);
+
+  const captureSource = useCallback((index: number) => {
+    const host = section.current;
+    const image = nodes.current[index]?.querySelector("img");
+    if (!host || !image) return;
+    const hostRect = host.getBoundingClientRect();
+    const bounds = image.getBoundingClientRect();
+    sourceRect.current = {
+      x: bounds.left - hostRect.left,
+      y: bounds.top - hostRect.top,
+      width: bounds.width,
+      height: bounds.height,
     };
   }, []);
+
+  const closeFocus = useCallback(() => {
+    const index = focusedIndex.current;
+    if (index === null || inlineProject.current || focusBusy.current)
+      return false;
+    focusAnimation.current?.pause();
+    focusBusy.current = true;
+    setFocusSettled(false);
+    wheelGesture.current.canOpen = false;
+    const finish = () => {
+      focusBusy.current = false;
+      focusedIndex.current = null;
+      setFocused(null);
+      paint();
+      cancelAnimationFrame(restoreFocusFrame.current);
+      restoreFocusFrame.current = requestAnimationFrame(() =>
+        nodes.current[index]?.focus({ preventScroll: true }),
+      );
+    };
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      focusProgress.current.value = 0;
+      paint();
+      finish();
+    } else {
+      focusAnimation.current = animate(focusProgress.current, {
+        value: 0,
+        duration: 680,
+        ease: "inOutCubic",
+        onUpdate: paint,
+        onComplete: finish,
+      });
+    }
+    return true;
+  }, [paint]);
+
+  const chooseProject = useCallback(
+    (index: number) => {
+      if (
+        !interactionEnabled.current ||
+        intro.current < 1 ||
+        focusedIndex.current !== null ||
+        focusBusy.current
+      )
+        return;
+      captureSource(index);
+      focusedIndex.current = index;
+      focusBusy.current = true;
+      setSummaryIndex(index);
+      setFocusSettled(false);
+      setFocused(index);
+      callbacks.current.onProjectChange?.(index);
+    },
+    [captureSource],
+  );
+
+  useLayoutEffect(() => {
+    if (focused === null) return;
+    focusProgress.current.value = 0;
+    paint();
+    const finish = () => {
+      focusBusy.current = false;
+      setFocusSettled(true);
+      cancelAnimationFrame(restoreFocusFrame.current);
+      restoreFocusFrame.current = requestAnimationFrame(() => {
+        if (
+          focusedIndex.current !== focused ||
+          inlineProject.current ||
+          !interactionEnabled.current ||
+          intro.current < 1
+        )
+          return;
+        actions.current
+          ?.querySelector<HTMLButtonElement>("button")
+          ?.focus({ preventScroll: true });
+      });
+    };
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      focusProgress.current.value = 1;
+      paint();
+      finish();
+      return;
+    }
+    const animation = animate(focusProgress.current, {
+      value: 1,
+      duration: 820,
+      ease: "inOutCubic",
+      onUpdate: paint,
+      onComplete: finish,
+    });
+    focusAnimation.current = animation;
+    return () => {
+      animation.pause();
+    };
+  }, [focused, paint]);
 
   const openDetail = useCallback(() => {
     const index = focusedIndex.current;
     if (
       index === null ||
       !interactionEnabled.current ||
-      introProgress.current < 1 ||
+      intro.current < 1 ||
       inlineProject.current ||
-      !carousel.current?.isFocusSettled()
+      focusBusy.current ||
+      focusProgress.current.value < 1
     )
       return false;
-    const rect = readCardRect();
+    const rect = readPreviewRect();
     if (!rect) return false;
     const next = { index, rect };
     inlineProject.current = next;
     wheelGesture.current.consumed = true;
-    onDetailChange?.(true);
+    callbacks.current.onDetailChange?.(true);
     setDetail(next);
     setDetailOpen(true);
     return true;
-  }, [readCardRect, onDetailChange]);
+  }, [readPreviewRect]);
 
-  const closeDetail = useCallback(() => setDetailOpen(false), []);
   const exitDetail = useCallback(() => {
-    const returnScrollY = window.scrollY;
-    // Invalidate the detail before React removes it: a queued resize frame
-    // must not read the old rect and mount the just-closed panel again.
     inlineProject.current = null;
     setDetail(null);
-    // Wait for inert to be removed before restoring keyboard focus.
     cancelAnimationFrame(restoreFocusFrame.current);
     restoreFocusFrame.current = requestAnimationFrame(() => {
       if (inlineProject.current) return;
-      window.scrollTo({ top: returnScrollY, behavior: "instant" });
-      onDetailChange?.(false);
-      gallery.current
-        ?.querySelector<HTMLElement>('[role="region"]')
+      callbacks.current.onDetailChange?.(false);
+      actions.current
+        ?.querySelector<HTMLButtonElement>("button")
         ?.focus({ preventScroll: true });
     });
-  }, [onDetailChange]);
+  }, []);
 
   useEffect(() => {
-    const container = section.current;
-    if (!container) return;
-    let touchStart: {
-      x: number;
-      y: number;
-      canOpen: boolean;
-      consumed: boolean;
-    } | null = null;
-    const canOpenFromGesture = () =>
-      !inlineProject.current &&
-      interactionEnabled.current &&
-      introProgress.current === 1 &&
-      Boolean(carousel.current?.isFocusSettled());
-    const consume = (event: Event) => {
-      event.preventDefault();
-      event.stopPropagation();
-    };
-    const wheel = (event: WheelEvent) => {
-      if (event.ctrlKey) return;
-      const gesture = wheelGesture.current;
-      const now = performance.now();
-      const inSection = event.composedPath().includes(container);
-      if (now - gesture.lastAt > 200) {
-        gesture.canOpen = inSection && canOpenFromGesture();
-        gesture.consumed = false;
-        gesture.distance = 0;
-      }
-      gesture.lastAt = now;
-      // Track the same gesture across inert layers and detail mount/unmount.
-      // A gesture that started before readiness cannot become an open request.
+    const host = section.current;
+    if (!host) return;
+    let resizeFrame = 0;
+    const measure = () => {
+      resizeFrame = 0;
+      if (focusedIndex.current !== null) captureSource(focusedIndex.current);
+      paint();
       if (inlineProject.current) {
-        gesture.canOpen = false;
-        gesture.consumed = true;
-        return;
-      }
-      if (!interactionEnabled.current) {
-        gesture.canOpen = false;
-        return;
-      }
-      if (!inSection) return;
-      if (introProgress.current < 1) {
-        gesture.canOpen = false;
-        return;
-      }
-      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
-      if (carousel.current?.isTransitioning()) {
-        gesture.canOpen = false;
-        gesture.consumed = true;
-      }
-      if (gesture.consumed) {
-        consume(event);
-        return;
-      }
-      if (event.deltaY <= 0) {
-        gesture.canOpen = false;
-        gesture.distance = 0;
-        return;
-      }
-      if (focusedIndex.current === null) return;
-      consume(event);
-      const unit =
-        event.deltaMode === 1
-          ? 16
-          : event.deltaMode === 2
-            ? container.clientHeight
-            : 1;
-      gesture.distance += event.deltaY * unit;
-      if (gesture.canOpen && gesture.distance >= 24 && openDetail()) {
-        gesture.consumed = true;
+        const rect = readPreviewRect();
+        if (rect) {
+          inlineProject.current = { ...inlineProject.current, rect };
+          setDetail(inlineProject.current);
+        }
       }
     };
-    const startTouch = (event: TouchEvent) => {
-      const touch = event.touches[0];
-      touchStart =
-        touch && event.composedPath().includes(container)
-          ? {
-              x: touch.clientX,
-              y: touch.clientY,
-              canOpen: canOpenFromGesture(),
-              consumed: Boolean(
-                inlineProject.current || carousel.current?.isTransitioning(),
-              ),
-            }
-          : null;
-    };
-    const moveTouch = (event: TouchEvent) => {
-      const touch = event.touches[0];
-      if (
-        !touch ||
-        !touchStart ||
-        inlineProject.current ||
-        !interactionEnabled.current
-      )
-        return;
-      const dy = touchStart.y - touch.clientY;
-      const dx = touchStart.x - touch.clientX;
-      if (Math.abs(dy) <= Math.abs(dx) * 1.25) return;
-      if (introProgress.current < 1) {
-        touchStart.canOpen = false;
-        return;
-      }
-      if (carousel.current?.isTransitioning()) {
-        touchStart.canOpen = false;
-        touchStart.consumed = true;
-      }
-      if (touchStart.consumed) {
-        consume(event);
-        return;
-      }
-      if (dy > 24 && focusedIndex.current !== null) {
-        consume(event);
-        if (touchStart.canOpen && openDetail()) touchStart.consumed = true;
-      }
-    };
-    const endTouch = () => {
-      touchStart = null;
-    };
-    const key = (event: KeyboardEvent) => {
-      if (
-        inlineProject.current ||
-        !interactionEnabled.current ||
-        introProgress.current < 1
-      )
-        return;
-      const down = event.key === "PageDown" || event.key === "ArrowDown";
-      const up = event.key === "PageUp" || event.key === "ArrowUp";
-      if (!down && !up) return;
-      if (carousel.current?.isTransitioning()) {
-        consume(event);
-        return;
-      }
-      if (down && focusedIndex.current !== null) {
-        consume(event);
-        if (!event.repeat) openDetail();
-      }
-    };
-    container.addEventListener("wheel", wheel, {
-      capture: true,
-      passive: false,
+    const resize = new ResizeObserver(() => {
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(measure);
     });
-    window.addEventListener("touchstart", startTouch, {
-      capture: true,
-      passive: true,
-    });
-    container.addEventListener("touchmove", moveTouch, {
-      capture: true,
-      passive: false,
-    });
-    container.addEventListener("keydown", key, true);
-    window.addEventListener("touchend", endTouch);
-    window.addEventListener("touchcancel", endTouch);
+    resize.observe(host);
+    callbacks.current.onReady?.();
     return () => {
-      container.removeEventListener("wheel", wheel, true);
-      window.removeEventListener("touchstart", startTouch, true);
-      container.removeEventListener("touchmove", moveTouch, true);
-      container.removeEventListener("keydown", key, true);
-      window.removeEventListener("touchend", endTouch);
-      window.removeEventListener("touchcancel", endTouch);
+      resize.disconnect();
+      cancelAnimationFrame(resizeFrame);
       cancelAnimationFrame(restoreFocusFrame.current);
+      focusAnimation.current?.pause();
     };
-  }, [openDetail]);
+  }, [captureSource, paint, readPreviewRect]);
 
   useEffect(() => {
     if (!detailMounted) return;
@@ -326,99 +355,190 @@ export const ProjectShowcase = forwardRef<
   }, [detailMounted]);
 
   useEffect(() => {
-    if (!detailMounted) return;
-    let resizeFrame = 0;
-    const resize = new ResizeObserver(() => {
-      cancelAnimationFrame(resizeFrame);
-      resizeFrame = requestAnimationFrame(() => {
-        const rect = readCardRect();
-        const previous = inlineProject.current;
-        if (!previous || !rect) return;
-        if (
-          Object.keys(rect).every(
-            (key) =>
-              rect[key as keyof typeof rect] ===
-              previous.rect[key as keyof typeof rect],
-          )
-        )
-          return;
-        const next = { ...previous, rect };
-        inlineProject.current = next;
-        setDetail(next);
-      });
-    });
-    if (gallery.current) resize.observe(gallery.current);
-    return () => {
-      resize.disconnect();
-      cancelAnimationFrame(resizeFrame);
-    };
-  }, [detailMounted, readCardRect, cardHeight]);
-
-  useEffect(() => {
-    const container = gallery.current;
+    const container = section.current;
     if (!container) return;
-    const update = () =>
-      setCardHeight(
-        getProjectCardHeight(container.clientWidth, container.clientHeight),
-      );
-    update();
-    const resize = new ResizeObserver(update);
-    resize.observe(container);
-    return () => resize.disconnect();
-  }, []);
+    let touch: {
+      x: number;
+      y: number;
+      canOpen: boolean;
+      consumed: boolean;
+    } | null = null;
+    const canOpen = () =>
+      !inlineProject.current &&
+      interactionEnabled.current &&
+      intro.current === 1 &&
+      focusedIndex.current !== null &&
+      !focusBusy.current &&
+      focusProgress.current.value === 1;
+    const consume = (event: Event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    };
+    const wheel = (event: WheelEvent) => {
+      if (event.ctrlKey) return;
+      const gesture = wheelGesture.current;
+      const now = performance.now();
+      if (now - gesture.lastAt > 200) {
+        gesture.canOpen = canOpen();
+        gesture.consumed = false;
+        gesture.distance = 0;
+      }
+      gesture.lastAt = now;
+      if (
+        inlineProject.current ||
+        !interactionEnabled.current ||
+        intro.current < 1
+      ) {
+        gesture.canOpen = false;
+        return;
+      }
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+      if (focusBusy.current) {
+        gesture.canOpen = false;
+        gesture.consumed = true;
+      }
+      if (gesture.consumed) {
+        consume(event);
+        return;
+      }
+      if (event.deltaY <= 0) {
+        gesture.canOpen = false;
+        gesture.distance = 0;
+        return;
+      }
+      if (focusedIndex.current === null) return;
+      consume(event);
+      gesture.distance +=
+        event.deltaY *
+        (event.deltaMode === 1
+          ? 16
+          : event.deltaMode === 2
+            ? container.clientHeight
+            : 1);
+      if (gesture.canOpen && gesture.distance >= 24 && openDetail())
+        gesture.consumed = true;
+    };
+    const startTouch = (event: TouchEvent) => {
+      const start = event.touches[0];
+      touch = start
+        ? {
+            x: start.clientX,
+            y: start.clientY,
+            canOpen: canOpen(),
+            consumed: Boolean(inlineProject.current || focusBusy.current),
+          }
+        : null;
+    };
+    const moveTouch = (event: TouchEvent) => {
+      const point = event.touches[0];
+      if (
+        !point ||
+        !touch ||
+        inlineProject.current ||
+        !interactionEnabled.current ||
+        intro.current < 1
+      )
+        return;
+      const dy = touch.y - point.clientY;
+      if (Math.abs(dy) <= Math.abs(touch.x - point.clientX) * 1.25) return;
+      if (focusBusy.current) {
+        touch.canOpen = false;
+        touch.consumed = true;
+      }
+      if (touch.consumed) {
+        consume(event);
+        return;
+      }
+      if (dy > 24 && focusedIndex.current !== null) {
+        consume(event);
+        if (touch.canOpen && openDetail()) touch.consumed = true;
+      }
+    };
+    const endTouch = () => {
+      touch = null;
+    };
+    const key = (event: KeyboardEvent) => {
+      if (
+        inlineProject.current ||
+        !interactionEnabled.current ||
+        intro.current < 1
+      )
+        return;
+      if (event.key === "Escape" && focusedIndex.current !== null) {
+        consume(event);
+        if (!event.repeat) closeFocus();
+      } else if (
+        (event.key === "PageDown" || event.key === "ArrowDown") &&
+        focusedIndex.current !== null
+      ) {
+        consume(event);
+        if (!event.repeat) openDetail();
+      }
+    };
+    container.addEventListener("wheel", wheel, {
+      capture: true,
+      passive: false,
+    });
+    container.addEventListener("touchstart", startTouch, {
+      capture: true,
+      passive: true,
+    });
+    container.addEventListener("touchmove", moveTouch, {
+      capture: true,
+      passive: false,
+    });
+    container.addEventListener("keydown", key, true);
+    window.addEventListener("touchend", endTouch);
+    window.addEventListener("touchcancel", endTouch);
+    return () => {
+      container.removeEventListener("wheel", wheel, true);
+      container.removeEventListener("touchstart", startTouch, true);
+      container.removeEventListener("touchmove", moveTouch, true);
+      container.removeEventListener("keydown", key, true);
+      window.removeEventListener("touchend", endTouch);
+      window.removeEventListener("touchcancel", endTouch);
+    };
+  }, [closeFocus, openDetail]);
 
   useImperativeHandle(
     ref,
     () => ({
       setIntroProgress(progress) {
-        if (inlineProject.current) return;
-        if (introProgress.current >= 1 && progress < 1) {
-          onProjectChange?.(carousel.current?.getSelectedIndex() ?? selected);
-        }
-        introProgress.current = progress;
-        carousel.current?.setIntroProgress(progress);
+        intro.current = clamp(progress);
+        paint();
       },
-      setActive,
+      setActive(active) {
+        if (section.current) section.current.dataset.active = String(active);
+      },
       setInteractionEnabled(enabled) {
         interactionEnabled.current = enabled;
-        // Match the synchronous gesture gate before React commits accessibility state.
         if (gallery.current)
           gallery.current.inert = !enabled || Boolean(inlineProject.current);
-        const footer = section.current?.querySelector<HTMLElement>(
-          "[data-project-footer]",
-        );
-        if (footer) footer.inert = !enabled || Boolean(inlineProject.current);
         setInteractive(enabled);
         if (!enabled) wheelGesture.current.canOpen = false;
       },
-      isTransitioning() {
-        return carousel.current?.isTransitioning() ?? false;
-      },
-      hasSelection() {
-        return focusedIndex.current !== null;
-      },
-      closeFocus() {
-        if (inlineProject.current) return false;
-        return carousel.current?.closeFocus() ?? false;
-      },
+      isTransitioning: () => focusBusy.current,
+      hasSelection: () => focusedIndex.current !== null,
+      closeFocus,
       resetForNavigation() {
+        focusAnimation.current?.pause();
         cancelAnimationFrame(restoreFocusFrame.current);
         const hadDetail = inlineProject.current !== null;
         inlineProject.current = null;
+        focusBusy.current = false;
+        focusedIndex.current = null;
+        focusProgress.current.value = 0;
         setDetail(null);
         setDetailOpen(false);
-        focusedIndex.current = null;
         setFocused(null);
         setFocusSettled(false);
         wheelGesture.current.canOpen = false;
         wheelGesture.current.consumed = true;
-        carousel.current?.closeFocus();
-        carousel.current?.setIntroProgress(0);
-        carousel.current?.setIntroProgress(1);
-        if (hadDetail) onDetailChange?.(false);
+        paint();
+        if (hadDetail) callbacks.current.onDetailChange?.(false);
       },
     }),
-    [onProjectChange, onDetailChange, selected],
+    [closeFocus, paint],
   );
 
   return (
@@ -429,6 +549,7 @@ export const ProjectShowcase = forwardRef<
       id="proyectos"
       data-focused={focused !== null || undefined}
       data-detail-open={detailMounted || undefined}
+      data-project-atlas
     >
       <header
         className={styles.header}
@@ -440,11 +561,7 @@ export const ProjectShowcase = forwardRef<
         <h2 id="projects-title" data-project-corner="left">
           PROYECTOS
         </h2>
-        <span className={styles.index} data-project-corner="up">
-          DESARROLLO & DISEÑO
-          <br />
-          {String(selected + 1).padStart(2, "0")} /{" "}
-          {String(projects.length).padStart(2, "0")}
+        <div className={styles.index} data-project-corner="up">
           <a
             href="#stack"
             className={styles.stackLink}
@@ -452,55 +569,96 @@ export const ProjectShowcase = forwardRef<
             inert={focused !== null}
             aria-hidden={focused !== null || undefined}
           >
-            Mi stack
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              aria-hidden="true"
-            >
-              <path d="M6 6 18 18M6 18h12V6" />
-            </svg>
+            Mi stack <span aria-hidden="true">↘</span>
           </a>
-        </span>
+        </div>
       </header>
       <div
         ref={gallery}
         className={styles.gallery}
         data-project-gallery
+        tabIndex={-1}
         inert={!interactive || detailMounted}
         aria-hidden={!interactive || detailMounted || undefined}
       >
-        <FlexCarousel
-          ref={carousel}
-          items={items}
-          preset="liquid"
-          fit="square"
-          intro="deal"
-          cardHeight={cardHeight}
-          gap={20}
-          radius={PROJECT_CARD_RADIUS}
-          squeeze={0.2}
-          captions={false}
-          captureWheel={false}
-          controlledIntro
-          active={active && !detailMounted}
-          onChange={(index) => {
-            setSelected(index);
-            onProjectChange?.(index);
-          }}
-          onFocusChange={focusProject}
-          onFocusProgress={(_, progress) =>
-            preview.current?.setProgress(progress)
-          }
-          onFocusSettledChange={setFocusSettled}
-          onReady={onReady}
-        />
+        <div
+          ref={atlas}
+          className={styles.atlas}
+          role="group"
+          aria-label="Elige un proyecto"
+          inert={focused !== null}
+          aria-hidden={focused !== null || undefined}
+        >
+          {projects.map((project, index) => (
+            <button
+              key={project.slug}
+              ref={(node) => {
+                nodes.current[index] = node;
+              }}
+              className={styles.location}
+              type="button"
+              data-project-location={project.slug}
+              onClick={() => chooseProject(index)}
+              aria-label={`Explorar ${project.title}`}
+              aria-controls="project-selection"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={project.image}
+                alt=""
+                width="256"
+                height="256"
+                draggable={false}
+                onContextMenu={(event) => event.preventDefault()}
+              />
+              <span className={styles.locationTitle}>
+                {project.title}
+                <span aria-hidden="true">↗</span>
+              </span>
+              <span className={styles.locationCategory}>
+                {project.category}
+              </span>
+            </button>
+          ))}
+        </div>
+        <div
+          className={styles.selection}
+          id="project-selection"
+          data-project-selection
+          hidden={focused === null}
+        >
+          <div
+            ref={selectedSurface}
+            className={styles.selectedSurface}
+            style={{
+              background: getProjectCardBackgroundCss(
+                getProjectCardBackground(current.slug),
+              ),
+            }}
+          >
+            <div ref={selectedInterior} className={styles.selectedInterior} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              ref={selectedMedia}
+              className={styles.selectedMedia}
+              src={current.preview.src}
+              alt={current.preview.alt}
+              draggable={false}
+            />
+          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            ref={selectedLogo}
+            className={styles.selectedLogo}
+            src={current.image}
+            alt={current.imageAlt}
+            draggable={false}
+          />
+        </div>
       </div>
       <ProjectPreview
         ref={preview}
-        project={projects[summaryIndex]}
+        project={current}
         visible={focused !== null && interactive && !detailMounted}
       />
       <footer
@@ -510,50 +668,46 @@ export const ProjectShowcase = forwardRef<
         inert={!interactive || detailMounted}
         aria-hidden={!interactive || detailMounted || undefined}
       >
-        <div className={styles.projectCopy} data-project-corner="down">
+        <p
+          className={styles.hint}
+          hidden={focused !== null}
+          data-project-corner="down"
+        >
+          Elige un proyecto para explorarlo.
+        </p>
+        <div
+          className={styles.projectCopy}
+          hidden={focused === null}
+          data-project-corner="down"
+        >
           <span className={styles.category}>{current.category}</span>
           <h3>{current.title}</h3>
-          <div
-            ref={summary}
-            className={styles.summary}
-            data-project-summary
-            inert={focused === null}
-            aria-hidden={focused === null || undefined}
-          >
-            <div className={styles.detail} id="project-summary">
-              <button
-                type="button"
-                className={styles.projectLink}
-                onClick={openDetail}
-                disabled={!focusSettled}
-                aria-expanded={detailOpen}
-                aria-controls="inline-project-detail"
-              >
-                Ver proyecto <span aria-hidden="true">↓</span>
-              </button>
-            </div>
-          </div>
         </div>
-        <div className={styles.controls} data-project-corner="right">
-          <ProjectControls
-            ref={controls}
-            summaryRef={summary}
-            focused={focused !== null}
-            onPrevious={() =>
-              carousel.current?.select(
-                (selected - 1 + projects.length) % projects.length,
-              )
-            }
-            onNext={() =>
-              carousel.current?.select((selected + 1) % projects.length)
-            }
-            onClose={() => {
-              gallery.current
-                ?.querySelector<HTMLElement>('[role="region"]')
-                ?.focus({ preventScroll: true });
-              carousel.current?.closeFocus();
-            }}
-          />
+        <div
+          className={styles.actionsCorner}
+          hidden={focused === null}
+          data-project-corner="right"
+        >
+          <div ref={actions} className={styles.actions}>
+            <button
+              type="button"
+              className={styles.projectLink}
+              onClick={openDetail}
+              disabled={!focusSettled}
+              aria-expanded={detailOpen}
+              aria-controls="inline-project-detail"
+            >
+              Ver proyecto <span aria-hidden="true">↓</span>
+            </button>
+            <button
+              type="button"
+              className={styles.close}
+              onClick={closeFocus}
+              disabled={!focusSettled}
+            >
+              Cerrar <span aria-hidden="true">×</span>
+            </button>
+          </div>
         </div>
       </footer>
       {detail && (
@@ -561,7 +715,7 @@ export const ProjectShowcase = forwardRef<
           project={projects[detail.index]}
           sourceRect={detail.rect}
           open={detailOpen}
-          onClose={closeDetail}
+          onClose={() => setDetailOpen(false)}
           onEntered={() =>
             section.current
               ?.querySelector<HTMLElement>("[data-detail-heading]")

@@ -204,6 +204,7 @@ uniform vec2 uBandNormal;
 uniform float uBandSpan;
 uniform float uBandTravel;
 uniform float uExitProgress;
+uniform float uTerrainProgress;
 out vec4 fragColor;
 
 float box(vec2 p, vec2 b, float r) {
@@ -219,7 +220,10 @@ float coverage(vec2 local, float level) {
   }
   if (uPattern == 1) {
     float extent = 0.5 * span * area;
-    return clamp(0.5 - box(local, vec2(extent), extent * 0.3), 0.0, 1.0);
+    float join = smoothstep(0.08, 0.75, uTerrainProgress);
+    // The original squares stretch along their wave before the relief rises.
+    vec2 size = vec2(mix(extent, uPitch.x * 0.54, join), mix(extent, uStroke * 0.45, join));
+    return clamp(0.5 - box(local, size, min(size.x, size.y) * 0.3), 0.0, 1.0);
   }
   if (uPattern == 2) {
     float arm = 0.5 * span * mix(0.3, 1.0, level);

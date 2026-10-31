@@ -60,14 +60,29 @@ const document = Object.assign(new EventTarget(), {
     };
   },
 });
+const sceneSurface = {
+  style: {},
+  hidden: false,
+  inert: false,
+  parentElement: null,
+};
+const hero = {
+  style: {},
+  hidden: false,
+  inert: false,
+  parentElement: sceneSurface,
+};
 const container = Object.assign(new EventTarget(), {
   dataset: {},
   style: {},
-  parentElement: null,
+  parentElement: hero,
   hidden: false,
   inert: false,
   clientWidth: 390,
   clientHeight: 844,
+  closest(selector) {
+    return selector === "[data-hero]" ? hero : null;
+  },
   getBoundingClientRect() {
     boundsReads++;
     return { left: 0, top: 0, width: 390, height: 844 };
@@ -174,6 +189,82 @@ assert.equal(calls.surfaces, 1);
 assert.equal(calls.draw.length, 1);
 assert.equal(frames.size, 1, "visible waves continue");
 assert.equal(calls.resize[0][2], 1.75, "desktop DPR is bounded");
+
+// LandingStory makes the Hero inert as its content starts fading. The visible
+// decorative background must retain its own clock, without restoring deformation.
+const beforeFade = calls.draw.length;
+const beforeFadeTime = calls.draw.at(-1)[3];
+hero.inert = true;
+mutationObserver.callback([{ target: hero, attributeName: "inert" }]);
+c.setTerrainProgress(0);
+flush();
+flush();
+assert.ok(
+  calls.draw.length > beforeFade,
+  "visible background keeps drawing beneath inert Hero",
+);
+assert.ok(
+  calls.draw.at(-1)[3] > beforeFadeTime,
+  "wave time advances throughout the fade",
+);
+assert.ok(
+  calls.draw.slice(beforeFade).every((args) => args[9] === 0),
+  "continued motion never enables the deformation shader",
+);
+
+// Only the Hero's inert attribute is excepted: real hiding and a menu-owned
+// inert ancestor still pause the same running background immediately.
+hero.hidden = true;
+mutationObserver.callback([{ target: hero, attributeName: "hidden" }]);
+const beforeHidden = calls.draw.length;
+flush();
+assert.equal(
+  frames.size,
+  0,
+  "hidden Hero pauses even while its inert is excepted",
+);
+assert.equal(calls.draw.length, beforeHidden);
+hero.hidden = false;
+mutationObserver.callback([{ target: hero, attributeName: "hidden" }]);
+flush();
+sceneSurface.inert = true;
+mutationObserver.callback([{ target: sceneSurface, attributeName: "inert" }]);
+const beforeMenu = calls.draw.length;
+flush();
+assert.equal(frames.size, 0, "menu ancestor inert remains effective");
+assert.equal(calls.draw.length, beforeMenu);
+sceneSurface.inert = false;
+mutationObserver.callback([{ target: sceneSurface, attributeName: "inert" }]);
+flush();
+container.style.visibility = "hidden";
+mutationObserver.callback([{ target: container, attributeName: "style" }]);
+const beforeCssHidden = calls.draw.length;
+flush();
+assert.equal(frames.size, 0, "CSS visibility still pauses a moving surface");
+assert.equal(calls.draw.length, beforeCssHidden);
+container.style.visibility = "visible";
+mutationObserver.callback([{ target: container, attributeName: "style" }]);
+flush();
+
+c.update({ active: false });
+const beforeInactive = calls.draw.length;
+const pausedTime = calls.draw.at(-1)[3];
+flush();
+assert.equal(
+  frames.size,
+  0,
+  "fully faded background stops via its active gate",
+);
+assert.equal(calls.draw.length, beforeInactive);
+c.update({ active: true });
+flush();
+assert.ok(
+  calls.draw.at(-1)[3] > pausedTime,
+  "reverse resumes before Hero becomes interactive again",
+);
+assert.equal(hero.inert, true);
+assert.equal(calls.draw.at(-1)[9], 0);
+
 c.setExitProgress(0.45);
 flush();
 assert.equal(calls.draw.at(-1)[5], 0.45);
@@ -193,6 +284,11 @@ motion.matches = true;
 motion.emit("change");
 flush();
 assert.equal(frames.size, 0, "reduced motion draws once and stops");
+assert.equal(
+  hero.inert,
+  true,
+  "reduced motion also respects the inert Hero exception",
+);
 const staticTime = calls.draw.at(-1)[3];
 window.emit("pointermove", { clientX: 100, clientY: 100 });
 assert.equal(frames.size, 0, "reduced motion ignores pointer ripples");
@@ -287,5 +383,5 @@ assert.equal(observer.disconnected, true);
 assert.equal(resizeObserver.disconnected, true);
 assert.equal(mutationObserver.disconnected, true);
 console.log(
-  "PASS: PatternWaves lifecycle and real visibility observer: loader, reverse, reduced motion, cleanup; 100 pointer events/1 bounds read; 60 transforms/0 style reads; 30 draws/60 refreshes. GPU stand-in, no visual assertions.",
+  "PASS: PatternWaves lifecycle and real visibility observer: inert Hero fade keeps moving without deformation; menu/hidden/inactive pause; reverse, reduced motion and cleanup; 100 pointer events/1 bounds read; 60 transforms/0 style reads; 30 draws/60 refreshes. GPU stand-in, no visual assertions.",
 );

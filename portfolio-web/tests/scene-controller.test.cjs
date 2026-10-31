@@ -1,12 +1,40 @@
-// Runs the actual animation controller with GSAP and plain-object DOM stand-ins.
-// No browser, page rendering, network or WebGL assertions.
+// Actual scene controller and Anime.js clocks with DOM/renderer boundary spies.
+// No browser pixels, pointer hit testing, WebGL or wall-clock sleeps.
+const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const vm = require("node:vm");
-const assert = require("node:assert/strict");
+const test = require("node:test");
+const ts = require("typescript");
+const anime = require("animejs");
 const app = path.resolve(__dirname, "..");
-const ts = require(path.join(app, "node_modules/typescript"));
-const { gsap } = require(path.join(app, "node_modules/gsap/dist/gsap"));
+const compile = (source) =>
+  ts.transpileModule(source, {
+    compilerOptions: {
+      target: ts.ScriptTarget.ES2022,
+      module: ts.ModuleKind.CommonJS,
+    },
+  }).outputText;
+function load(relative, dependencies = {}) {
+  const loaded = { exports: {} };
+  new Function(
+    "exports",
+    "require",
+    "module",
+    compile(fs.readFileSync(path.join(app, relative), "utf8")),
+  )(
+    loaded.exports,
+    (name) => {
+      assert.ok(
+        Object.hasOwn(dependencies, name),
+        `Unexpected dependency: ${name}`,
+      );
+      return dependencies[name];
+    },
+    loaded,
+  );
+  return loaded.exports;
+}
+const contact = load("src/lib/contact-transition.ts");
 const source = ts.createSourceFile(
   "LandingStory.tsx",
   fs.readFileSync(
@@ -20,57 +48,54 @@ const source = ts.createSourceFile(
 let body;
 function visit(node) {
   if (
-    ts.isCallExpression(node) &&
-    node.expression.getText(source) === "media.add"
+    ts.isVariableDeclaration(node) &&
+    node.name.getText(source) === "mountStory"
   )
-    body = node.arguments[1].body.getText(source).slice(1, -1);
+    body = node.initializer.body.getText(source).slice(1, -1);
   ts.forEachChild(node, visit);
 }
 visit(source);
-assert.ok(body);
-const compiled = ts.transpileModule(`(function(){${body}})()`, {
-  compilerOptions: {
-    target: ts.ScriptTarget.ES2022,
-    module: ts.ModuleKind.CommonJS,
-  },
-}).outputText;
-const modelCode = ts.transpileModule(
-  fs.readFileSync(path.join(app, "src/lib/contact-transition.ts"), "utf8"),
-  {
-    compilerOptions: {
-      target: ts.ScriptTarget.ES2022,
-      module: ts.ModuleKind.CommonJS,
-    },
-  },
-).outputText;
-const model = { exports: {} };
-vm.runInNewContext(modelCode, { module: model, exports: model.exports });
+assert.ok(body, "mountStory must remain independently exercisable");
+const controllerCode = compile(`return (function(){${body}})();`);
+const CLOCK = {
+  hero: 0,
+  stack: 1,
+  about: 2,
+  contact: 3,
+};
 
-function fixture(hash) {
+function fixture(hash = "") {
   const listeners = new Map(),
     frames = new Map(),
-    nodes = new Map(),
-    timelines = [];
+    nodes = new Map();
+  const clocks = [],
+    clockRuns = [],
+    menuRuns = [];
   let nextFrame = 0,
-    options,
-    context,
-    dispose;
-  const document = {
-    documentElement: { scrollHeight: 2080 },
-    activeElement: null,
-  };
+    inputOptions,
+    resetCalls = 0,
+    radarWrites = 0;
+  let disposed = false;
+  const doc = { documentElement: { scrollHeight: 2080 }, activeElement: null };
+  class Style {
+    setProperty(key, value) {
+      this[key] = value;
+    }
+    getPropertyValue(key) {
+      return this[key] || "";
+    }
+    getPropertyPriority() {
+      return "";
+    }
+    removeProperty(key) {
+      delete this[key];
+    }
+  }
   class Node {
     constructor(name) {
       Object.assign(this, {
         name,
-        style: {
-          setProperty(k, v) {
-            this[k] = v;
-          },
-          removeProperty(k) {
-            delete this[k];
-          },
-        },
+        style: new Style(),
         dataset: {},
         attrs: {},
         inert: false,
@@ -79,68 +104,90 @@ function fixture(hash) {
         offsetWidth: 1280,
         offsetHeight: 800,
         offsetTop: 0,
+        offsetLeft: 0,
         scrollHeight: 800,
         scrollTop: 0,
-        x: 0,
-        y: 0,
-        xPercent: 0,
-        yPercent: 0,
-        scale: 1,
-        rotationX: 0,
-        transformPerspective: 0,
-        transformOrigin: "",
-        autoAlpha: 1,
-        opacity: 1,
-        clipPath: "",
-        filter: "none",
       });
     }
-    querySelector(sel) {
-      return node(sel);
+    querySelector(selector) {
+      return node(selector);
     }
-    querySelectorAll(sel) {
-      return [node(sel + "1"), node(sel + "2")];
+    querySelectorAll(selector) {
+      return [node(`${selector}1`), node(`${selector}2`)];
     }
     getBoundingClientRect() {
-      return { top: -window.scrollY, bottom: 2080 - window.scrollY };
+      return {
+        top: -win.scrollY,
+        bottom: 2080 - win.scrollY,
+        left: 0,
+        width: this.clientWidth,
+        height: this.clientHeight,
+      };
     }
-    setAttribute(k, v) {
-      this.attrs[k] = v;
+    getAttribute(key) {
+      if (key === "style") {
+        const entries = Object.entries(this.style);
+        return entries.length
+          ? entries.map(([k, v]) => `${k}:${v}`).join(";")
+          : null;
+      }
+      return this.attrs[key] ?? null;
     }
-    removeAttribute(k) {
-      delete this.attrs[k];
+    setAttribute(key, value) {
+      if (key === "style") {
+        this.style = new Style();
+        for (const entry of value.split(";")) {
+          const divider = entry.indexOf(":");
+          if (divider >= 0)
+            this.style[entry.slice(0, divider)] = entry.slice(divider + 1);
+        }
+      } else this.attrs[key] = value;
     }
-    getAttribute(k) {
-      return this.attrs[k];
+    removeAttribute(key) {
+      if (key === "style") this.style = new Style();
+      else delete this.attrs[key];
     }
-    addEventListener(k, fn) {
-      listeners.set(k, fn);
+    hasAttribute(key) {
+      return Object.hasOwn(this.attrs, key);
     }
-    removeEventListener(k) {
-      listeners.delete(k);
+    closest(selector) {
+      return selector
+        .split(",")
+        .some((part) => this.hasAttribute(part.trim().slice(1, -1)))
+        ? this
+        : null;
     }
-    contains(n) {
-      return n instanceof Node;
+    addEventListener(key, callback) {
+      listeners.set(key, callback);
+    }
+    removeEventListener(key) {
+      listeners.delete(key);
+    }
+    contains(value) {
+      return value instanceof Node;
     }
     focus() {
-      document.activeElement = this;
+      doc.activeElement = this;
     }
   }
-  const node = (name) => {
-    if (!nodes.has(name)) nodes.set(name, new Node(name));
+  function node(name) {
+    if (!nodes.has(name)) {
+      const element = new Node(name);
+      nodes.set(name, element);
+    }
     return nodes.get(name);
-  };
+  }
   const container = node("root"),
     viewport = node("viewport");
   container.offsetHeight = 2080;
-  const window = {
+  const win = {
     scrollY: 0,
     innerHeight: 800,
     location: { pathname: "/", search: "", hash },
     history: {
       state: null,
-      replaceState(_s, _t, url) {
-        window.location.hash = url.includes("#")
+      replaceState(_state, _title, url) {
+        win.location.hash = url.includes("#")
           ? url.slice(url.indexOf("#"))
           : "";
       },
@@ -148,86 +195,50 @@ function fixture(hash) {
     scrollTo({ top }) {
       this.scrollY = top;
     },
-    addEventListener(k, fn) {
-      listeners.set(k, fn);
+    addEventListener(key, callback) {
+      listeners.set(key, callback);
     },
-    removeEventListener(k) {
-      listeners.delete(k);
-    },
-  };
-  const resolve = (t) => (typeof t === "string" ? node(t) : t);
-  const wrappedGsap = {
-    set(t, v) {
-      return gsap.set(Array.isArray(t) ? t.map(resolve) : resolve(t), v);
-    },
-    // Plain objects have no CSSPlugin. Match its property writes without tween creation.
-    quickSetter(t) {
-      return (v) => Object.assign(resolve(t), v);
-    },
-    timeline(o) {
-      const tl = gsap.timeline(o);
-      const proxy = new Proxy(tl, {
-        get(target, k) {
-          if (k === "to")
-            return (t, v, p) => {
-              target.to(resolve(t), v, p);
-              return proxy;
-            };
-          if (k === "fromTo")
-            return (t, a, b, p) => {
-              target.fromTo(resolve(t), a, b, p);
-              return proxy;
-            };
-          const v = target[k];
-          return typeof v === "function" ? v.bind(target) : v;
-        },
-      });
-      timelines.push(tl);
-      return proxy;
+    removeEventListener(key) {
+      listeners.delete(key);
     },
   };
-  const radarState = { active: true, view: {} };
-  let radarWrites = 0,
-    resetCalls = 0;
-  const waveState = { active: true, exit: 0 };
-  const refs = {
-    canvas: { current: node("canvas") },
-    radar: {
-      current: {
-        setView(v) {
-          Object.assign(radarState.view, v);
-        },
-        setActive(v) {
-          radarState.active = v;
-        },
+  const clockModule = load("src/lib/scene-clock.ts", {
+    animejs: {
+      animate(...args) {
+        const result = anime.animate(...args);
+        clockRuns.push(result);
+        return result;
       },
     },
-    showcase: {
-      current: {
-        setInteractionEnabled() {},
-        setIntroProgress() {},
-        setActive() {},
-        hasSelection() {
-          return false;
-        },
-        isTransitioning() {
-          return false;
-        },
-        closeFocus() {
-          return false;
-        },
-      },
-    },
-    dither: { current: { setRevealProgress() {} } },
-    carouselReady: { current: true },
-    detailIsOpen: { current: false },
-    selectedProject: { current: 0 },
-    setParticleProject: { current() {} },
-    syncScene: { current() {} },
-    detailMode: { current() {} },
+  });
+  const environmentState = {
+    stack: 0,
+    about: 0,
+    measurements: [],
+    destroyed: 0,
+  };
+  const radarState = { active: true, view: {}, technologyProgress: 0 };
+  const waveState = { active: true, terrain: 0 };
+  const showcaseState = {
+    active: false,
+    interactive: true,
+    intro: 0,
+    selected: false,
+    transitioning: false,
+    closeCalls: 0,
   };
   const sandbox = {
-    gsap: wrappedGsap,
+    animate(...args) {
+      const result = anime.animate(...args);
+      menuRuns.push(result);
+      return result;
+    },
+    eases: anime.eases,
+    createSceneClock(options) {
+      const result = clockModule.createSceneClock(options);
+      clocks.push(result);
+      return result;
+    },
     container,
     viewport,
     stackLayer: node("stack"),
@@ -241,18 +252,88 @@ function fixture(hash) {
     projectLayer: node("project"),
     heroLayer: node("hero"),
     portrait: node("portrait"),
-    photo: { complete: false },
-    projects: [],
-    getProjectCardHeight: () => 0.5,
-    getProjectCardBackground: () => "",
-    ...refs,
-    ...model.exports,
-    window,
-    document,
+    backgroundLayer: node("background"),
+    surface: { current: node("surface") },
+    world: { current: node("world") },
+    radar: {
+      current: {
+        prepare() {},
+        setView(value) {
+          radarWrites++;
+          Object.assign(radarState.view, value);
+        },
+        setActive(value) {
+          radarState.active = value;
+        },
+        setTechnologyProgress(value) {
+          radarState.technologyProgress = value;
+        },
+      },
+    },
+    showcase: {
+      current: {
+        setInteractionEnabled(value) {
+          showcaseState.interactive = value;
+        },
+        setIntroProgress(value) {
+          showcaseState.intro = value;
+        },
+        setActive(value) {
+          showcaseState.active = value;
+        },
+        hasSelection() {
+          return showcaseState.selected;
+        },
+        isTransitioning() {
+          return showcaseState.transitioning;
+        },
+        closeFocus() {
+          showcaseState.closeCalls++;
+          const selected = showcaseState.selected;
+          showcaseState.selected = false;
+          return selected;
+        },
+        resetForNavigation() {
+          resetCalls++;
+          sandbox.detailIsOpen.current = false;
+          showcaseState.selected = false;
+        },
+      },
+    },
+    waves: {
+      current: {
+        setTerrainProgress(value) {
+          waveState.terrain = value;
+        },
+        setActive(value) {
+          waveState.active = value;
+        },
+      },
+    },
+    dither: { current: { setRevealProgress() {} } },
+    projectsReady: { current: true },
+    menuAnchors: {
+      hero: "inicio",
+      projects: "proyectos",
+      stack: "stack",
+      about: "sobre-mi",
+      contact: "contacto",
+    },
+    detailIsOpen: { current: false },
+    syncScene: { current() {} },
+    detailMode: { current() {} },
+    menuOpen: { current: false },
+    menuGate: { current() {} },
+    menuNavigate: { current: null },
+    setSceneBusy() {},
+    setMenuSection() {},
+    ...contact,
+    window: win,
+    document: doc,
     Element: Node,
     performance,
-    requestAnimationFrame(fn) {
-      frames.set(++nextFrame, fn);
+    requestAnimationFrame(callback) {
+      frames.set(++nextFrame, callback);
       return nextFrame;
     },
     cancelAnimationFrame(id) {
@@ -262,66 +343,104 @@ function fixture(hash) {
       observe() {}
       disconnect() {}
     },
-    createSceneInput(o) {
-      options = o;
+    createSceneInput(options) {
+      inputOptions = options;
       return { destroy() {}, resetGesture() {} };
     },
-  };
-  sandbox.backgroundLayer = node("background");
-  sandbox.surface = { current: node("surface") };
-  sandbox.menuOpen = { current: false };
-  sandbox.menuGate = { current() {} };
-  sandbox.menuNavigate = { current: null };
-  sandbox.setSceneBusy = () => {};
-  sandbox.setMenuSection = () => {};
-  sandbox.radar.current.prepare = () => {};
-  sandbox.radar.current.setView = (v) => {
-    radarWrites++;
-    Object.assign(radarState.view, v);
-  };
-  sandbox.showcase.current.resetForNavigation = () => {
-    resetCalls++;
-    sandbox.detailIsOpen.current = false;
-  };
-  sandbox.waves = {
-    current: {
-      setExitProgress(v) {
-        waveState.exit = v;
-      },
-      setActive(v) {
-        waveState.active = v;
-      },
+    createEnvironmentTransition({
+      viewport: measuredViewport,
+      projectLayer,
+      world,
+    }) {
+      assert.equal(measuredViewport, viewport);
+      assert.equal(world, sandbox.world.current);
+      assert.equal(projectLayer, node("[data-project-environment]"));
+      assert.notEqual(
+        projectLayer,
+        node("project"),
+        "environment transforms use an independent wrapper",
+      );
+      return {
+        render(stack, about) {
+          environmentState.stack = stack;
+          environmentState.about = about;
+        },
+        measure() {
+          environmentState.measurements.push([
+            viewport.clientWidth,
+            viewport.clientHeight,
+          ]);
+        },
+        getRadarView() {
+          return {
+            tilt: 72 - 8 * environmentState.about,
+            centerX: 0.5,
+            centerY: 0.94,
+            scale: 1.3,
+          };
+        },
+        destroy() {
+          environmentState.destroyed++;
+        },
+      };
     },
   };
   sandbox.portrait.parentElement = node("composition");
-  context = gsap.context(() => {
-    dispose = vm.runInNewContext(compiled, sandbox);
-  });
+  const dispose = new Function(...Object.keys(sandbox), controllerCode)(
+    ...Object.values(sandbox),
+  );
   const flush = () => {
-    const f = [...frames.values()];
+    const callbacks = [...frames.values()];
     frames.clear();
-    f.forEach((fn) => fn());
-  };
-  const complete = (i, end) => {
-    timelines[i].pause().progress(end, false);
-    flush();
-  };
-  const cleanup = () => {
-    context.revert();
-    dispose();
-    gsap.ticker.sleep();
+    callbacks.forEach((callback) => callback());
   };
   return {
     ...sandbox,
-    timelines,
-    options,
+    clocks,
+    clockRuns,
+    menuRuns,
+    options: inputOptions,
+    environmentState,
     radarState,
     waveState,
-    flush,
-    complete,
-    cleanup,
+    showcaseState,
     listeners,
-    context,
+    node,
+    flush,
+    complete(name, progress) {
+      clocks[CLOCK[name]].pause().progress(progress, false);
+      flush();
+    },
+    tick(progress = 1) {
+      const animation = clockRuns.at(-1);
+      animation.pause().seek(animation.duration * progress, false);
+      flush();
+    },
+    clickNavigation(attribute) {
+      const link = node(attribute);
+      link.setAttribute(attribute, "");
+      let prevented = false;
+      listeners.get("click")({
+        button: 0,
+        target: link,
+        preventDefault() {
+          prevented = true;
+        },
+      });
+      assert.equal(prevented, true);
+    },
+    resize(width, height) {
+      viewport.clientWidth = width;
+      viewport.clientHeight = height;
+      win.innerHeight = height;
+      listeners.get("resize")();
+      flush();
+    },
+    cleanup() {
+      if (disposed) return;
+      disposed = true;
+      dispose();
+    },
     get radarWrites() {
       return radarWrites;
     },
@@ -331,301 +450,418 @@ function fixture(hash) {
   };
 }
 
-const f = fixture("#sobre-mi");
-assert.equal(f.container.dataset.sceneStage, "about");
-assert.equal(f.personalLayer.xPercent, 0);
-for (const copy of f.aboutLayer.querySelectorAll("[data-about-copy]")) {
-  assert.equal(copy.filter, "none");
-  assert.equal(copy.x, 0);
-  assert.equal(copy.rotationX, 0);
-  assert.equal(copy.scale, 1);
+function setup(t, hash) {
+  const f = fixture(hash);
+  t.after(() => f.cleanup());
+  return f;
 }
-assert.equal(f.radarState.view.tilt, 64);
-assert.equal(f.contactLayer.inert, true);
-f.options.onStep(1);
-assert.equal(f.container.dataset.sceneStage, "transitioning");
-assert.equal(f.options.isBlocked(), true);
-f.timelines[4].pause().progress(0.5, false);
-assert.equal(f.radarState.view.tilt, 32);
-assert.equal(f.contactLayer.rotationX, 32);
-assert.equal(f.aboutLayer.rotationX, -32);
-assert.equal(f.radarState.active, true);
-assert.equal(f.radarSurface.attrs["aria-hidden"], "false");
-const midway = JSON.stringify(f.radarState.view);
-f.viewport.clientHeight = 600;
-f.window.innerHeight = 600;
-f.listeners.get("resize")();
-f.flush();
-assert.equal(
-  JSON.stringify(f.radarState.view),
-  midway,
-  "resize preserves orbit",
-);
-assert.equal(f.aboutLayer.transformPerspective, 1200);
-f.options.onStep(-1);
-assert.equal(
-  f.container.dataset.sceneTarget,
-  "contact",
-  "busy blocks reverse requests",
-);
-f.complete(4, 1);
-assert.equal(f.container.dataset.sceneStage, "contact");
-assert.equal(f.window.location.hash, "#contacto");
-assert.equal(f.contactLayer.inert, false);
-assert.equal(f.aboutLayer.inert, true);
-assert.equal(f.contactLayer.scale, 1);
-assert.equal(f.contactLayer.opacity, 1);
-assert.equal(f.radarState.view.tilt, 0);
-assert.equal(f.document.activeElement, f.contactContent);
-f.options.onStep(-1);
-f.timelines[4].pause().progress(0.5, false);
-assert.equal(
-  JSON.stringify(f.radarState.view),
-  midway,
-  "identical inverse camera path",
-);
-f.complete(4, 0);
-assert.equal(f.container.dataset.sceneStage, "about");
-assert.equal(f.aboutLayer.opacity, 1);
-assert.equal(f.contactLayer.opacity, 0);
-f.options.onStep(-1);
-f.complete(3, 0);
-assert.equal(f.container.dataset.sceneStage, "stack");
-assert.equal(f.radarState.active, false);
-assert.equal(f.stackLayer.rotationX, 0, "return restores Stack plane");
-assert.equal(f.stackLayer.opacity, 1);
-assert.equal(f.stackLayer.scale, 1);
-assert.equal(f.stackLayer.xPercent, 0);
-assert.equal(f.personalLayer.xPercent, 100);
-f.options.onStep(1);
-f.complete(3, 1);
-assert.equal(f.container.dataset.sceneStage, "about");
-f.options.onStep(1);
-f.complete(4, 1);
-assert.equal(f.container.dataset.sceneStage, "contact");
-f.cleanup();
-assert.equal(
-  f.radarState.active,
-  true,
-  "natural flow reactivates the static radar",
-);
-assert.equal(f.radarState.view.tilt, 0);
-assert.equal(f.contactLayer.inert, false);
-assert.equal(f.aboutLayer.inert, false);
-assert.equal(
-  f.contactLayer.opacity,
-  1,
-  "context restores natural-flow visibility",
-);
-assert.equal(f.aboutLayer.opacity, 1);
-assert.equal(f.contactLayer.rotationX, 0);
 
-const direct = fixture("#contacto");
-direct.flush();
-assert.equal(direct.container.dataset.sceneStage, "contact");
-assert.equal(direct.radarState.view.tilt, 0);
-assert.equal(direct.contactLayer.opacity, 1);
-assert.equal(direct.document.activeElement, direct.contactContent);
-direct.options.onStep(-1);
-direct.complete(4, 0);
-assert.equal(direct.container.dataset.sceneStage, "about");
-direct.cleanup();
-const stackEntry = fixture("#stack");
-assert.equal(
-  stackEntry.waveState.exit,
-  1,
-  "direct entry into Stack hides the Hero pattern",
-);
-assert.equal(stackEntry.waveState.active, false);
-stackEntry.stackContent.scrollHeight = 1600;
-stackEntry.stackContent.scrollTop = 800;
-stackEntry.options.onStep(1);
-stackEntry.timelines[3].pause().progress(0.5, false);
-assert.equal(stackEntry.container.dataset.sceneStage, "transitioning");
-assert.equal(
-  stackEntry.personalLayer.xPercent,
-  50,
-  "incoming page is half open",
-);
-assert.equal(
-  stackEntry.stackLayer.xPercent,
-  -8,
-  "outgoing page moves at lower speed",
-);
-assert.equal(
-  stackEntry.stackLayer.opacity,
-  1,
-  "opaque paper keeps gallery covered",
-);
-assert.equal(stackEntry.radarSurface.x, 0, "radar has no independent entrance");
-assert.equal(stackEntry.radarSurface.y, 0);
-assert.equal(stackEntry.radarSurface.scale, 1);
-assert.equal(stackEntry.radarSurface.opacity, 1);
-const pageAtHalf = stackEntry.personalLayer.xPercent;
-stackEntry.viewport.clientHeight = 320;
-stackEntry.window.innerHeight = 320;
-stackEntry.viewport.clientWidth = 390;
-stackEntry.listeners.get("resize")();
-stackEntry.flush();
-assert.equal(
-  stackEntry.personalLayer.xPercent,
-  pageAtHalf,
-  "resize keeps the page at the same progress",
-);
-for (const copy of stackEntry.aboutLayer
-  .querySelectorAll("[data-about-copy]")
-  .slice(0, 1)) {
-  assert.ok(
-    Math.abs(copy.x - 9.75) < 0.01,
-    "resize recalculates the text parallax for the narrower viewport",
+for (const [hash, stage, stack, about] of [
+  ["", "hero", 0, 0],
+  ["#cubo", "projects", 0, 0],
+  ["#proyectos", "projects", 0, 0],
+  ["#stack", "stack", 1, 0],
+  ["#sobre-mi", "about", 1, 1],
+  ["#contacto", "contact", 1, 1],
+])
+  test(
+    "direct " +
+      (hash || "Hero") +
+      " entry places clocks, environment and controls",
+    (t) => {
+      const f = setup(t, hash);
+      f.flush();
+      assert.equal(f.container.dataset.sceneStage, stage);
+      assert.equal(f.environmentState.stack, stack);
+      assert.equal(f.environmentState.about, about);
+      assert.equal(f.options.isBlocked(), false);
+      assert.equal(f.showcaseState.interactive, stage === "projects");
+      assert.equal(
+        f.heroLayer.inert,
+        stage !== "hero",
+        "hidden Hero cannot intercept input",
+      );
+      assert.equal(f.waveState.terrain, stage === "hero" ? 0 : 1);
+      assert.equal(f.waveState.active, ["hero", "projects"].includes(stage));
+      assert.equal(f.radarState.technologyProgress, about);
+      const expectedFocus = {
+        projects: f.node("[data-project-gallery]"),
+        stack: f.stackContent,
+        about: f.aboutContent,
+        contact: f.contactContent,
+      }[stage];
+      if (expectedFocus) assert.equal(f.document.activeElement, expectedFocus);
+    },
   );
-}
-stackEntry.complete(3, 1);
-assert.equal(stackEntry.container.dataset.sceneStage, "about");
-stackEntry.options.onStep(-1);
-stackEntry.timelines[3].pause().progress(0.5, false);
-assert.equal(
-  stackEntry.personalLayer.xPercent,
-  pageAtHalf,
-  "reverse follows the identical page path",
-);
-stackEntry.complete(3, 0);
-assert.equal(
-  stackEntry.stackContent.scrollTop,
-  800,
-  "reverse preserves stack reading position",
-);
-assert.equal(stackEntry.stackLayer.rotationX, 0);
-assert.equal(stackEntry.stackLayer.xPercent, 0);
-// Both opaque pages must overlap throughout, in either direction.
-for (let cycle = 0; cycle < 3; cycle++) {
-  stackEntry.options.onStep(1);
-  for (const progress of [0.1, 0.25, 0.5, 0.75, 0.9]) {
-    stackEntry.timelines[3].pause().progress(progress, false);
-    assert.ok(
-      stackEntry.personalLayer.xPercent <= 100 + stackEntry.stackLayer.xPercent,
-      "no gap exposes Projects",
-    );
+
+test("Hero enters the terrain and reveals projects in one reversible passage", (t) => {
+  const f = setup(t);
+  assert.equal(f.waveState.active, true);
+  assert.equal(f.heroLayer.inert, false);
+  f.options.onStep(1);
+  assert.equal(f.clockRuns.at(-1).duration, 1250);
+  f.complete("hero", 0.2);
+  const terrain = f.waveState.terrain;
+  const portrait = f.portrait.getAttribute("style");
+  assert.ok(terrain > 0 && terrain < 1);
+  assert.equal(f.showcaseState.intro, 0);
+  assert.equal(f.heroLayer.inert, true);
+  assert.equal(f.options.isBlocked(), true);
+  f.options.onStep(1);
+  f.options.onStep(-1);
+  assert.equal(
+    f.container.dataset.sceneTarget,
+    "projects",
+    "busy gestures cannot queue another scene",
+  );
+  assert.equal(f.clockRuns.length, 1);
+  f.complete("hero", 0.72);
+  assert.ok(f.showcaseState.intro > 0 && f.showcaseState.intro < 1);
+  assert.equal(f.projectLayer.inert, true);
+  f.resize(390, 844);
+  assert.equal(f.clocks[CLOCK.hero].progress(), 0.72);
+  f.complete("hero", 1);
+  assert.equal(f.container.dataset.sceneStage, "projects");
+  assert.equal(f.window.location.hash, "#proyectos");
+  assert.equal(f.waveState.terrain, 1);
+  assert.equal(
+    f.waveState.active,
+    true,
+    "terrain remains behind the project marks",
+  );
+  assert.equal(f.showcaseState.interactive, true);
+  assert.equal(f.document.activeElement, f.node("[data-project-gallery]"));
+  f.resize(1280, 800);
+  f.options.onStep(-1);
+  f.complete("hero", 0.2);
+  assert.equal(f.waveState.terrain, terrain);
+  assert.equal(f.portrait.getAttribute("style"), portrait);
+  assert.equal(f.heroLayer.inert, true);
+  f.complete("hero", 0);
+  assert.equal(f.container.dataset.sceneStage, "hero");
+  assert.equal(f.waveState.terrain, 0);
+  assert.equal(f.heroLayer.inert, false);
+  assert.equal(f.portrait.style.opacity, "1");
+});
+
+test("projects wait for readiness and prevent gestures during project selection", (t) => {
+  const f = setup(t, "#proyectos");
+  f.projectsReady.current = false;
+  f.syncScene.current();
+  assert.equal(f.showcaseState.interactive, false);
+  f.projectsReady.current = true;
+  f.syncScene.current();
+  assert.equal(f.showcaseState.interactive, true);
+  f.showcaseState.transitioning = true;
+  assert.equal(f.options.isBlocked(), true);
+  f.options.onStep(1);
+  assert.equal(f.clockRuns.length, 0);
+  f.showcaseState.transitioning = false;
+  f.options.onStep(1);
+  assert.equal(f.clockRuns.length, 1);
+});
+
+test("Projects and Stack share reversible progress across resize in one gesture", (t) => {
+  const f = setup(t, "#proyectos");
+  f.options.onStep(1);
+  assert.equal(f.clockRuns.at(-1).duration, 1000);
+  f.complete("stack", 0.5);
+  assert.equal(f.environmentState.stack, 0.5);
+  assert.equal(f.projectLayer.inert, true);
+  assert.equal(f.stackLayer.inert, true);
+  assert.equal(f.waveState.active, true);
+  f.resize(390, 844);
+  assert.equal(f.environmentState.stack, 0.5);
+  assert.deepEqual(f.environmentState.measurements.at(-1), [390, 844]);
+  f.complete("stack", 1);
+  assert.equal(f.container.dataset.sceneStage, "stack");
+  assert.equal(f.stackLayer.inert, false);
+  assert.equal(f.document.activeElement, f.stackContent);
+  assert.equal(f.waveState.active, false);
+  f.options.onStep(-1);
+  f.complete("stack", 0.5);
+  assert.equal(f.environmentState.stack, 0.5);
+  f.complete("stack", 0);
+  assert.equal(f.container.dataset.sceneStage, "projects");
+  assert.equal(f.showcaseState.intro, 1);
+  assert.equal(f.projectLayer.inert, false);
+  assert.equal(f.waveState.active, true);
+});
+
+test("explicit section links bypass inner scroll but retain the project selection guard", (t) => {
+  const f = setup(t, "#proyectos");
+  f.showcaseState.selected = true;
+  f.clickNavigation("data-stack-open");
+  assert.equal(f.clockRuns.length, 0);
+  f.showcaseState.selected = false;
+  f.clickNavigation("data-stack-open");
+  assert.equal(f.clockRuns.at(-1).duration, 1000);
+  f.tick(0.5);
+  assert.equal(f.options.isBlocked(), true);
+  f.tick();
+  assert.equal(f.container.dataset.sceneStage, "stack");
+  assert.equal(f.document.activeElement, f.stackContent);
+  f.stackContent.scrollHeight = 1600;
+  f.stackContent.scrollTop = 260;
+  assert.equal(f.options.handlesDirection(-1), false);
+  f.options.onStep(-1);
+  assert.equal(f.container.dataset.sceneStage, "stack");
+  f.clickNavigation("data-stack-back");
+  assert.equal(f.clockRuns.at(-1).duration, 1000);
+  f.tick();
+  assert.equal(f.container.dataset.sceneStage, "projects");
+  assert.equal(f.document.activeElement, f.node("[data-project-gallery]"));
+});
+
+test("the terrain pauses for menu and detail, resuming only in the project environment", (t) => {
+  const f = setup(t, "#proyectos");
+  assert.equal(f.waveState.active, true);
+  f.menuOpen.current = true;
+  f.menuGate.current(true);
+  assert.equal(f.waveState.active, false);
+  f.syncScene.current();
+  assert.equal(f.waveState.active, false);
+  f.menuOpen.current = false;
+  f.menuGate.current(false);
+  assert.equal(f.waveState.active, true);
+  f.detailIsOpen.current = true;
+  f.detailMode.current(true);
+  assert.equal(f.waveState.active, false);
+  f.syncScene.current();
+  f.menuGate.current(false);
+  assert.equal(f.waveState.active, false);
+  const progress = f.waveState.terrain;
+  f.options.onStep(1);
+  assert.equal(f.clockRuns.length, 0);
+  assert.equal(f.waveState.terrain, progress);
+  f.detailIsOpen.current = false;
+  f.detailMode.current(false);
+  assert.equal(f.waveState.active, true);
+  f.options.onStep(1);
+  f.tick();
+  assert.equal(f.container.dataset.sceneStage, "stack");
+  f.menuGate.current(false);
+  assert.equal(f.waveState.active, false);
+});
+
+test("native scroll bursts cannot enqueue transitions or leave inner reading scenes", (t) => {
+  const f = setup(t);
+  f.window.scrollY = 40;
+  f.listeners.get("scroll")();
+  assert.equal(f.clockRuns.length, 1);
+  assert.equal(f.container.dataset.sceneTarget, "projects");
+  f.tick();
+  for (let index = 0; index < 3; index++) {
+    f.window.scrollY += 30;
+    f.listeners.get("scroll")();
   }
-  stackEntry.complete(3, 1);
-  stackEntry.options.onStep(-1);
-  stackEntry.complete(3, 0);
-  assert.equal(stackEntry.personalLayer.xPercent, 100);
-  assert.equal(stackEntry.stackLayer.xPercent, 0);
-}
-stackEntry.cleanup();
-assert.equal(
-  stackEntry.personalLayer.xPercent,
-  0,
-  "natural flow removes page translation",
-);
-assert.equal(
-  stackEntry.waveState.exit,
-  0,
-  "natural flow restores the Hero background",
-);
-assert.equal(stackEntry.waveState.active, true);
+  assert.equal(f.clockRuns.length, 1);
+  assert.equal(f.container.dataset.sceneStage, "projects");
+  f.options.onStep(1);
+  f.tick();
+  f.window.scrollY -= 30;
+  f.listeners.get("scroll")();
+  assert.equal(f.container.dataset.sceneStage, "stack");
+  assert.equal(f.clockRuns.length, 2);
+});
 
-const hero = fixture("");
-assert.equal(hero.waveState.exit, 0);
-assert.equal(hero.waveState.active, true);
-hero.options.onStep(1);
-hero.timelines[0].pause().progress(0.3, false);
-const waveMidpoint = hero.waveState.exit;
-assert.ok(
-  waveMidpoint > 0 && waveMidpoint < 1,
-  "strips move during the Hero departure",
-);
-hero.timelines[0].pause().progress(0.6, false);
-assert.equal(
-  hero.waveState.exit,
-  1,
-  "pattern clears before the project card is assembled",
-);
-assert.equal(hero.waveState.active, false);
-assert.equal(hero.backgroundLayer.style.visibility, "hidden");
-hero.complete(0, 1);
-hero.complete(1, 1);
-assert.equal(hero.container.dataset.sceneStage, "expanded");
-hero.options.onStep(-1);
-hero.complete(1, 0);
-hero.timelines[0].pause().progress(0.3, false);
-assert.equal(
-  hero.waveState.exit,
-  waveMidpoint,
-  "reverse uses the identical diagonal strip path",
-);
-assert.equal(hero.waveState.active, true);
-assert.equal(hero.backgroundLayer.style.visibility, "visible");
-hero.complete(0, 0);
-assert.equal(hero.waveState.exit, 0);
-assert.equal(hero.container.dataset.sceneStage, "hero");
-hero.cleanup();
-const menu = fixture("#stack");
-const oldCameraWrites = menu.radarWrites;
-for (let n = 0; n < 120; n++) menu.syncScene.current();
-assert.equal(
-  menu.radarWrites,
-  oldCameraWrites,
-  "steady frames never recompute/rewrite the same radar camera",
-);
-for (const [section, stage, hash] of [
-  ["contact", "contact", "#contacto"],
-  ["hero", "hero", ""],
-  ["about", "about", "#sobre-mi"],
-  ["projects", "expanded", "#proyectos"],
-  ["stack", "stack", "#stack"],
-]) {
-  menu.menuOpen.current = true;
-  menu.menuGate.current(true);
-  menu.menuNavigate.current(section);
-  const nav = menu.timelines.at(-1);
-  nav.pause().time(0.24, false);
+test("disposing an active terrain passage restores flow and rejects stale completion", (t) => {
+  const f = setup(t);
+  f.options.onStep(1);
+  f.tick(0.5);
+  const interrupted = f.clockRuns.at(-1);
+  f.cleanup();
+  assert.equal(f.environmentState.destroyed, 1);
+  assert.equal(f.container.dataset.scrollStory, undefined);
+  assert.equal(f.heroLayer.inert, false);
+  assert.equal(f.projectLayer.inert, false);
+  assert.equal(f.stackLayer.inert, false);
+  assert.equal(f.showcaseState.interactive, true);
+  assert.equal(f.waveState.terrain, 0);
+  assert.equal(f.portrait.getAttribute("style"), null);
+  const state = f.environmentState.stack;
+  const focus = f.document.activeElement;
+  interrupted.onUpdate(interrupted);
+  interrupted.onComplete(interrupted);
+  assert.equal(f.environmentState.stack, state);
+  assert.equal(f.document.activeElement, focus);
+  assert.equal(f.container.dataset.sceneStage, undefined);
+});
+
+test("Stack/About reverse preserves reading position, camera and repeated-cycle gates", (t) => {
+  const f = setup(t, "#stack");
+  f.stackContent.scrollHeight = 1588;
+  f.stackContent.scrollTop = 788;
+  f.options.onStep(1);
+  f.complete("about", 0.5);
+  const camera = JSON.stringify(f.radarState.view);
+  assert.equal(f.environmentState.about, 0.5);
+  assert.equal(f.radarState.view.tilt, 68);
+  assert.equal(f.radarState.technologyProgress, 0.5);
+  assert.equal(f.stackLayer.inert, true);
+  assert.equal(f.aboutLayer.inert, true);
+  f.resize(390, 320);
+  assert.equal(f.environmentState.about, 0.5);
+  assert.equal(JSON.stringify(f.radarState.view), camera);
+  f.complete("about", 1);
+  assert.equal(f.container.dataset.sceneStage, "about");
+  assert.equal(f.radarState.view.tilt, 64);
+  assert.equal(f.aboutLayer.inert, false);
+  f.options.onStep(-1);
+  f.complete("about", 0.5);
+  assert.equal(JSON.stringify(f.radarState.view), camera);
+  f.complete("about", 0);
+  assert.equal(f.stackContent.scrollTop, 788);
+  assert.equal(f.stackLayer.inert, false);
+  for (let cycle = 0; cycle < 3; cycle++) {
+    f.options.onStep(1);
+    for (const progress of [0.1, 0.5, 0.9]) {
+      f.complete("about", progress);
+      assert.equal(f.environmentState.about, progress);
+      assert.equal(f.projectLayer.inert, true);
+      assert.equal(f.stackLayer.inert, true);
+      assert.equal(f.aboutLayer.inert, true);
+    }
+    f.complete("about", 1);
+    f.options.onStep(-1);
+    f.complete("about", 0);
+    assert.equal(f.environmentState.about, 0);
+    assert.equal(f.stackContent.scrollTop, 788);
+  }
+});
+
+test("About/Contact retains its shared reversible camera, focus and resize behavior", (t) => {
+  const f = setup(t, "#sobre-mi");
+  f.options.onStep(1);
+  f.complete("contact", 0.5);
+  assert.equal(f.radarState.view.tilt, 32);
+  assert.match(f.contactLayer.style.transform, /rotateX\(32deg\)/);
+  assert.match(f.aboutLayer.style.transform, /rotateX\(-32deg\)/);
+  const camera = JSON.stringify(f.radarState.view);
+  f.resize(1280, 600);
+  assert.equal(JSON.stringify(f.radarState.view), camera);
+  assert.match(f.aboutLayer.style.transform, /perspective\(1200px\)/);
+  f.options.onStep(-1);
+  assert.equal(f.container.dataset.sceneTarget, "contact");
+  f.complete("contact", 1);
+  assert.equal(f.window.location.hash, "#contacto");
+  assert.equal(f.radarState.view.tilt, 0);
+  assert.equal(f.contactLayer.inert, false);
+  assert.equal(f.aboutLayer.inert, true);
+  assert.equal(f.document.activeElement, f.contactContent);
+  f.options.onStep(-1);
+  f.complete("contact", 0.5);
+  assert.equal(JSON.stringify(f.radarState.view), camera);
+  f.complete("contact", 0);
+  assert.equal(f.container.dataset.sceneStage, "about");
+  assert.equal(f.aboutLayer.style.opacity, "1");
+  assert.equal(f.contactLayer.style.opacity, "0");
+});
+
+test("menu jumps place every scene while invisible and can leave a project detail", (t) => {
+  const f = setup(t, "#stack");
+  const cameraWrites = f.radarWrites;
+  for (let frame = 0; frame < 120; frame++) f.syncScene.current();
   assert.equal(
-    menu.surface.current.opacity,
-    0,
-    "scene changes only when invisible",
+    f.radarWrites,
+    cameraWrites,
+    "unchanged frames do not rewrite the camera",
   );
-  assert.equal(menu.container.dataset.sceneTarget, stage);
-  menu.menuOpen.current = false;
-  menu.menuGate.current(false);
-  nav.progress(1, false);
-  menu.flush();
-  assert.equal(menu.container.dataset.sceneStage, stage);
-  assert.equal(menu.window.location.hash, hash);
-  assert.equal(menu.surface.current.opacity, 1);
-  assert.equal(menu.surface.current.y, 0);
-  assert.equal(menu.options.isBlocked(), false);
-}
-assert.equal(
-  menu.resetCalls,
-  5,
-  "each direct jump clears stale project focus/detail",
-);
-menu.detailIsOpen.current = true;
-menu.menuNavigate.current("about");
-menu.timelines.at(-1).pause().progress(1, false);
-menu.flush();
-assert.equal(menu.detailIsOpen.current, false, "menu can leave an open detail");
-assert.equal(menu.container.dataset.sceneStage, "about");
-menu.cleanup();
-for (const interruptedAt of [0.1, 0.5]) {
-  const interrupted = fixture("#stack");
-  interrupted.menuNavigate.current("contact");
-  interrupted.timelines.at(-1).pause().time(interruptedAt, false);
-  interrupted.cleanup();
-  assert.equal(
-    interrupted.surface.current.y,
-    0,
-    "reduced-motion cleanup restores the scene surface position",
-  );
-  assert.equal(
-    interrupted.surface.current.opacity,
-    1,
-    "reduced-motion cleanup cannot leave the page faded",
-  );
-  assert.equal(interrupted.menuNavigate.current, null);
-}
-console.log(
-  "PASS: actual controller with real GSAP: Hero pattern departure/reverse/visibility, About/Contact/Stack, busy input, hash, resize, focus and cleanup. Plain-object styles; no visual/WebGL assertions.",
-);
+  for (const [section, stage, hash] of [
+    ["contact", "contact", "#contacto"],
+    ["hero", "hero", ""],
+    ["about", "about", "#sobre-mi"],
+    ["projects", "projects", "#proyectos"],
+    ["stack", "stack", "#stack"],
+  ]) {
+    f.menuOpen.current = true;
+    f.menuGate.current(true);
+    f.menuNavigate.current(section);
+    const animation = f.menuRuns.at(-1);
+    animation.pause().seek(240, false);
+    assert.equal(f.surface.current.style.opacity, "0");
+    assert.equal(f.container.dataset.sceneTarget, stage);
+    f.menuOpen.current = false;
+    f.menuGate.current(false);
+    animation.seek(animation.duration, false);
+    f.flush();
+    assert.equal(f.container.dataset.sceneStage, stage);
+    assert.equal(f.window.location.hash, hash);
+    assert.equal(f.heroLayer.inert, stage !== "hero");
+    assert.equal(f.surface.current.style.opacity, "1");
+    assert.equal(f.surface.current.style.transform, "none");
+    assert.equal(
+      f.environmentState.stack,
+      ["stack", "about", "contact"].includes(stage) ? 1 : 0,
+    );
+    assert.equal(
+      f.environmentState.about,
+      ["about", "contact"].includes(stage) ? 1 : 0,
+    );
+    assert.equal(f.options.isBlocked(), false);
+  }
+  assert.equal(f.resetCalls, 6);
+  f.detailIsOpen.current = true;
+  f.menuNavigate.current("about");
+  const animation = f.menuRuns.at(-1);
+  animation.pause().seek(animation.duration, false);
+  f.flush();
+  assert.equal(f.detailIsOpen.current, false);
+  assert.equal(f.container.dataset.sceneStage, "about");
+});
+
+test("focused projects close before leaving the atlas and cannot skip into Stack", (t) => {
+  const f = setup(t, "#proyectos");
+  f.showcaseState.selected = true;
+  f.options.onStep(1);
+  assert.equal(f.container.dataset.sceneStage, "projects");
+  f.options.onStep(-1);
+  assert.equal(f.container.dataset.sceneStage, "projects");
+  assert.equal(f.showcaseState.closeCalls, 1);
+  f.options.onStep(-1);
+  assert.equal(f.container.dataset.sceneTarget, "hero");
+});
+
+for (const [hash, clock] of [
+  ["", "hero"],
+  ["#proyectos", "stack"],
+  ["#stack", "about"],
+  ["#sobre-mi", "contact"],
+])
+  test(`interrupted ${clock} cleanup restores natural flow and releases clocks`, (t) => {
+    const f = setup(t, hash);
+    f.options.onStep(1);
+    f.complete(clock, 0.6);
+    f.cleanup();
+    assert.equal(f.environmentState.destroyed, 1);
+    assert.equal(f.container.dataset.scrollStory, undefined);
+    assert.equal(f.heroLayer.inert, false, "cleanup restores the natural Hero");
+    assert.equal(f.stackLayer.inert, false);
+    assert.equal(f.aboutLayer.inert, false);
+    assert.equal(f.contactLayer.inert, false);
+    assert.equal(f.projectLayer.style.visibility, "");
+    assert.equal(f.projectLayer.style.opacity, undefined);
+    assert.equal(f.aboutLayer.getAttribute("style"), null);
+    assert.equal(f.contactLayer.getAttribute("style"), null);
+    assert.equal(f.showcaseState.active, true);
+    assert.equal(f.showcaseState.interactive, true);
+    assert.equal(f.radarState.active, true);
+    assert.equal(f.radarState.view.tilt, 0);
+    assert.equal(f.menuNavigate.current, null);
+    assert.equal(f.waveState.terrain, 0);
+    assert.equal(f.portrait.getAttribute("style"), null);
+    for (const animation of f.clockRuns)
+      assert.equal(animation.cancelled, true);
+  });
+
+for (const time of [80, 400])
+  test(`menu cleanup at ${time}ms restores its surface`, (t) => {
+    const f = setup(t, "#stack");
+    f.menuNavigate.current("contact");
+    f.menuRuns.at(-1).pause().seek(time, false);
+    f.cleanup();
+    assert.equal(f.surface.current.getAttribute("style"), null);
+    assert.equal(f.environmentState.destroyed, 1);
+    assert.equal(f.menuNavigate.current, null);
+    assert.equal(f.menuRuns.at(-1).cancelled, true);
+  });

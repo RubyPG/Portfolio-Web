@@ -49,3 +49,18 @@ No scripts, event handlers, embedded images or external references are included.
 Repository license: MIT, Copyright (c) 2025 Nous Research.
 Full notice preserved in LICENSE-hermes.txt, from:
 https://raw.githubusercontent.com/NousResearch/hermes-agent/3fa571a51a6bf1220dfe9a7a23fcd5bb9482a1af/LICENSE
+
+Anime.js retrieved 2026-10-31
+---------------------------
+animejs.svg: official Anime.js v4 wordmark by Julian Garnier, linked directly
+from the header of https://animejs.com/.
+Source: https://animejs.com/assets/images/anime-js-logo-v4.svg
+Source SHA-256 (UTF-8):
+ad55a2db1f323c48db12db2a507d330c68b926c16215ee523ef7d92d8d9fb636
+The eight original paths/polygons and their proportions are retained unchanged.
+Metadata, editor IDs, fixed dimensions and unused namespaces were removed;
+fills/strokes are black for the CSS alpha mask, preserving the two 2px strokes.
+The viewBox is tightened from 0 0 580 118 to 0 2 550 112 around the full mark.
+This is the complete horizontal wordmark, not an invented square monogram.
+No scripts, event handlers, embedded images or external references are included.
+The mark remains the property of its owner and identifies the library used here.

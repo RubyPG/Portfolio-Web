@@ -25,6 +25,7 @@ export const stackGroups: StackGroup[] = [
       { name: "TypeScript", icon: assetPath("/icons/stack/typescript.svg") },
       { name: "Astro", icon: assetPath("/icons/stack/astro.svg") },
       { name: "Tailwind CSS", icon: assetPath("/icons/stack/tailwind.svg") },
+      { name: "anime.js", icon: assetPath("/icons/stack/animejs.svg") },
       { name: "GSAP", icon: assetPath("/icons/stack/gsap.svg") },
     ],
     additional: [

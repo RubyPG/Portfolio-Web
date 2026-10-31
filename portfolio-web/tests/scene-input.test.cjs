@@ -35,7 +35,7 @@ vm.runInNewContext(compiled, {
   Element: ElementStub,
   performance: { now: () => now },
 });
-let stage = 3,
+let stage = 2,
   position = 100,
   bottom = 1000,
   busy = false;
@@ -123,7 +123,7 @@ position = bottom;
 assert.equal(wheel(70).defaultPrevented, true, "tail at bottom is consumed");
 assert.equal(steps.length, 0, "same gesture cannot open next section");
 wheel(70, 300);
-assert.deepEqual(steps, [[3, 1]], "fresh gesture opens About");
+assert.deepEqual(steps, [[2, 1]], "fresh gesture opens About");
 wheel(3000);
 assert.equal(steps.length, 1, "fast scrolling cannot chain a transition");
 busy = false;
@@ -134,21 +134,21 @@ wheel(-70, 300);
 assert.deepEqual(
   steps,
   [
-    [3, 1],
-    [4, -1],
+    [2, 1],
+    [3, -1],
   ],
   "fresh gesture reverses About",
 );
 busy = false;
 position = bottom;
 dispatch("keydown", { key: "PageDown", repeat: false });
-assert.equal(stage, 4, "keyboard can open About");
+assert.equal(stage, 3, "keyboard can open About");
 busy = false;
 position = 0;
 dispatch("keydown", { key: "PageUp", repeat: true });
-assert.equal(stage, 4, "held keyboard does not chain");
+assert.equal(stage, 3, "held keyboard does not chain");
 dispatch("keydown", { key: "PageUp", repeat: false });
-assert.equal(stage, 3, "fresh keyboard can reverse");
+assert.equal(stage, 2, "fresh keyboard can reverse");
 busy = false;
 position = 100;
 dispatch("touchstart", {
@@ -167,7 +167,7 @@ assert.equal(
   }).defaultPrevented,
   true,
 );
-assert.equal(stage, 3, "touch route is not promoted at bottom");
+assert.equal(stage, 2, "touch route is not promoted at bottom");
 dispatch("touchend");
 dispatch("touchstart", {
   touches: [{ identifier: 2, clientX: 100, clientY: 300 }],
@@ -175,7 +175,7 @@ dispatch("touchstart", {
 dispatch("touchmove", {
   touches: [{ identifier: 2, clientX: 100, clientY: 240 }],
 });
-assert.equal(stage, 4, "fresh touch opens About");
+assert.equal(stage, 3, "fresh touch opens About");
 dispatch("touchend");
 busy = false;
 position = 100;
@@ -190,9 +190,9 @@ assert.equal(
   true,
   "About tail is consumed at its bottom",
 );
-assert.equal(stage, 4, "same gesture cannot open Contact");
+assert.equal(stage, 3, "same gesture cannot open Contact");
 wheel(7000, 300);
-assert.equal(stage, 5, "fresh gesture opens Contact");
+assert.equal(stage, 4, "fresh gesture opens Contact");
 const contactStepCount = steps.length;
 wheel(7000);
 busy = false;
@@ -204,11 +204,11 @@ assert.equal(
   "fast tail cannot skip or reverse the contact transition",
 );
 wheel(-70, 300);
-assert.equal(stage, 4, "fresh gesture reverses Contact");
+assert.equal(stage, 3, "fresh gesture reverses Contact");
 busy = false;
 position = bottom;
 dispatch("keydown", { key: "PageDown", repeat: false });
-assert.equal(stage, 5, "keyboard opens Contact");
+assert.equal(stage, 4, "keyboard opens Contact");
 busy = false;
 position = 100;
 assert.equal(
@@ -218,9 +218,9 @@ assert.equal(
 );
 position = 0;
 dispatch("keydown", { key: "PageUp", repeat: true });
-assert.equal(stage, 5, "held key cannot chain a reverse");
+assert.equal(stage, 4, "held key cannot chain a reverse");
 dispatch("keydown", { key: "PageUp", repeat: false });
-assert.equal(stage, 4, "fresh keyboard reverses Contact");
+assert.equal(stage, 3, "fresh keyboard reverses Contact");
 busy = false;
 position = bottom;
 dispatch("touchstart", {
@@ -229,7 +229,7 @@ dispatch("touchstart", {
 dispatch("touchmove", {
   touches: [{ identifier: 3, clientX: 100, clientY: 240 }],
 });
-assert.equal(stage, 5, "fresh touch opens Contact");
+assert.equal(stage, 4, "fresh touch opens Contact");
 dispatch("touchend");
 busy = false;
 position = 0;
@@ -239,13 +239,13 @@ dispatch("touchstart", {
 dispatch("touchmove", {
   touches: [{ identifier: 4, clientX: 100, clientY: 260 }],
 });
-assert.equal(stage, 4, "fresh touch reverses Contact");
+assert.equal(stage, 3, "fresh touch reverses Contact");
 dispatch("touchend");
 // Editing a message must not rotate Contact away when its parent is at the top.
 const textareaTarget = new ElementStub();
 textareaTarget.closest = (selector) =>
   selector.includes("textarea") ? textareaTarget : null;
-stage = 5;
+stage = 4;
 position = 0;
 busy = false;
 const beforeEditing = steps.length;
@@ -279,10 +279,10 @@ assert.equal(steps.length, beforeEditing, "editing does not leave Contact");
 wheel(-70, 300);
 assert.equal(
   stage,
-  4,
+  3,
   "a fresh gesture outside the field still reverses Contact",
 );
-stage = 5;
+stage = 4;
 busy = false;
 dispatch("touchstart", {
   target: textareaTarget,
@@ -303,7 +303,7 @@ assert.equal(
   false,
   "touch ownership survives leaving the field until release",
 );
-assert.equal(stage, 5, "scrolling the message keeps Contact open");
+assert.equal(stage, 4, "scrolling the message keeps Contact open");
 dispatch("touchend");
 // Native-field ownership must never bypass an in-flight scene transition.
 busy = true;
@@ -346,6 +346,47 @@ assert.equal(
   "blocked field touch stays consumed after the transition",
 );
 dispatch("touchend");
+// Project SVG buttons keep activation keys; ordinary vertical gestures leave
+// the atlas through the same scene ownership rules as the rest of the page.
+const projectButton = new ElementStub();
+projectButton.closest = (selector) =>
+  selector.includes("button, a[href]") ? projectButton : null;
+stage = 1;
+busy = false;
+const beforeProjectButton = steps.length;
+for (const key of [" ", "Enter"]) {
+  assert.equal(
+    dispatch("keydown", { target: projectButton, key, repeat: false })
+      .defaultPrevented,
+    false,
+  );
+}
+assert.equal(
+  steps.length,
+  beforeProjectButton,
+  "project activation cannot advance the story",
+);
+dispatch("touchstart", {
+  target: projectButton,
+  touches: [{ identifier: 8, clientX: 120, clientY: 400 }],
+});
+dispatch("touchmove", {
+  target: projectButton,
+  touches: [{ identifier: 8, clientX: 120, clientY: 150 }],
+});
+assert.equal(stage, 2, "vertical swipe on a project mark advances to Stack");
+busy = false;
+dispatch("touchmove", {
+  target: projectButton,
+  touches: [{ identifier: 8, clientX: 120, clientY: 80 }],
+});
+assert.equal(
+  steps.length,
+  beforeProjectButton + 1,
+  "a swipe cannot chain after its first scene settles",
+);
+dispatch("touchend");
+
 // The menu owns its keyboard and scroll even though it sits inside the story.
 const menuTarget = new ElementStub();
 menuTarget.closest = (selector) =>

@@ -124,6 +124,8 @@ export function DitherVeil({
       {...attributes}
       ref={root}
       className={`${styles.root} ${className ?? ""}`}
+      onDragStart={(event) => event.preventDefault()}
+      onContextMenu={(event) => event.preventDefault()}
     >
       <Image
         ref={image}
@@ -132,6 +134,7 @@ export function DitherVeil({
         alt={alt}
         width={width}
         height={height}
+        draggable={false}
         preload
         unoptimized
       />
