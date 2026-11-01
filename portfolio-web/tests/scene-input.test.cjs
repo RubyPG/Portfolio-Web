@@ -23,6 +23,7 @@ class ElementStub {
 }
 const win = new EventTarget();
 win.innerHeight = 800;
+win.visualViewport = { scale: 1 };
 const element = new ElementStub();
 const doc = { body: {}, documentElement: {} };
 let now = 1000;
@@ -33,6 +34,7 @@ vm.runInNewContext(compiled, {
   window: win,
   document: doc,
   Element: ElementStub,
+  getComputedStyle: (node) => ({ overflowY: node.overflowY ?? "visible" }),
   performance: { now: () => now },
 });
 let stage = 2,
@@ -386,6 +388,132 @@ assert.equal(
   "a swipe cannot chain after its first scene settles",
 );
 dispatch("touchend");
+
+// The mobile preview is a reading surface; desktop summaries still delegate
+// to project selection because their overflow remains visible.
+const previewTarget = new ElementStub();
+previewTarget.overflowY = "auto";
+previewTarget.closest = (selector) =>
+  selector === "[data-project-preview-scroll]" ? previewTarget : null;
+stage = 1;
+busy = false;
+const beforePreview = steps.length;
+now += 300;
+assert.equal(
+  dispatch("wheel", {
+    target: previewTarget,
+    deltaY: -80,
+    deltaX: 0,
+    deltaMode: 0,
+  }).defaultPrevented,
+  false,
+  "reading the preview never returns to the Hero at its scroll edge",
+);
+assert.equal(wheel(-80).defaultPrevented, false, "reading owns the wheel tail");
+assert.equal(
+  dispatch("keydown", {
+    target: previewTarget,
+    key: "PageDown",
+    repeat: false,
+  }).defaultPrevented,
+  false,
+);
+dispatch("touchstart", {
+  target: previewTarget,
+  touches: [{ identifier: 20, clientX: 100, clientY: 300 }],
+});
+assert.equal(
+  dispatch("touchmove", {
+    touches: [{ identifier: 20, clientX: 100, clientY: 450 }],
+  }).defaultPrevented,
+  false,
+  "preview touch remains native after leaving its bounds",
+);
+assert.equal(steps.length, beforePreview);
+dispatch("touchend");
+previewTarget.overflowY = "visible";
+now += 300;
+dispatch("wheel", {
+  target: previewTarget,
+  deltaY: -80,
+  deltaX: 0,
+  deltaMode: 0,
+});
+assert.equal(stage, 0, "desktop summary retains the regular scene route");
+
+stage = 1;
+busy = false;
+const beforeZoom = steps.length;
+const finger = { identifier: 21, clientX: 100, clientY: 300 };
+const secondFinger = { identifier: 22, clientX: 200, clientY: 300 };
+dispatch("touchstart", { touches: [finger] });
+dispatch("touchstart", { touches: [finger, secondFinger] });
+assert.equal(
+  dispatch("touchmove", {
+    touches: [{ ...finger, clientY: 450 }, secondFinger],
+  }).defaultPrevented,
+  false,
+  "pinch is left to the browser",
+);
+dispatch("touchend", { touches: [finger] });
+assert.equal(
+  dispatch("touchmove", {
+    touches: [{ ...finger, clientY: 500 }],
+  }).defaultPrevented,
+  false,
+  "lifting one pinch finger cannot resume scene navigation",
+);
+assert.equal(steps.length, beforeZoom);
+dispatch("touchend", { touches: [] });
+win.visualViewport.scale = 2;
+dispatch("touchstart", { touches: [finger] });
+assert.equal(
+  dispatch("touchmove", {
+    touches: [{ ...finger, clientY: 450 }],
+  }).defaultPrevented,
+  false,
+  "one finger pans the enlarged viewport",
+);
+assert.equal(wheel(-100, 300).defaultPrevented, false);
+assert.equal(
+  dispatch("keydown", { key: "PageDown", repeat: false }).defaultPrevented,
+  false,
+  "zoomed keyboard scrolling does not advance the scene",
+);
+win.visualViewport.scale = 1;
+assert.equal(
+  dispatch("touchmove", {
+    touches: [{ ...finger, clientY: 550 }],
+  }).defaultPrevented,
+  false,
+  "a pan started while enlarged stays native after returning to 1x",
+);
+assert.equal(
+  wheel(-100).defaultPrevented,
+  false,
+  "zoom wheel tail stays native",
+);
+assert.equal(steps.length, beforeZoom);
+dispatch("touchend", { touches: [] });
+now += 300;
+assert.equal(
+  dispatch("wheel", {
+    deltaY: -100,
+    deltaX: 0,
+    deltaMode: 0,
+    ctrlKey: true,
+  }).defaultPrevented,
+  false,
+  "Ctrl-wheel browser zoom remains native",
+);
+wheel(-100);
+assert.equal(steps.length, beforeZoom, "Ctrl-wheel tail cannot change scenes");
+dispatch("touchstart", { touches: [{ ...finger, identifier: 23 }] });
+dispatch("touchmove", {
+  touches: [{ ...finger, identifier: 23, clientY: 450 }],
+});
+assert.equal(stage, 0, "a fresh one-finger gesture works again at 1x");
+dispatch("touchend", { touches: [] });
 
 // The menu owns its keyboard and scroll even though it sits inside the story.
 const menuTarget = new ElementStub();

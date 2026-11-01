@@ -11,6 +11,15 @@
   --text-body: clamp(1rem, 0.95rem + 0.2vw, 1.125rem);
 }
 
+@media (max-width: 899px) {
+  :root {
+    --text-meta: 1rem;
+    --text-small: 1.0625rem;
+    --text-action: 1.125rem;
+    --text-body: 1.125rem;
+  }
+}
+
 * {
   box-sizing: border-box;
 }

@@ -602,7 +602,48 @@ export function LandingStory({
         else renderScene();
       };
       const nativeGesture = { lastAt: -Infinity, consumed: false };
+      const visualViewport = window.visualViewport;
+      let browserZoomed = (visualViewport?.scale ?? 1) > 1.01;
+      let zoomTouchActive = false;
+      let zoomReturnFrame = 0;
+      const syncBrowserZoom = () => {
+        if ((visualViewport?.scale ?? 1) > 1.01) {
+          browserZoomed = true;
+          input.resetGesture();
+          return;
+        }
+        if (!browserZoomed || zoomTouchActive) return;
+        browserZoomed = false;
+        input.resetGesture();
+        nativeGesture.lastAt = performance.now();
+        nativeGesture.consumed = true;
+        // Pinch panning may move the layout viewport too. Restore the same
+        // scene anchor after zoom ends without interpreting that move as input.
+        cancelAnimationFrame(zoomReturnFrame);
+        zoomReturnFrame = requestAnimationFrame(() => {
+          zoomReturnFrame = 0;
+          if ((visualViewport?.scale ?? 1) <= 1.01)
+            window.scrollTo({ top: desiredScroll, behavior: "instant" });
+        });
+      };
+      const startBrowserTouch = (event: TouchEvent) => {
+        if (event.touches.length > 1 || (visualViewport?.scale ?? 1) > 1.01) {
+          zoomTouchActive = true;
+          browserZoomed = true;
+          input.resetGesture();
+        }
+      };
+      const endBrowserTouch = (event: TouchEvent) => {
+        if (event.touches.length || !zoomTouchActive) return;
+        zoomTouchActive = false;
+        syncBrowserZoom();
+      };
       const nativeScroll = () => {
+        if (browserZoomed || (visualViewport?.scale ?? 1) > 1.01) {
+          syncBrowserZoom();
+          return;
+        }
+        if (zoomReturnFrame) return;
         if (
           detailIsOpen.current ||
           viewport.clientWidth !== measuredWidth ||
@@ -635,6 +676,13 @@ export function LandingStory({
       resize.observe(viewport);
       window.addEventListener("resize", scheduleResize);
       window.addEventListener("scroll", nativeScroll, { passive: true });
+      visualViewport?.addEventListener("resize", syncBrowserZoom);
+      window.addEventListener("touchstart", startBrowserTouch, {
+        capture: true,
+        passive: true,
+      });
+      window.addEventListener("touchend", endBrowserTouch, true);
+      window.addEventListener("touchcancel", endBrowserTouch, true);
       const initial = (
         {
           "#proyectos": 1,
@@ -673,6 +721,11 @@ export function LandingStory({
         resize.disconnect();
         cancelAnimationFrame(resizeFrame);
         cancelAnimationFrame(focusFrame);
+        cancelAnimationFrame(zoomReturnFrame);
+        visualViewport?.removeEventListener("resize", syncBrowserZoom);
+        window.removeEventListener("touchstart", startBrowserTouch, true);
+        window.removeEventListener("touchend", endBrowserTouch, true);
+        window.removeEventListener("touchcancel", endBrowserTouch, true);
         window.removeEventListener("scroll", nativeScroll);
         window.removeEventListener("resize", scheduleResize);
         timeline.kill();

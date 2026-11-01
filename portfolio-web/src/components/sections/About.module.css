@@ -146,3 +146,9 @@
     font-size: 1.75rem;
   }
 }
+
+@media (max-width: 899px) {
+  .copy {
+    font-size: var(--text-body);
+  }
+}

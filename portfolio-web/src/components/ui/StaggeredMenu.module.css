@@ -119,7 +119,7 @@
   scrollbar-width: thin;
   scrollbar-color: var(--ink) var(--paper);
   pointer-events: auto;
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
 }
 
 .panel[inert] {
@@ -224,6 +224,13 @@
   }
   .label {
     font-size: clamp(3.25rem, 12vw, 4.75rem);
+  }
+}
+
+@media (max-width: 899px) {
+  .toggle,
+  .socials a {
+    font-size: var(--text-small);
   }
 }
 

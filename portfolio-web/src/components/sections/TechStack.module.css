@@ -286,7 +286,7 @@
   .intro {
     max-width: 30ch;
     margin-top: 16px;
-    font-size: 1rem;
+    font-size: var(--text-body);
   }
 
   .back {
@@ -295,23 +295,49 @@
 
   .groups {
     grid-template-columns: minmax(0, 1fr);
-    gap: 28px;
-  }
-
-  .primary .mark {
-    width: 48px;
-    height: 48px;
-  }
-
-  .primary .icon {
-    width: 40px;
-    height: 40px;
+    gap: 36px;
   }
 }
 
-@media (max-width: 359px) {
+@media (max-width: 899px) {
+  .back {
+    font-size: var(--text-action);
+  }
+
+  .groupTitle {
+    margin-bottom: 20px;
+    font-size: 2.25rem;
+  }
+
   .primary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 16px;
+  }
+
+  .name,
+  .additional .name {
+    font-size: var(--text-small);
+    line-height: 1.5;
+  }
+
+  .additional {
+    gap: 14px 20px;
+    margin-top: 24px;
+  }
+
+  .additional .icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .primary .mark {
+    width: 56px;
+    height: 56px;
+  }
+
+  .primary .icon {
+    width: 48px;
+    height: 48px;
   }
 }
 

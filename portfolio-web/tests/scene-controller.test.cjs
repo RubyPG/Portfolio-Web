@@ -183,6 +183,15 @@ function fixture(hash = "") {
   const win = {
     scrollY: 0,
     innerHeight: 800,
+    visualViewport: {
+      scale: 1,
+      addEventListener(key, callback) {
+        listeners.set(`visual:${key}`, callback);
+      },
+      removeEventListener(key) {
+        listeners.delete(`visual:${key}`);
+      },
+    },
     location: { pathname: "/", search: "", hash },
     history: {
       state: null,
@@ -686,6 +695,70 @@ test("disposing an active terrain passage restores flow and rejects stale comple
   assert.equal(f.environmentState.stack, state);
   assert.equal(f.document.activeElement, focus);
   assert.equal(f.container.dataset.sceneStage, undefined);
+});
+
+test("zoom panning preserves the scene and returns to its anchor without navigation", (t) => {
+  const f = setup(t, "#proyectos");
+  f.flush();
+  const anchor = f.window.scrollY;
+  f.listeners.get("touchstart")({ touches: [{}, {}] });
+  f.window.visualViewport.scale = 2;
+  f.listeners.get("visual:resize")();
+  f.window.scrollY = anchor + 180;
+  f.listeners.get("scroll")();
+  assert.equal(
+    f.window.scrollY,
+    anchor + 180,
+    "native zoom panning is not snapped back",
+  );
+  assert.equal(f.container.dataset.sceneStage, "projects");
+  assert.equal(f.clockRuns.length, 0);
+  f.window.visualViewport.scale = 1;
+  f.listeners.get("visual:resize")();
+  f.window.scrollY = anchor + 30;
+  f.listeners.get("scroll")();
+  f.listeners.get("touchend")({ touches: [{}] });
+  f.window.scrollY = anchor + 60;
+  f.listeners.get("scroll")();
+  f.flush();
+  assert.equal(
+    f.window.scrollY,
+    anchor + 60,
+    "the remaining pinch finger stays native at 1x",
+  );
+  assert.equal(f.clockRuns.length, 0);
+  f.listeners.get("touchend")({ touches: [] });
+  f.flush();
+  assert.equal(f.window.scrollY, anchor);
+  f.listeners.get("scroll")();
+  assert.equal(
+    f.clockRuns.length,
+    0,
+    "zoom-out cannot masquerade as a scene gesture",
+  );
+  assert.equal(f.container.dataset.sceneStage, "projects");
+  f.options.onStep(1);
+  f.tick();
+  assert.equal(f.container.dataset.sceneStage, "stack");
+});
+
+test("cleanup removes zoom listeners and cancels pending anchor restoration", (t) => {
+  const f = setup(t, "#proyectos");
+  f.flush();
+  f.window.visualViewport.scale = 2;
+  f.listeners.get("visual:resize")();
+  f.window.scrollY += 100;
+  f.window.visualViewport.scale = 1;
+  f.listeners.get("visual:resize")();
+  const beforeCleanup = f.window.scrollY;
+  f.cleanup();
+  assert.equal(f.listeners.has("visual:resize"), false);
+  assert.equal(f.listeners.has("touchstart"), false);
+  assert.equal(f.listeners.has("touchend"), false);
+  assert.equal(f.listeners.has("touchcancel"), false);
+  f.flush();
+  assert.equal(f.window.scrollY, beforeCleanup);
+  assert.equal(f.clockRuns.length, 0);
 });
 
 test("Stack/About reverse preserves reading position, camera and repeated-cycle gates", (t) => {

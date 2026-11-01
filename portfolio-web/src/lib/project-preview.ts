@@ -34,6 +34,8 @@ export function getProjectPreviewRect(
   const landscape = height <= 550 && width > height;
   const lateral = width >= 900 || landscape;
   const compact = !lateral && height <= 650;
+  const phone = width < 700 && !landscape;
+  const portraitHeight = phone ? 0.27 : 0.34;
   // Short portrait screens reserve room for readable context and the actions.
   // Every renderer uses this rectangle, so the logo hand-off stays continuous.
   const compactHeight = height <= 520 ? 0.21 : 0.25;
@@ -43,10 +45,16 @@ export function getProjectPreviewRect(
       ? Math.min(width * 0.5, 760, height * 0.55 * safeAspect)
       : compact
         ? Math.min(width * 0.84, 640, height * compactHeight * safeAspect)
-        : Math.min(width * 0.88, 640, height * 0.34 * safeAspect);
+        : Math.min(width * 0.88, 640, height * portraitHeight * safeAspect);
   const maxHeight =
     height *
-    (landscape ? 0.46 : lateral ? 0.55 : compact ? compactHeight : 0.34);
+    (landscape
+      ? 0.46
+      : lateral
+        ? 0.55
+        : compact
+          ? compactHeight
+          : portraitHeight);
   if (
     getProjectPreviewComposition(previewWidth, safeAspect).height > maxHeight
   ) {
@@ -69,7 +77,16 @@ export function getProjectPreviewRect(
   return {
     x: (width - previewWidth) / 2,
     y:
-      height * (lateral ? 0.5 : compact ? (height <= 520 ? 0.3 : 0.34) : 0.39) -
+      height *
+        (lateral
+          ? 0.5
+          : compact
+            ? height <= 520
+              ? 0.3
+              : 0.34
+            : phone
+              ? 0.31
+              : 0.39) -
       previewHeight / 2,
     width: previewWidth,
     height: previewHeight,

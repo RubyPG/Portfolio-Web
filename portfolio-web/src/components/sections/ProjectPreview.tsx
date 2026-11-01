@@ -18,9 +18,10 @@ export interface ProjectPreviewHandle {
 /** The atlas selection's anime.js clock owns the reveals, including their reverse. */
 export const ProjectPreview = forwardRef<
   ProjectPreviewHandle,
-  { project: Project; visible: boolean }
->(function ProjectPreview({ project, visible }, ref) {
+  { project: Project; visible: boolean; selected: boolean }
+>(function ProjectPreview({ project, visible, selected }, ref) {
   const root = useRef<HTMLDivElement>(null);
+  const reading = useRef<HTMLDivElement>(null);
   const progress = useRef(0);
   const reduced = useRef(false);
   const paint = useCallback(() => {
@@ -75,6 +76,9 @@ export const ProjectPreview = forwardRef<
     [paint],
   );
   useLayoutEffect(() => {
+    if (selected && reading.current) reading.current.scrollTop = 0;
+  }, [selected, project.slug]);
+  useLayoutEffect(() => {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => {
       reduced.current = preference.matches;
@@ -87,6 +91,9 @@ export const ProjectPreview = forwardRef<
   useLayoutEffect(() => {
     const host = root.current;
     if (!host) return;
+    const footer = host
+      .closest("[data-project-atlas]")
+      ?.querySelector<HTMLElement>("[data-project-footer]");
     const layout = () => {
       const rect = getProjectPreviewRect(
         host.clientWidth,
@@ -95,10 +102,17 @@ export const ProjectPreview = forwardRef<
       );
       host.style.setProperty("--preview-x", `${rect.x}px`);
       host.style.setProperty("--preview-bottom", `${rect.y + rect.height}px`);
+      if (footer) {
+        host.style.setProperty(
+          "--preview-copy-bottom",
+          `${Math.max(16, host.clientHeight - footer.offsetTop + 16)}px`,
+        );
+      }
     };
     layout();
     const observer = new ResizeObserver(layout);
     observer.observe(host);
+    if (footer) observer.observe(footer);
     return () => observer.disconnect();
   }, [project.preview.width, project.preview.height]);
 
@@ -110,25 +124,34 @@ export const ProjectPreview = forwardRef<
       inert={!visible}
       aria-hidden={!visible || undefined}
     >
-      <div className={styles.problem} data-project-corner="left">
-        <div data-preview-problem>
-          <h3>Qué resuelve</h3>
-          <p>{project.problem}</p>
+      <div
+        ref={reading}
+        className={styles.copy}
+        data-project-preview-scroll
+        role="region"
+        aria-label="Resumen del proyecto"
+        tabIndex={visible ? 0 : -1}
+      >
+        <div className={styles.problem} data-project-corner="left">
+          <div data-preview-problem>
+            <h3>Qué resuelve</h3>
+            <p>{project.problem}</p>
+          </div>
         </div>
-      </div>
-      <div className={styles.contribution} data-project-corner="right">
-        <div data-preview-contribution>
-          <h3>Mi aportación</h3>
-          <p>{project.contribution}</p>
-        </div>
-        <div className={styles.technologyBlock} data-preview-technologies>
-          {project.technologies.length > 0 && (
-            <ul aria-label="Tecnologías">
-              {project.technologies.map((technology) => (
-                <li key={technology}>{technology}</li>
-              ))}
-            </ul>
-          )}
+        <div className={styles.contribution} data-project-corner="right">
+          <div data-preview-contribution>
+            <h3>Mi aportación</h3>
+            <p>{project.contribution}</p>
+          </div>
+          <div className={styles.technologyBlock} data-preview-technologies>
+            {project.technologies.length > 0 && (
+              <ul aria-label="Tecnologías">
+                {project.technologies.map((technology) => (
+                  <li key={technology}>{technology}</li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
     </div>

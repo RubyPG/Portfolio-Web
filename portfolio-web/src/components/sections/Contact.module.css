@@ -152,6 +152,11 @@
   .intro {
     max-width: 28ch;
     margin-inline: auto;
+    font-size: var(--text-body);
+  }
+  .email,
+  .socials a {
+    font-size: var(--text-action);
   }
   .emailGroup {
     margin-top: 24px;

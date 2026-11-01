@@ -10,6 +10,10 @@ import {
   useState,
 } from "react";
 import { animate } from "animejs";
+import {
+  isProjectPreviewScrollTarget,
+  isViewportZoomed,
+} from "@/lib/scene-input";
 import { projects } from "@/data/projects";
 import { ProjectDetail, type ProjectDetailRect } from "./ProjectDetail";
 import { ProjectPreview, type ProjectPreviewHandle } from "./ProjectPreview";
@@ -77,6 +81,7 @@ export const ProjectShowcase = forwardRef<
     canOpen: false,
     consumed: false,
     distance: 0,
+    native: false,
   });
   const callbacks = useRef({ onReady, onDetailChange, onProjectChange });
   const [focused, setFocused] = useState<number | null>(null);
@@ -358,6 +363,7 @@ export const ProjectShowcase = forwardRef<
     const container = section.current;
     if (!container) return;
     let touch: {
+      identifier: number;
       x: number;
       y: number;
       canOpen: boolean;
@@ -375,15 +381,23 @@ export const ProjectShowcase = forwardRef<
       event.stopPropagation();
     };
     const wheel = (event: WheelEvent) => {
-      if (event.ctrlKey) return;
       const gesture = wheelGesture.current;
       const now = performance.now();
+      if (event.ctrlKey || isViewportZoomed()) {
+        gesture.lastAt = now;
+        gesture.canOpen = false;
+        gesture.distance = 0;
+        gesture.native = true;
+        return;
+      }
       if (now - gesture.lastAt > 200) {
         gesture.canOpen = canOpen();
         gesture.consumed = false;
         gesture.distance = 0;
+        gesture.native = isProjectPreviewScrollTarget(event);
       }
       gesture.lastAt = now;
+      if (gesture.native) return;
       if (
         inlineProject.current ||
         !interactionEnabled.current ||
@@ -419,9 +433,18 @@ export const ProjectShowcase = forwardRef<
         gesture.consumed = true;
     };
     const startTouch = (event: TouchEvent) => {
+      if (
+        event.touches.length !== 1 ||
+        isViewportZoomed() ||
+        isProjectPreviewScrollTarget(event)
+      ) {
+        touch = null;
+        return;
+      }
       const start = event.touches[0];
       touch = start
         ? {
+            identifier: start.identifier,
             x: start.clientX,
             y: start.clientY,
             canOpen: canOpen(),
@@ -430,10 +453,15 @@ export const ProjectShowcase = forwardRef<
         : null;
     };
     const moveTouch = (event: TouchEvent) => {
+      if (event.touches.length !== 1 || isViewportZoomed()) {
+        touch = null;
+        return;
+      }
       const point = event.touches[0];
       if (
         !point ||
         !touch ||
+        point.identifier !== touch.identifier ||
         inlineProject.current ||
         !interactionEnabled.current ||
         intro.current < 1
@@ -459,6 +487,9 @@ export const ProjectShowcase = forwardRef<
     };
     const key = (event: KeyboardEvent) => {
       if (
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey ||
         inlineProject.current ||
         !interactionEnabled.current ||
         intro.current < 1
@@ -469,6 +500,8 @@ export const ProjectShowcase = forwardRef<
         if (!event.repeat) closeFocus();
       } else if (
         (event.key === "PageDown" || event.key === "ArrowDown") &&
+        !isViewportZoomed() &&
+        !isProjectPreviewScrollTarget(event) &&
         focusedIndex.current !== null
       ) {
         consume(event);
@@ -659,6 +692,7 @@ export const ProjectShowcase = forwardRef<
       <ProjectPreview
         ref={preview}
         project={current}
+        selected={focused !== null}
         visible={focused !== null && interactive && !detailMounted}
       />
       <footer

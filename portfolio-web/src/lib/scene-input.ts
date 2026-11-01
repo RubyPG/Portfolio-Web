@@ -24,6 +24,21 @@ const TOUCH_THRESHOLD = 24;
 const EDITABLE_SELECTOR =
   'input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"]';
 
+/** Pinch zoom belongs to the browser, including one-finger panning afterward. */
+export function isViewportZoomed(): boolean {
+  return (window.visualViewport?.scale ?? 1) > 1.01;
+}
+
+export function isProjectPreviewScrollTarget(event: Event): boolean {
+  const scroller =
+    event.target instanceof Element
+      ? event.target.closest("[data-project-preview-scroll]")
+      : null;
+  if (!scroller) return false;
+  const overflow = getComputedStyle(scroller).overflowY;
+  return overflow === "auto" || overflow === "scroll";
+}
+
 /** Own one scene step per fresh gesture, without queuing input during motion. */
 export function createSceneInput(options: SceneInputOptions): {
   resetGesture(): void;
@@ -49,17 +64,21 @@ export function createSceneInput(options: SceneInputOptions): {
     // This listener owns the gesture before nested showcase handlers see it.
     event.stopImmediatePropagation();
   };
-  const editsField = (event: Event) =>
-    event.target instanceof Element &&
-    Boolean(event.target.closest(EDITABLE_SELECTOR));
+  const ownsNativeScroll = (event: Event) =>
+    (event.target instanceof Element &&
+      Boolean(event.target.closest(EDITABLE_SELECTOR))) ||
+    isProjectPreviewScrollTarget(event);
 
   const wheel = (event: WheelEvent) => {
-    if (
-      !inScene(event) ||
-      event.ctrlKey ||
-      event.shiftKey ||
-      Math.abs(event.deltaY) <= Math.abs(event.deltaX)
-    )
+    if (!inScene(event)) return;
+    if (event.ctrlKey || isViewportZoomed()) {
+      wheelGesture.lastAt = performance.now();
+      wheelGesture.distance = 0;
+      wheelGesture.consumed = false;
+      wheelGesture.route = "native";
+      return;
+    }
+    if (event.shiftKey || Math.abs(event.deltaY) <= Math.abs(event.deltaX))
       return;
 
     const now = performance.now();
@@ -68,7 +87,7 @@ export function createSceneInput(options: SceneInputOptions): {
       wheelGesture.distance = 0;
       wheelGesture.consumed = options.isBlocked() || options.isDetailOpen();
       wheelGesture.direction = direction;
-      wheelGesture.route = editsField(event)
+      wheelGesture.route = ownsNativeScroll(event)
         ? "native"
         : options.handlesDirection(direction)
           ? "scene"
@@ -109,7 +128,7 @@ export function createSceneInput(options: SceneInputOptions): {
   };
 
   const touchStart = (event: TouchEvent) => {
-    if (!inScene(event) || event.touches.length !== 1) {
+    if (!inScene(event) || event.touches.length !== 1 || isViewportZoomed()) {
       touchGesture = null;
       return;
     }
@@ -119,13 +138,13 @@ export function createSceneInput(options: SceneInputOptions): {
       x: touch.clientX,
       y: touch.clientY,
       consumed: options.isBlocked() || options.isDetailOpen(),
-      route: editsField(event) ? "native" : null,
+      route: ownsNativeScroll(event) ? "native" : null,
       direction: null,
     };
   };
 
   const touchMove = (event: TouchEvent) => {
-    if (event.touches.length !== 1) {
+    if (event.touches.length !== 1 || isViewportZoomed()) {
       touchGesture = null;
       return;
     }
@@ -181,11 +200,12 @@ export function createSceneInput(options: SceneInputOptions): {
       event.ctrlKey ||
       event.metaKey ||
       event.altKey ||
+      isViewportZoomed() ||
       options.isDetailOpen()
     )
       return;
     const target = event.target instanceof Element ? event.target : null;
-    if (editsField(event)) return;
+    if (ownsNativeScroll(event)) return;
     const space = event.key === " " || event.key === "Spacebar";
     if (
       space &&

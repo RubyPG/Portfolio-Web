@@ -102,7 +102,7 @@
   font: inherit;
   text-align: center;
   cursor: pointer;
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
   -webkit-tap-highlight-color: transparent;
 }
 .location:nth-child(2) {
@@ -255,7 +255,7 @@
   }
   .locationTitle {
     gap: 8px;
-    font-size: clamp(1.7rem, 7vw, 2.4rem);
+    font-size: clamp(2rem, 7vw, 2.4rem);
   }
   .locationCategory {
     margin-top: 5px;
@@ -266,12 +266,15 @@
     gap: 16px;
   }
   .section[data-focused] .footer {
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
   }
   .projectCopy h3 {
     font-size: clamp(2rem, 9vw, 3rem);
   }
   .actions {
+    justify-content: space-between;
     gap: 26px;
   }
   .projectLink {
@@ -296,6 +299,11 @@
   }
 }
 @media (max-height: 550px) and (aspect-ratio > 1) {
+  .section[data-focused] .footer {
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 16px;
+  }
   .location {
     top: 29%;
   }

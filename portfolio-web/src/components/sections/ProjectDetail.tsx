@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import type { Project } from "@/data/projects";
 import { assetPath } from "@/lib/asset-path";
+import { isViewportZoomed } from "@/lib/scene-input";
 import {
   getProjectCardBackground,
   getProjectCardBackgroundCss,
@@ -333,7 +334,12 @@ export function ProjectDetail({
     let lastWheelAt = 0;
     let wheelStartedAtTop = false;
     let wheelDistance = 0;
-    let touchStart: { x: number; y: number; atTop: boolean } | null = null;
+    let touchStart: {
+      identifier: number;
+      x: number;
+      y: number;
+      atTop: boolean;
+    } | null = null;
 
     const requestClose = () => {
       if (requestedClose || !callbacks.current.open) return;
@@ -347,6 +353,12 @@ export function ProjectDetail({
       requestClose();
     };
     const handleWheel = (event: WheelEvent) => {
+      if (event.ctrlKey || isViewportZoomed()) {
+        lastWheelAt = performance.now();
+        wheelStartedAtTop = false;
+        wheelDistance = 0;
+        return;
+      }
       event.stopPropagation();
       if (progress.current < 0.999 || !callbacks.current.open) {
         event.preventDefault();
@@ -372,14 +384,33 @@ export function ProjectDetail({
       }
     };
     const handleTouchStart = (event: TouchEvent) => {
+      if (event.touches.length !== 1 || isViewportZoomed()) {
+        touchStart = null;
+        return;
+      }
       const touch = event.touches[0];
       touchStart = touch
-        ? { x: touch.clientX, y: touch.clientY, atTop: scroller.scrollTop <= 1 }
+        ? {
+            identifier: touch.identifier,
+            x: touch.clientX,
+            y: touch.clientY,
+            atTop: scroller.scrollTop <= 1,
+          }
         : null;
     };
     const handleTouchMove = (event: TouchEvent) => {
+      if (event.touches.length !== 1 || isViewportZoomed()) {
+        touchStart = null;
+        return;
+      }
       const touch = event.touches[0];
-      if (!touch || !touchStart?.atTop || progress.current < 0.999) return;
+      if (
+        !touch ||
+        !touchStart?.atTop ||
+        touch.identifier !== touchStart.identifier ||
+        progress.current < 0.999
+      )
+        return;
       const down = touch.clientY - touchStart.y;
       const sideways = Math.abs(touch.clientX - touchStart.x);
       if (down > 36 && down > sideways && scroller.scrollTop <= 1) {
@@ -388,16 +419,23 @@ export function ProjectDetail({
         requestClose();
       }
     };
+    const handleTouchEnd = () => {
+      touchStart = null;
+    };
 
     window.addEventListener("keydown", handleKey, true);
     host.addEventListener("wheel", handleWheel, { passive: false });
     host.addEventListener("touchstart", handleTouchStart, { passive: true });
     host.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("touchend", handleTouchEnd);
+    window.addEventListener("touchcancel", handleTouchEnd);
     return () => {
       window.removeEventListener("keydown", handleKey, true);
       host.removeEventListener("wheel", handleWheel);
       host.removeEventListener("touchstart", handleTouchStart);
       host.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+      window.removeEventListener("touchcancel", handleTouchEnd);
     };
   }, []);
 

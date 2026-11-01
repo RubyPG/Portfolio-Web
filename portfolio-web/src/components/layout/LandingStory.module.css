@@ -124,7 +124,7 @@
   overflow-y: auto;
   overscroll-behavior-y: contain;
   scrollbar-width: thin;
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
 }
 .story[data-scroll-story] .stackScroll {
   scrollbar-color: var(--accent) var(--ink);

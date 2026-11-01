@@ -164,6 +164,21 @@
   }
 }
 
+@media (max-width: 899px) {
+  .field label,
+  .feedback {
+    font-size: var(--text-small);
+  }
+  .field input,
+  .field textarea {
+    font-size: var(--text-body);
+  }
+  .note,
+  .error {
+    font-size: var(--text-meta);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .field input,
   .field textarea,
