@@ -34,7 +34,9 @@ Después, abrir un chat dentro del proyecto para crear o editar la web. Las norm
 
 Para Claude, dar acceso a esta misma raíz y comenzar por [CLAUDE.md](CLAUDE.md). Si el cliente no carga los archivos automáticamente, pedirle que lea `AGENTS.md` y `README.md`. No asumir que Claude Desktop/Cowork y Claude Code procesan los archivos del mismo modo.
 
-## Estado actual · 31 de octubre de 2026
+## Estado actual · 1 de noviembre de 2026
+
+- **Legibilidad móvil:** tras la revisión de Rubén en su Oppo, lectura principal de 18 px, etiquetas de 16–17 px y acciones de 18 px hasta 899 px de ancho. Stack con dos columnas de iconos mayores; resumen de proyectos en una columna desplazable, separado del pie. Zoom con pellizco y desplazamiento ampliado sin abrir fichas ni cambiar escenas. Validación y límites en [Legibilidad móvil](portfolio-vault/rendimiento-y-navegacion.md#legibilidad-móvil--1-de-noviembre-de-2026).
 
 - **Nueva dirección confirmada:** conservar la Hero y todo desde Mi stack hasta Contacto. Cubo, carrusel y brasas quedan archivados y retirados de la aplicación activa.
 - **Proyectos como mapa topográfico:** transición sencilla de 1,25 s con anime.js: textos y retrato desaparecen suavemente, el fondo original se funde con Topography y entran los SVG de Sophos y Loops n’ Grooves. Cámara estable y movimientos cortos. Las ondas del fondo siguen animadas durante todo el fundido, también al regresar al Hero; se pausan cuando ya no son visibles. El efecto experimental de puntos que formaban líneas queda descartado y eliminado por petición de Rubén. Detalles en [Coreografía del entorno](portfolio-vault/base-tecnica-y-visual.md#coreografía-del-entorno-con-animejs).
@@ -44,8 +46,8 @@ Para Claude, dar acceso a esta misma raíz y comenzar por [CLAUDE.md](CLAUDE.md)
 - Hero con League Gothic, firma Amazed, PNG original, DitherVeil y PatternWaves. El retrato sigue protegido contra arrastre nativo y menú contextual. Al volver desde proyectos reconoce el cursor quieto sobre la foto y revela el color gradualmente, también después de un periodo de reposo. La entrada inicial conserva anime.js.
 - Menú con saltos directos a las cinco secciones, teclado y flujo natural con movimiento reducido. El controlador nuevo mantiene bloqueo de ráfagas y reversas. GSAP permanece únicamente en componentes internos heredados de menú/fichas; no se añade en el nuevo recorrido.
 - **Archivo local:** [`_archive/2026-10-31-cubo-carrusel/`](_archive/2026-10-31-cubo-carrusel/ARCHIVO.md), con código, recursos, pruebas y documentación del estado anterior. Está excluido de Git. La propuesta pendiente de partículas reactivas del cubo se archiva con esa dirección.
-- **Publicado y comprobado el 31 de octubre** (`f9955fa`), con [despliegue correcto](https://github.com/RubyPG/Portfolio-Web/actions/runs/41249504488) en [GitHub Pages](https://rubypg.github.io/Portfolio-Web/). Formspree `myeeyrzo` y `noindex, follow` ya estaban publicados. Dominio `ruben.sepharim.eu` confirmado; DNS y dominio personalizado pendientes. Ver [Rendimiento y navegación](portfolio-vault/rendimiento-y-navegacion.md) y [Sobre mí y contacto](portfolio-vault/sobre-mi.md).
-- **Validación:** 79 pruebas correctas, incluidas las regresiones de cadencia/caché del terreno, ángulos de transición, invalidación del radar y retrato interactivo. Compilación, TypeScript, ESLint y formato correctos; ida/vuelta y selección revisadas a 1440 × 900 y 390 × 844, sin errores ni desbordamiento. Ondas activas durante el fundido de ida/vuelta y pausadas al ocultarse o abrir el menú, verificadas en escritorio y móvil. Revelado con cursor quieto y entrada progresiva tras reposo comprobados en Chromium; el modo reducido conserva el PNG. La selección mantiene el terreno visible sin velo blanco; las pruebas conservan las regresiones de Mi stack, radar, Contacto, menú y movimiento reducido.
+- **Actualizado y comprobado el 1 de noviembre** (`817c9ff`), con [despliegue correcto](https://github.com/RubyPG/Portfolio-Web/actions/runs/41315705665) en [GitHub Pages](https://rubypg.github.io/Portfolio-Web/). Formspree `myeeyrzo` y `noindex, follow` ya estaban publicados. Dominio `ruben.sepharim.eu` confirmado; DNS y dominio personalizado pendientes. Ver [Rendimiento y navegación](portfolio-vault/rendimiento-y-navegacion.md) y [Sobre mí y contacto](portfolio-vault/sobre-mi.md).
+- **Validación:** 81 pruebas correctas, incluidas las regresiones de zoom, lectura nativa del resumen, cadencia/caché del terreno, ángulos de transición, invalidación del radar y retrato interactivo. Compilación, TypeScript, ESLint y formato correctos; lectura revisada entre 320 y 1440 px, sin desbordamiento horizontal. Ondas activas durante el fundido de ida/vuelta y pausadas al ocultarse o abrir el menú, verificadas en escritorio y móvil. Revelado con cursor quieto y entrada progresiva tras reposo comprobados en Chromium; el modo reducido conserva el PNG. La selección mantiene el terreno visible sin velo blanco; las pruebas conservan las regresiones de Mi stack, radar, Contacto, menú y movimiento reducido.
 
 ## Desarrollo
 
@@ -84,7 +86,7 @@ Auditoría inicial: `npm audit --omit=dev` informa de cero vulnerabilidades. La 
 
 ## Siguiente paso
 
-Revisar la versión publicada del recorrido Hero → terreno → proyectos y el ajuste de ángulos de Mi stack → Sobre mí. Comprobar la sensación del gesto y el rendimiento en un teléfono físico, incluido el revelado táctil del retrato.
+Comprobar la nueva escala de lectura en el Oppo físico de Rubén y la sensación del gesto, incluido el revelado táctil del retrato. La emulación no reproduce sus ajustes personales de pantalla y tamaño de texto.
 
 Incorporar capturas reales en `portfolio-web/public/images/projects/capturas/sophos/` y `portfolio-web/public/images/projects/capturas/loops-grooves/`, y actualizar `preview` en sus datos. Confirmar las tecnologías de Sophos y añadir LinkedIn cuando Rubén facilite la URL.
 

@@ -16,6 +16,18 @@ El botón conserva fondo Sangria, texto Pebble e icono Jade en todas las seccion
 
 La regresión prueba desplazamientos previos equivalentes a paneles de 320 y 520 px y la espera durante la carga, además de los ciclos de apertura, cierre, foco y movimiento reducido. Usa GSAP sobre objetos con ambos canales de desplazamiento; no verifica la descomposición CSS ni el renderizado en un navegador. Las cinco suites, build, tipos, ESLint y formato pasan. Se ha reiniciado el servidor local con la build corregida; queda pendiente su comprobación visual por la restricción de acceso descrita abajo.
 
+## Legibilidad móvil · 1 de noviembre de 2026
+
+Rubén informa de que el portfolio se lee demasiado pequeño en su Oppo Reno8 Pro 5G. El viewport ya era correcto (`width=device-width, initial-scale=1`); la causa observada es la escala tipográfica: etiquetas de 12–15 px, párrafos de proyecto de 14 px en dos columnas estrechas y cuerpo de 16 px en Sobre mí y Contacto.
+
+- Hasta 899 px: cuerpo de 18 px, texto secundario de 17 px, metadatos de 16 px y acciones de 18 px. Se corrigen también los tamaños locales de menú, formulario y secciones. Escritorio conserva su escala.
+- Stack: dos columnas de tecnologías principales, nombres de 17 px y SVG de 48 px, con separación mayor. El contenido conserva su scroll interior.
+- Selección de proyecto: resumen a una columna en vertical, con scroll propio y límite inferior medido desde el pie. La captura reserva más espacio para leer; las geometrías de selección y ficha siguen compartidas. Al elegir un proyecto nuevo se vuelve al comienzo del resumen; al volver de la ficha se conserva la lectura.
+- Zoom: `pan-y pinch-zoom`, guardas para gestos de varios dedos y viewport ampliado. El resumen conserva los gestos de lectura y no abre la ficha al desplazarse. El controlador no cambia de escena durante el zoom; restaura su ancla al volver a 1× y soltar los dedos.
+- Verificación: 81 pruebas, TypeScript, ESLint, formato, build y exportación estática de 52 recursos correctos. Chromium con emulación móvil (393 px, DPR 2,75), vistas de 320–844 px, tablet 768 × 1024 y composición de escritorio 1440 × 900. Sin overflow horizontal. El deslizamiento táctil sintetizado del resumen mueve `scrollTop` de 0 a 86 sin abrir la ficha; un pellizco de dos contactos amplía a 3,93× sin cambiar de escena. También se verificó pan a 2× y regreso a 1×. Falta la comprobación en el Oppo físico y con sus ajustes personales. El detector sólo señala Arial, conservada por identidad previa.
+
+Capturas y auxiliares locales en `_temp/output/playwright/readability-*.png`. Publicado `817c9ff` el 1 de noviembre: [build y deploy correctos](https://github.com/RubyPG/Portfolio-Web/actions/runs/41315705665). La URL pública responde HTTP 200, contiene el resumen desplazable y sirve los nuevos tamaños en la emulación móvil; consola sin errores.
+
 ## Fluidez del entorno · 31 de octubre de 2026
 
 Petición vigente: mejorar el fondo de proyectos y la transición Mi stack → Sobre mí, incluidos los ángulos, conservando la dirección visual y anime.js.
