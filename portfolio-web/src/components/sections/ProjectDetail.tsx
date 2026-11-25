@@ -12,6 +12,8 @@ import {
   PROJECT_CARD_RADIUS,
 } from "@/lib/project-card";
 import { getProjectPreviewComposition } from "@/lib/project-preview";
+import { getProjectMedia } from "@/lib/project-media";
+import { ProjectMediaGallery } from "./ProjectMediaGallery";
 import styles from "./ProjectDetail.module.css";
 
 gsap.registerPlugin(useGSAP);
@@ -347,7 +349,12 @@ export function ProjectDetail({
       callbacks.current.onClose();
     };
     const handleKey = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || host.closest("[inert]")) return;
+      if (
+        event.key !== "Escape" ||
+        host.closest("[inert]") ||
+        document.fullscreenElement
+      )
+        return;
       event.preventDefault();
       event.stopPropagation();
       requestClose();
@@ -384,7 +391,11 @@ export function ProjectDetail({
       }
     };
     const handleTouchStart = (event: TouchEvent) => {
-      if (event.touches.length !== 1 || isViewportZoomed()) {
+      if (
+        event.touches.length !== 1 ||
+        isViewportZoomed() ||
+        (event.target instanceof Element && event.target.closest("video"))
+      ) {
         touchStart = null;
         return;
       }
@@ -541,17 +552,30 @@ export function ProjectDetail({
           </h2>
         </header>
         <div ref={body} className={styles.body} data-detail-scroll tabIndex={0}>
-          <p className={styles.description}>{project.description}</p>
-          {project.technologies.length > 0 && (
-            <div className={styles.technologyBlock}>
-              <h3>Tecnologías</h3>
-              <ul className={styles.technologies}>
-                {project.technologies.map((technology) => (
-                  <li key={technology}>{technology}</li>
-                ))}
-              </ul>
+          <div className={styles.layout}>
+            <ProjectMediaGallery
+              key={project.slug}
+              title={project.title}
+              logo={project.image}
+              items={getProjectMedia(project.slug)}
+              active={open}
+            />
+            <div className={styles.overview}>
+              <p className={styles.description}>{project.description}</p>
+              <p className={styles.contribution}>{project.contribution}</p>
+              {project.technologies.length > 0 && (
+                <ul className={styles.technologies} aria-label="Tecnologías">
+                  {project.technologies.map((technology) => (
+                    <li key={technology}>{technology}</li>
+                  ))}
+                </ul>
+              )}
+              <div className={styles.draft}>
+                <p className={styles.draftLabel}>Texto de prueba</p>
+                <p>{project.detailNote}</p>
+              </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </section>

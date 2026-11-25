@@ -134,13 +134,11 @@ export const ProjectPreview = forwardRef<
       >
         <div className={styles.problem} data-project-corner="left">
           <div data-preview-problem>
-            <h3>Qué resuelve</h3>
             <p>{project.problem}</p>
           </div>
         </div>
         <div className={styles.contribution} data-project-corner="right">
           <div data-preview-contribution>
-            <h3>Mi aportación</h3>
             <p>{project.contribution}</p>
           </div>
           <div className={styles.technologyBlock} data-preview-technologies>

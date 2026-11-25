@@ -1,0 +1,132 @@
+.gallery {
+  min-width: 0;
+  align-self: start;
+}
+
+.stage {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  max-height: max(180px, calc(100svh - 280px));
+  overflow: hidden;
+  background: #e4eae8;
+  touch-action: pan-y pinch-zoom;
+}
+
+.stage[data-media-type="video"] {
+  background: #17241e;
+  touch-action: auto;
+}
+
+.stage > img,
+.stage > video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+}
+
+.empty,
+.message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+  color: #3c4c44;
+  text-align: center;
+  font-size: var(--text-body);
+}
+
+.empty img {
+  width: clamp(64px, 8vw, 120px);
+  height: clamp(64px, 8vw, 120px);
+  object-fit: contain;
+}
+
+.empty p,
+.message p {
+  margin: 0;
+}
+
+.stage[data-media-type="video"] .message {
+  color: var(--paper);
+}
+
+.message a {
+  color: inherit;
+  text-underline-offset: 4px;
+}
+
+.controls,
+.caption,
+.arrows {
+  display: flex;
+  align-items: center;
+}
+
+.controls {
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.caption {
+  gap: 24px;
+  margin: 0;
+  color: #412e36;
+  font-size: max(1rem, var(--text-small));
+}
+
+.counter {
+  font-variant-numeric: tabular-nums;
+}
+
+.arrows {
+  gap: 4px;
+}
+
+.arrows button {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.arrows button:hover {
+  background: var(--paper);
+}
+
+.arrows button:active {
+  background: #d4dfda;
+}
+
+.gallery:focus-visible,
+.arrows button:focus-visible,
+.message a:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+@media (max-width: 699px) {
+  .empty,
+  .message {
+    gap: 16px;
+    padding: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrows button {
+    transition: none;
+  }
+}

@@ -2,6 +2,36 @@
 
 Base inicial del 18 de octubre de 2026: Next.js y paleta aportada por Rubén. La aplicación activa está en `portfolio-web/` y el alojamiento confirmado es GitHub Pages. La dirección vigente de Hero/proyectos es el mapa topográfico del 31 de octubre; cubo, carrusel y brasas se conservan únicamente en el archivo local.
 
+## Fichas de proyecto y medios · 4 de noviembre de 2026
+
+Petición confirmada: una plantilla común mientras se define cada ficha, con contenido breve y una galería de imágenes y vídeos. Se amplía la ficha integrada conservando tipografía, colores, apertura y regreso al mapa. La galería ocupa el espacio principal; la acompañan descripción, rol y tecnologías conocidas. El texto de prueba se identifica como provisional, sin inventar experiencia, resultados ni tecnologías. Se retiran «Qué resuelve» y «Mi aportación» del resumen previo.
+
+### Añadir imágenes y vídeos
+
+Colocar los archivos directamente en la carpeta del proyecto:
+
+| Proyecto | Carpeta desde la raíz del portfolio |
+| --- | --- |
+| Sophos | `portfolio-web/public/media/projects/sophos/` |
+| Loops n’ Grooves | `portfolio-web/public/media/projects/loops-grooves/` |
+
+Los vídeos aparecen primero. Dentro de cada grupo se usa orden alfanumérico natural, sin distinguir mayúsculas: `2` va antes que `10`. Por ejemplo, `01-demo.mp4`, `02-recorrido.webm`, `01-inicio.webp`, `02-detalle.png`. Se admiten espacios y acentos; las rutas se codifican y respetan el prefijo de GitHub Pages.
+
+- **Imágenes:** AVIF, GIF, JPEG/JPG, PNG, SVG y WebP.
+- **Vídeos:** M4V, MP4, OGG/OGV y WebM. Preferir MP4 o WebM con una codificación compatible con los navegadores previstos.
+- Solo se leen archivos directos; se ignoran subcarpetas, archivos ocultos, enlaces simbólicos y formatos ajenos.
+- La primera **imagen** por nombre se utiliza automáticamente en la selección del mapa. Los vídeos mantienen prioridad dentro de la galería.
+
+`npm run dev` detecta archivos añadidos, renombrados o borrados y actualiza la galería. Si se sustituye el contenido de un archivo conservando su nombre, recargar la página. `npm run build` regenera el catálogo antes de compilar; `npm run media:sync` permite hacerlo manualmente. No se edita el catálogo generado ni una lista de medios. En la web publicada hay que compilar y desplegar de nuevo: GitHub Pages no observa la carpeta local.
+
+### Interacción y estado
+
+Vídeos con controles nativos, sin reproducción automática; se pausan al cambiar de elemento, cerrar la ficha, abrir el menú u ocultar la pestaña. La galería dispone de flechas y teclado (izquierda/derecha, Inicio/Fin); las imágenes admiten deslizamiento táctil. Sin medios muestra el logo y un mensaje, sin flechas. Con un solo archivo tampoco muestra flechas. El marco conserva el contenido completo y limita su altura en pantallas bajas. Con movimiento reducido, la ficha se alinea al abrirse y al cambiar de orientación, respetando el zoom. No se han añadido capturas ni vídeos reales; los recursos temporales de prueba se han retirado.
+
+Implementación: [ficha](../portfolio-web/src/components/sections/ProjectDetail.tsx), [galería](../portfolio-web/src/components/sections/ProjectMediaGallery.tsx), [datos y textos](../portfolio-web/src/data/projects.ts), [generación y vigilancia de medios](../portfolio-web/scripts/project-media.mjs) y [lectura del catálogo](../portfolio-web/src/lib/project-media.ts).
+
+Validación del 4 de noviembre: 87 pruebas, TypeScript, ESLint, formato y compilación correctos. Exportación estática con `/Portfolio-Web`: 52 recursos locales verificados. Revisión en Chromium a 320, 390 y 1440 px y en horizontal a 844 × 390: sin desbordamiento horizontal; imagen vertical completa, orden de vídeos, controles, pausa al cambiar/cerrar/abrir menú, recuperación de errores, carpeta vacía y archivo único. Añadir, renombrar y borrar actualiza la ficha; espacios, acentos y `#` cargan correctamente. Apertura y resize con movimiento reducido conservan la cabecera a la vista. Detector inicial sin hallazgos y revisión visual final independiente sin correcciones materiales. Quedan por probar los medios reales y el dispositivo físico. La última publicación comprobada continúa siendo la del 1 de noviembre.
+
 ## Stack
 
 | Tecnología | Uso y alcance |

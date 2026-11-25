@@ -94,7 +94,7 @@
 
 .navigation {
   flex-shrink: 0;
-  margin-bottom: clamp(16px, 4svh, 40px);
+  margin-bottom: clamp(16px, 2.8svh, 28px);
 }
 
 .back {
@@ -132,7 +132,7 @@
   align-items: center;
   min-width: 0;
   gap: clamp(16px, 2vw, 32px);
-  margin-bottom: clamp(24px, 5svh, 56px);
+  margin-bottom: clamp(24px, 4svh, 40px);
 }
 
 .logoSlot {
@@ -169,12 +169,23 @@
   -webkit-overflow-scrolling: touch;
 }
 
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2.2fr) minmax(240px, 1fr);
+  gap: clamp(28px, 4vw, 64px);
+  align-items: start;
+}
+
+.overview {
+  padding-top: 4px;
+}
+
 .description {
-  max-width: 44ch;
+  max-width: 32ch;
   margin: 0;
   color: #412e36;
-  font-size: clamp(1.125rem, 0.8rem + 1.65vw, 2rem);
-  line-height: 1.5;
+  font-size: clamp(1.25rem, 1rem + 0.6vw, 1.625rem);
+  line-height: 1.45;
   text-wrap: pretty;
 }
 
@@ -183,27 +194,52 @@
   outline-offset: -1px;
 }
 
-.technologyBlock {
-  margin-top: clamp(28px, 5svh, 56px);
-}
-
-.technologyBlock h3 {
-  margin: 0 0 12px;
-  font-size: var(--text-small);
-  font-weight: 500;
+.contribution {
+  margin: 24px 0 12px;
+  font-size: var(--text-body);
   line-height: 1.5;
-  color: #65414e;
+  color: #412e36;
 }
 
 .technologies {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px clamp(16px, 2vw, 24px);
+  gap: 4px 16px;
   padding: 0;
   margin: 0;
   list-style: none;
-  font-size: var(--text-body);
+  font-size: max(1rem, var(--text-small));
   line-height: 1.6;
+}
+
+.draft {
+  margin-top: clamp(32px, 4vw, 56px);
+  max-width: 36ch;
+  color: #412e36;
+  font-size: var(--text-body);
+  line-height: 1.55;
+}
+
+.draft p {
+  margin: 0;
+}
+
+.draft .draftLabel {
+  margin-bottom: 8px;
+  color: #65414e;
+  font-size: max(1rem, var(--text-small));
+}
+
+@media (max-width: 999px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  .description,
+  .draft {
+    max-width: 52ch;
+  }
 }
 
 @media (max-width: 699px) {
@@ -218,6 +254,7 @@
 
   .header {
     gap: clamp(12px, 3vw, 16px);
+    margin-bottom: 24px;
   }
 
   .header h2 {
@@ -225,7 +262,11 @@
   }
 
   .description {
-    font-size: clamp(1.125rem, 0.8rem + 1.65vw, 1.5rem);
+    font-size: 1.25rem;
+  }
+
+  .contribution {
+    margin-top: 20px;
   }
 }
 
@@ -253,10 +294,6 @@
 
   .description {
     font-size: 1.125rem;
-  }
-
-  .technologyBlock {
-    margin-top: 20px;
   }
 }
 

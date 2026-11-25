@@ -294,6 +294,14 @@ export const ProjectShowcase = forwardRef<
       return false;
     const rect = readPreviewRect();
     if (!rect) return false;
+    // Native document scrolling can leave the selection halfway offscreen.
+    // Align the shared detail surface before opening it without animation.
+    if (
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches &&
+      !isViewportZoomed()
+    ) {
+      section.current?.scrollIntoView({ behavior: "instant", block: "start" });
+    }
     const next = { index, rect };
     inlineProject.current = next;
     wheelGesture.current.consumed = true;
@@ -325,6 +333,12 @@ export const ProjectShowcase = forwardRef<
       if (focusedIndex.current !== null) captureSource(focusedIndex.current);
       paint();
       if (inlineProject.current) {
+        if (
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches &&
+          !isViewportZoomed()
+        ) {
+          host.scrollIntoView({ behavior: "instant", block: "start" });
+        }
         const rect = readPreviewRect();
         if (rect) {
           inlineProject.current = { ...inlineProject.current, rect };
